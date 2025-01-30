@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.kingpixel.cobblestop.mixins",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "PreventDamageMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
