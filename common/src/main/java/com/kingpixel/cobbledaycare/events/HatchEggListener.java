@@ -1,4 +1,4 @@
-package com.kingpixel.cobbleutils.features.breeding.events;
+package com.kingpixel.cobbledaycare.events;
 
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import net.minecraft.server.network.ServerPlayerEntity;

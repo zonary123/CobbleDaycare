@@ -1,19 +1,20 @@
-package com.kingpixel.cobbleutils.features.breeding.models;
+package com.kingpixel.cobbledaycare.models;
 
 import com.cobblemon.mod.common.pokemon.Pokemon;
+import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbleutils.Model.ItemModel;
-import com.kingpixel.cobbleutils.Model.PokemonData;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.CustomModelDataComponent;
+import net.minecraft.component.type.NbtComponent;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * @author Carlos Varas Alonso - 12/08/2024 12:37
@@ -22,116 +23,125 @@ import java.util.Objects;
 @Setter
 @ToString
 public class Incense extends ItemModel {
-  private String name;
+  private String id;
   private List<PokemonIncense> pokemonIncense;
 
   public Incense() {
     super("minecraft:emerald", "Full Incense", List.of(""), 1);
-    name = "Full Incense";
+    this.id = "full_incense";
     pokemonIncense = new ArrayList<>();
-    pokemonIncense.add(new PokemonIncense());
+    pokemonIncense.add(new PokemonIncense("", ""));
   }
 
-  public Incense(String name, String displayname, List<String> lore, int custommodeldata,
+  public Incense(String id, String displayname, List<String> lore, int custommodeldata,
                  List<PokemonIncense> pokemonIncense) {
     super("minecraft:emerald", displayname, lore, custommodeldata);
-    this.name = name;
+    this.id = id;
     this.pokemonIncense = pokemonIncense;
   }
-
-  public boolean isIncense(ItemStack itemStack) {
-    if (itemStack == null) return false;
-    if (itemStack.getItem() == Items.AIR) return false;
-   /* NbtComponent itemStackNbt = itemStack.get(DataComponentTypes.CUSTOM_DATA);
-    if (itemStackNbt == null) return false;*/
-
-    CustomModelDataComponent customModelDataComponent = itemStack.get(DataComponentTypes.CUSTOM_MODEL_DATA);
-
-    return itemStack.getItem().equals(this.getItemStack().getItem()) && Objects.equals(customModelDataComponent,
-      new CustomModelDataComponent((int) getCustomModelData()));
-  }
-
-  public String getChild(Pokemon pokemon) {
-    if (pokemonIncense.isEmpty()) return null;
-    String pokemonName = pokemon.getSpecies().showdownId();
-
-    if (isIncense(pokemon.heldItem())) {
-      for (PokemonIncense pokemonIncense1 : pokemonIncense) {
-        if (pokemonIncense1.getParent().getPokename().equalsIgnoreCase(pokemonName)) {
-          String childName = pokemonIncense1.getChild().getPokename();
-          return childName;
-        }
-      }
-    } else {
-      for (PokemonIncense pokemonIncense1 : pokemonIncense) {
-        if (pokemonIncense1.getParent().getPokename().equalsIgnoreCase(pokemonName)) {
-          return pokemonIncense1.getParent().getPokename();
-        }
-      }
-    }
-
-    return null;
-  }
-
 
   public static List<Incense> defaultIncenses() {
     List<Incense> incenses = new ArrayList<>();
     incenses.add(new Incense("Full Incense", "Full Incense", List.of(""), 1, List.of(
       new PokemonIncense(
-        new PokemonData("snorlax", "normal"),
-        new PokemonData("munchlax", "normal")
+        "snorlax",
+        "munchlax"
       )
     )));
     incenses.add(new Incense("Lax Incense", "Lax Incense", List.of(""), 2, List.of(
       new PokemonIncense(
-        new PokemonData("wobbuffet", "normal"),
-        new PokemonData("wynaut", "normal")
+        "wobbuffet",
+        "wynaut"
       )
     )));
     incenses.add(new Incense("Sea Incense", "Sea Incense", List.of(""), 3, List.of(
       new PokemonIncense(
-        new PokemonData("marill", "normal"),
-        new PokemonData("azurill", "normal")
+        "marill",
+        "azurill"
       )
     )));
     incenses.add(new Incense("Rose Incense", "Rose Incense", List.of(""), 4, List.of(
       new PokemonIncense(
-        new PokemonData("roselia", "normal"),
-        new PokemonData("budew", "normal")
+        "roselia",
+        "budew"
       )
     )));
     incenses.add(new Incense("Pure Incese", "Pure Incese", List.of(""), 5, List.of(
       new PokemonIncense(
-        new PokemonData("chimecho", "normal"),
-        new PokemonData("chingling", "normal")
+        "chimecho",
+        "chingling"
       )
     )));
     incenses.add(new Incense("Rock Incense", "Rock Incense", List.of(""), 6, List.of(
       new PokemonIncense(
-        new PokemonData("sudowoodo", "normal"),
-        new PokemonData("bonsly", "normal")
+        "sudowoodo",
+        "bonsly"
       )
     )));
     incenses.add(new Incense("Odd Incense", "Odd Incense", List.of(""), 7, List.of(
       new PokemonIncense(
-        new PokemonData("mrmime", "normal"),
-        new PokemonData("mimejr", "normal")
+        "mrmime",
+        "mimejr"
       )
     )));
     incenses.add(new Incense("Luck Incense", "Luck Incense", List.of(""), 8, List.of(
       new PokemonIncense(
-        new PokemonData("chansey", "normal"),
-        new PokemonData("happiny", "normal")
-      )
-    )));
-    incenses.add(new Incense("Wave Incense", "Wave Incense", List.of(""), 9, List.of(
-      new PokemonIncense(
-        new PokemonData("mantyke", "normal"),
-        new PokemonData("mantyke", "normal")
+        "chansey",
+        "happiny"
       )
     )));
 
     return incenses;
+  }
+
+  public static void giveIncense(ServerPlayerEntity player, String id) {
+    Incense incense = null;
+    for (Incense incense1 : CobbleDaycare.incenses) {
+      if (incense1.getId().equals(id)) {
+        incense = incense1;
+        break;
+      }
+    }
+    if (incense == null) return;
+    ItemStack itemStack = incense.getItemStack();
+    NbtCompound nbt = new NbtCompound();
+    nbt.putString("id", incense.getId());
+    itemStack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(nbt));
+    player.getInventory().insertStack(itemStack);
+  }
+
+
+  public static boolean isIncense(ItemStack itemStack) {
+    if (itemStack == null) return false;
+    if (itemStack.getItem() == Items.AIR) return false;
+
+    NbtComponent nbtComponent = itemStack.get(DataComponentTypes.CUSTOM_DATA);
+    if (nbtComponent == null) return false;
+    NbtCompound nbt = nbtComponent.getNbt();
+    if (nbt == null) return false;
+    A
+    return nbt.getString("id").equals(id);
+  }
+
+  public String getChild(Pokemon pokemon) {
+    if (pokemonIncense.isEmpty()) return null;
+    String pokemonName = pokemon.showdownId();
+
+    if (isIncense(pokemon.heldItem())) {
+      for (PokemonIncense pokemonIncense1 : pokemonIncense) {
+        if (pokemonIncense1.getParent().equals(pokemonName)) {
+          return pokemonIncense1.getChild();
+        }
+      }
+    } else {
+      for (PokemonIncense pokemonIncense1 : pokemonIncense) {
+        if (pokemonIncense1.getParent().equals(pokemonName)) {
+          return pokemonIncense1.getParent();
+        }
+      }
+    }
+
+    return null;
   }
 
 }

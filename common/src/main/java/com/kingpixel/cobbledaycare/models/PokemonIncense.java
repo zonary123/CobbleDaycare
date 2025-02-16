@@ -1,28 +1,18 @@
-package com.kingpixel.cobbleutils.features.breeding.models;
+package com.kingpixel.cobbledaycare.models;
 
-import com.kingpixel.cobbleutils.Model.PokemonData;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
 /**
- * @author Carlos Varas Alonso - 12/08/2024 12:38
+ * @author Carlos Varas Alonso - 31/01/2025 2:55
  */
 @Getter
 @Setter
-@Data
-@ToString
 public class PokemonIncense {
-  private PokemonData parent;
-  private PokemonData child;
+  private String parent;
+  private String child;
 
-  public PokemonIncense() {
-    parent = new PokemonData("snorlax", "normal");
-    child = new PokemonData("munchlax", "normal");
-  }
-
-  public PokemonIncense(PokemonData parent, PokemonData child) {
+  public PokemonIncense(String parent, String child) {
     this.parent = parent;
     this.child = child;
   }

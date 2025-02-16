@@ -4,11 +4,17 @@
   "id": "${mod_id}",
   "version": "${mod_version}",
   "description": "${mod_description}",
-  "authors": ["${author}"],
-  "mixins": ["cobblestop.mixins.json"],
+  "authors": [
+    "${author}"
+  ],
+  "mixins": [
+    "cobbledaycare.mixins.json"
+  ],
   "contact": {},
   "entrypoints": {
-    "main": ["com.kingpixel.cobblestop.fabric.CobbleStopFabric"]
+    "main": [
+      "com.kingpixel.cobbledaycare.fabric.CobbleDaycareFabric"
+    ]
   },
   "license": "${license}",
   "environment": "*",
