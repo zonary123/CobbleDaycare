@@ -1,8 +1,9 @@
 package com.kingpixel.cobbledaycare.config;
 
 import com.kingpixel.cobbledaycare.CobbleDaycare;
-import com.kingpixel.cobbledaycare.ui.DaycareMenu;
 import com.kingpixel.cobbledaycare.ui.PlotMenu;
+import com.kingpixel.cobbledaycare.ui.PrincipalMenu;
+import com.kingpixel.cobbledaycare.ui.SelectPokemonMenu;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Getter;
@@ -17,13 +18,15 @@ import java.util.concurrent.CompletableFuture;
 @Setter
 public class Language {
   private String prefix;
-  private DaycareMenu daycareMenu;
+  private PrincipalMenu principalMenu;
   private PlotMenu plotMenu;
+  private SelectPokemonMenu selectPokemonMenu;
 
   public Language() {
     this.prefix = "&7[&6CobbleDaycare&7] ";
-    this.daycareMenu = new DaycareMenu();
+    this.principalMenu = new PrincipalMenu();
     this.plotMenu = new PlotMenu();
+    this.selectPokemonMenu = new SelectPokemonMenu();
   }
 
   public void init() {

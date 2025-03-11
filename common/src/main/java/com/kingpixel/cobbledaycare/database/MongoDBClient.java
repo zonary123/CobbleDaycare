@@ -30,7 +30,7 @@ public class MongoDBClient implements DatabaseClient {
   }
 
   @Override public void removeIfNecessary(ServerPlayerEntity player) {
-
+    DatabaseClientFactory.userPlots.remove(player.getUuid());
   }
 
 }

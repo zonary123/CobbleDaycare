@@ -1,72 +1,258 @@
 package com.kingpixel.cobbledaycare.models;
 
-import ca.landonjw.gooeylibs2.api.template.types.ChestTemplate;
 import com.cobblemon.mod.common.Cobblemon;
+import com.cobblemon.mod.common.api.pokemon.PokemonProperties;
+import com.cobblemon.mod.common.api.pokemon.egg.EggGroup;
+import com.cobblemon.mod.common.pokemon.Gender;
 import com.cobblemon.mod.common.pokemon.Pokemon;
-import com.google.gson.JsonObject;
-import net.minecraft.registry.DynamicRegistryManager;
+import com.kingpixel.cobbledaycare.CobbleDaycare;
+import com.kingpixel.cobbledaycare.database.DatabaseClientFactory;
+import com.kingpixel.cobbledaycare.models.mechanics.Mechanics;
+import com.kingpixel.cobbleutils.CobbleUtils;
+import com.kingpixel.cobbleutils.Model.CobbleUtilsTags;
+import com.kingpixel.cobbleutils.api.PermissionApi;
+import com.kingpixel.cobbleutils.util.PlayerUtils;
+import com.kingpixel.cobbleutils.util.TypeMessage;
+import lombok.Data;
+import lombok.ToString;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Carlos Varas Alonso - 31/01/2025 1:17
  */
+@Data
+@ToString
 public class Plot {
-  private List<JsonObject> parents;
-  private List<JsonObject> eggs;
-  private boolean creatingEgg;
+  private Pokemon male;
+  private Pokemon female;
+  private List<Pokemon> eggs;
   private long timeToHatch;
+  private long canOpen;
 
-  public List<Pokemon> getParents() {
-    List<Pokemon> pokemons = new ArrayList<>();
-    for (JsonObject parent : parents) {
-      if (parent == null) continue;
-      pokemons.add(Pokemon.Companion.loadFromJSON(DynamicRegistryManager.EMPTY, parent));
-    }
-    return pokemons.stream().toList();
+  public Plot() {
+    this.male = null;
+    this.female = null;
+    this.eggs = new ArrayList<>();
+    this.timeToHatch = 0;
   }
 
-  public List<Pokemon> getEggs() {
-    List<Pokemon> eggs = new ArrayList<>();
-    for (JsonObject egg : this.eggs) {
-      if (egg == null) continue;
-      eggs.add(Pokemon.Companion.loadFromJSON(DynamicRegistryManager.EMPTY, egg));
+  public boolean canBreed(Pokemon pokemon, SelectGender gender) {
+    if (!pokemon.getPersistentData().getBoolean(CobbleUtilsTags.BREEDABLE_TAG)) return false;
+    if (gender == SelectGender.MALE) {
+      Gender pokemonGender = pokemon.getGender();
+      if (!pokemonGender.equals(Gender.MALE) && !pokemonGender.equals(Gender.GENDERLESS)) return false;
+    } else {
+      Gender pokemonGender = pokemon.getGender();
+      if (!pokemonGender.equals(Gender.FEMALE) && !pokemonGender.equals(Gender.GENDERLESS)) return false;
     }
-    return eggs;
+    if (pokemon.getForm().getEggGroups().contains(EggGroup.UNDISCOVERED)) return false;
+    if (CobbleDaycare.config.getBlackList().isBlackListed(pokemon)) return false;
+    Pokemon other = getEmptyParent();
+    if (other == null) return true;
+    if (other.getGender().equals(Gender.GENDERLESS)) {
+      boolean otherIsDitto = other.getForm().getEggGroups().contains(EggGroup.DITTO);
+      boolean pokemonIsDitto = pokemon.getForm().getEggGroups().contains(EggGroup.DITTO);
+      if (!CobbleDaycare.config.isDobbleDitto() && (pokemonIsDitto && otherIsDitto))
+        return false;
+      if (otherIsDitto) {
+        return true;
+      } else {
+        return pokemonIsDitto;
+      }
+    }
+    for (EggGroup eggGroup : pokemon.getForm().getEggGroups()) {
+      if (other.getForm().getEggGroups().contains(eggGroup)) return true;
+    }
+    return false;
+  }
+
+  public boolean hasCooldownToOpen(ServerPlayerEntity player) {
+    return canOpen > System.currentTimeMillis();
   }
 
 
-  public boolean giveEggs(ServerPlayerEntity player) {
+  private void setTime(ServerPlayerEntity player) {
+    if (hasTwoParents()) {
+      long cooldown = PlayerUtils.getCooldown(CobbleDaycare.config.getCooldowns(), CobbleDaycare.config.getCooldown()
+        , player);
+      timeToHatch = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(cooldown);
+    } else {
+      timeToHatch = 0;
+    }
+  }
+
+  public void addFemale(ServerPlayerEntity player, Pokemon female) {
+    this.female = female;
+    if (!Cobblemon.INSTANCE.getStorage().getParty(player).remove(female)) {
+      Cobblemon.INSTANCE.getStorage().getPC(player).remove(female);
+    }
+    setTime(player);
+  }
+
+  public void addMale(ServerPlayerEntity player, Pokemon male) {
+    this.male = male;
+    if (!Cobblemon.INSTANCE.getStorage().getParty(player).remove(male)) {
+      Cobblemon.INSTANCE.getStorage().getPC(player).remove(male);
+    }
+    setTime(player);
+  }
+
+  public boolean hasEggs() {
+    return !eggs.isEmpty();
+  }
+
+  public boolean hasTwoParents() {
+    return male != null && female != null;
+  }
+
+  public boolean notParents() {
+    return male == null && female == null;
+  }
+
+  public Pokemon getEmptyParent() {
+    if (male == null && female == null) {
+      return null;
+    } else if (male == null) {
+      return female;
+    } else {
+      return male;
+    }
+  }
+
+  public void giveEggs(ServerPlayerEntity player) {
+    if (!hasEggs()) return;
     boolean update = false;
-    List<JsonObject> remove = new ArrayList<>();
-    for (JsonObject egg : eggs) {
+    List<Pokemon> remove = new ArrayList<>();
+    for (Pokemon egg : eggs) {
       if (egg == null) continue;
-      Pokemon pokemon = Pokemon.Companion.loadFromJSON(DynamicRegistryManager.EMPTY, egg);
-      Cobblemon.INSTANCE.getStorage().getParty(player).add(pokemon);
+      Cobblemon.INSTANCE.getStorage().getParty(player).add(egg);
       remove.add(egg);
     }
     if (!remove.isEmpty()) {
       eggs.removeAll(remove);
       update = true;
     }
-    return update;
   }
 
-
-  private void openPc(ServerPlayerEntity player, UserInformation userInformation) {
-    ChestTemplate template = ChestTemplate
-      .builder(6)
-      .build();
-
-
+  public boolean check(ServerPlayerEntity player) {
+    return false;
   }
 
-  public Pokemon getMale() {
+  private boolean hasCooldown(ServerPlayerEntity player) {
+    return timeToHatch > System.currentTimeMillis();
   }
 
-  public boolean canCreateEgg() {
+  public int limitEggs(ServerPlayerEntity player) {
+    int limit = 1;
+    for (Map.Entry<String, Integer> limitEgg : CobbleDaycare.config.getLimitEggs().entrySet()) {
+      if (limitEgg.getValue() < limit) continue;
+      if (PermissionApi.hasPermission(player, limitEgg.getKey(), 4)) {
+        limit = limitEgg.getValue();
+        break;
+      }
+    }
+    return limit;
+  }
 
+  public boolean checkEgg(ServerPlayerEntity player, UserInformation userInformation) {
+    try {
+      boolean update = false;
+      int sizeEggs = eggs.size();
+      if (!hasTwoParents()) {
+        if (CobbleDaycare.config.isDebug()) {
+          CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Plot.checkEgg: !hasTwoParents");
+        }
+        return false;
+      }
+      if (sizeEggs >= limitEggs(player)) {
+        if (CobbleDaycare.config.isDebug()) {
+          CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Plot.checkEgg: limitEggs < sizeEggs");
+        }
+        return false;
+      }
+      if (hasBannedPokemons(player, userInformation)) {
+        if (CobbleDaycare.config.isDebug()) {
+          CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Plot.checkEgg: hasBannedPokemons");
+        }
+        return true;
+      }
+      if (!hasCooldown(player)) {
+        if (CobbleDaycare.config.isDebug()) {
+          CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Plot.checkEgg: !hasCooldown");
+        }
+        Pokemon egg = createEgg(player);
+        if (!egg.getSpecies().showdownId().equals("egg")) {
+          PlayerUtils.sendMessage(
+            player,
+            "You need install the datapack to use this feature",
+            CobbleDaycare.language.getPrefix(),
+            TypeMessage.CHAT
+          );
+        } else {
+          if (CobbleDaycare.config.isDebug()) {
+            CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Egg created: " + egg.showdownId());
+          }
+          eggs.add(egg);
+          update = true;
+          setTime(player);
+        }
+      }
+      return update;
+    } catch (Exception e) {
+      e.printStackTrace();
+      return false;
+    }
+  }
+
+  private Pokemon createEgg(ServerPlayerEntity player) {
+    if (CobbleDaycare.config.isDebug()) {
+      CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Plot.createEgg");
+    }
+    Pokemon egg = PokemonProperties.Companion.parse("egg").create();
+    Pokemon firstEvolution = new Pokemon();
+    List<Pokemon> parents = new ArrayList<>();
+    parents.add(this.male);
+    parents.add(this.female);
+    for (Mechanics mechanic : CobbleDaycare.mechanics) {
+      mechanic.applyEgg(player, this.male, this.female, egg, parents, firstEvolution);
+    }
+    return egg;
+  }
+
+  private boolean hasBannedPokemons(ServerPlayerEntity player, UserInformation userInformation) {
+    boolean banned = false;
+    if (male != null) banned = CobbleDaycare.config.getBlackList().isBlackListed(male);
+    if (banned) {
+      sendBanNotification(player, male, userInformation);
+      male = null;
+      return banned;
+    }
+    if (female != null) banned = CobbleDaycare.config.getBlackList().isBlackListed(female);
+    if (banned) {
+      sendBanNotification(player, female, userInformation);
+      female = null;
+    }
+    return banned;
+  }
+
+  private void sendBanNotification(ServerPlayerEntity player, Pokemon pokemon, UserInformation userInformation) {
+    Cobblemon.INSTANCE.getStorage().getParty(player).add(pokemon);
+    if (userInformation.isNotifyBanPokemon()) {
+
+    }
+  }
+
+  public void addPokemon(ServerPlayerEntity player, Pokemon pokemon, SelectGender gender, UserInformation userInformation) {
+    if (gender == SelectGender.FEMALE) {
+      addFemale(player, pokemon);
+    } else {
+      addMale(player, pokemon);
+    }
+    DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
   }
 }

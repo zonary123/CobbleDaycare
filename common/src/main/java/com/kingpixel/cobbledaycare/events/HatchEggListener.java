@@ -8,4 +8,5 @@ import net.minecraft.server.network.ServerPlayerEntity;
  */
 public interface HatchEggListener {
   void HatchEgg(ServerPlayerEntity player, Pokemon pokemon);
+  
 }

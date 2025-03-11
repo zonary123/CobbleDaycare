@@ -1,6 +1,5 @@
 package com.kingpixel.cobbledaycare.database;
 
-import com.google.gson.Gson;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.models.UserInformation;
 import com.kingpixel.cobbleutils.Model.DataBaseConfig;
@@ -13,7 +12,6 @@ import java.util.concurrent.CompletableFuture;
  * Improved by GitHub Copilot - 07/08/2024 9:41
  */
 public class JSONClient implements DatabaseClient {
-  private static Gson gson = Utils.newWithoutSpacingGson();
 
   public JSONClient(DataBaseConfig config) {
   }
@@ -32,11 +30,14 @@ public class JSONClient implements DatabaseClient {
   }
 
   @Override public UserInformation getUserInformation(ServerPlayerEntity player) {
+    boolean update = false;
     UserInformation userInformation = DatabaseClientFactory.userPlots.get(player.getUuid());
     if (userInformation == null) {
       readFile(player);
       userInformation = DatabaseClientFactory.userPlots.get(player.getUuid());
+      update = userInformation.check(CobbleDaycare.config.getSlotPlots().size());
     }
+    if (update) updateUserInformation(player, userInformation);
     return userInformation;
   }
 
@@ -72,6 +73,6 @@ public class JSONClient implements DatabaseClient {
   }
 
   @Override public void removeIfNecessary(ServerPlayerEntity player) {
-
+    DatabaseClientFactory.userPlots.remove(player.getUuid());
   }
 }

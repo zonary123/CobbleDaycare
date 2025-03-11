@@ -12,20 +12,20 @@ import java.util.UUID;
  * @author Carlos Varas Alonso - 24/07/2024 21:03
  */
 public class DatabaseClientFactory {
-  public static DatabaseClient databaseClient;
+  public static DatabaseClient INSTANCE;
   public static Map<UUID, UserInformation> userPlots = new HashMap<>();
 
   public static DatabaseClient createDatabaseClient(DataBaseConfig database) {
-    if (databaseClient != null) {
-      databaseClient.disconnect();
+    if (INSTANCE != null) {
+      INSTANCE.disconnect();
     }
     switch (database.getType()) {
-      case MONGODB -> databaseClient = new MongoDBClient(database);
-      case JSON -> databaseClient = new JSONClient(database);
-      default -> databaseClient = new JSONClient(database);
+      case MONGODB -> INSTANCE = new MongoDBClient(database);
+      case JSON -> INSTANCE = new JSONClient(database);
+      default -> INSTANCE = new JSONClient(database);
     }
-    databaseClient.connect(database);
-    return databaseClient;
+    INSTANCE.connect(database);
+    return INSTANCE;
   }
 
 }

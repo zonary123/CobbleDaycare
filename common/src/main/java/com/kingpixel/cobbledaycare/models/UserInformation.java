@@ -1,5 +1,6 @@
 package com.kingpixel.cobbledaycare.models;
 
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -14,15 +15,22 @@ import java.util.UUID;
  */
 @Getter
 @Setter
+@Data
 @ToString
 public class UserInformation {
   private UUID playerUUID;
   private String playerName;
+  private boolean notifyCreateEgg;
+  private boolean notifyLimitEggs;
+  private boolean notifyBanPokemon;
   private List<Plot> plots;
 
   public UserInformation(ServerPlayerEntity player) {
     this.playerUUID = player.getUuid();
     this.playerName = player.getGameProfile().getName();
+    this.notifyLimitEggs = true;
+    this.notifyCreateEgg = true;
+    this.notifyBanPokemon = true;
     this.plots = new ArrayList<>();
   }
 

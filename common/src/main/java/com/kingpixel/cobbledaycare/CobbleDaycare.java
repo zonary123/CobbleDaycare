@@ -1,5 +1,10 @@
 package com.kingpixel.cobbledaycare;
 
+import ca.landonjw.gooeylibs2.api.tasks.Task;
+import com.cobblemon.mod.common.Cobblemon;
+import com.cobblemon.mod.common.api.Priority;
+import com.cobblemon.mod.common.api.events.CobblemonEvents;
+import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.kingpixel.cobbledaycare.commands.CommandTree;
@@ -7,12 +12,16 @@ import com.kingpixel.cobbledaycare.config.Config;
 import com.kingpixel.cobbledaycare.config.Language;
 import com.kingpixel.cobbledaycare.database.DatabaseClientFactory;
 import com.kingpixel.cobbledaycare.models.Incense;
-import com.kingpixel.cobbledaycare.models.mecanics.DaycareIvs;
-import com.kingpixel.cobbledaycare.models.mecanics.DaycareNature;
-import com.kingpixel.cobbledaycare.models.mecanics.Mechanics;
+import com.kingpixel.cobbledaycare.models.Plot;
+import com.kingpixel.cobbledaycare.models.UserInformation;
+import com.kingpixel.cobbledaycare.models.mechanics.*;
+import com.kingpixel.cobbleutils.Model.CobbleUtilsTags;
+import com.kingpixel.cobbleutils.api.PermissionApi;
 import dev.architectury.event.events.common.CommandRegistrationEvent;
 import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.event.events.common.PlayerEvent;
+import kotlin.Unit;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.io.BufferedReader;
@@ -33,11 +42,12 @@ public class CobbleDaycare {
   public static final String PATH_INCENSE = PATH + "incenses/";
   private static final String API_URL_IP = "http://ip-api.com/json/";
   private static final Map<UUID, UserInfo> playerCountry = new HashMap<>();
+  public static MinecraftServer server;
   public static Config config = new Config();
   public static Language language = new Language();
   public static List<Mechanics> mechanics = new ArrayList<>();
   public static List<Incense> incenses = new ArrayList<>();
-
+  public static Task task;
 
   public static void init() {
     load();
@@ -47,16 +57,43 @@ public class CobbleDaycare {
   private static void load() {
     files();
     DatabaseClientFactory.createDatabaseClient(config.getDataBase());
+    tasks();
+  }
+
+  private static void tasks() {
+    long cooldown = 60 * 20;
+    if (task != null) task.setExpired();
+    task = Task.builder()
+      .execute(() -> {
+        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
+          boolean update = false;
+          UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
+          for (Plot plot : userInformation.getPlots()) {
+            if (plot.checkEgg(player, userInformation) && !update) update = true;
+          }
+          DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
+          fixPlayer(player);
+        }
+      })
+      .interval(cooldown)
+      .build();
   }
 
   private static void files() {
     config.init();
     language.init();
     incenses.clear();
-    Incense.init();
     mechanics.clear();
+    mechanics.add(new DayCarePokemon());
+    mechanics.add(new DayCareForm());
     mechanics.add(new DaycareIvs());
-    mechanics.add(new DaycareNature());
+    mechanics.add(new DayCareMirrorHerb());
+    mechanics.add(new DayCareNature());
+    mechanics.add(new DayCareShiny());
+    mechanics.add(new DayCarePokeBall());
+    mechanics.add(new DayCareAbility());
+    mechanics.add(new DayCareMoves());
+    mechanics.add(new DayCareCountry());
   }
 
   private static void events() {
@@ -66,24 +103,61 @@ public class CobbleDaycare {
       CommandTree.register(dispatcher, registry);
     });
 
-    LifecycleEvent.SERVER_STARTED.register(instance -> {
+    LifecycleEvent.SERVER_STARTED.register(minecraftServer -> {
+      server = minecraftServer;
       load();
-    });
-
-    LifecycleEvent.SERVER_STOPPING.register(instance -> {
-
+      for (int i = 0; i < config.getSlotPlots().size(); i++) {
+        PermissionApi.hasPermission(server.getCommandSource(), "cobbledaycare.plot." + i + 1, 4);
+      }
     });
 
     PlayerEvent.PLAYER_JOIN.register(player -> {
       countryPlayer(player);
-      DatabaseClientFactory.databaseClient.getUserInformation(player);
+      fixPlayer(player);
+      UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
+      boolean update = false;
+      for (Plot plot : userInformation.getPlots()) {
+        if (plot.checkEgg(player, userInformation) && !update) update = true;
+      }
+      if (update) DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
     });
 
+    PlayerEvent.PLAYER_QUIT.register(player -> DatabaseClientFactory.INSTANCE.removeIfNecessary(player));
 
+    CobblemonEvents.POKEMON_CAPTURED.subscribe(Priority.HIGHEST, evt -> {
+      breedable(evt.getPokemon());
+      return Unit.INSTANCE;
+    });
   }
 
-  private static void countryPlayer(ServerPlayerEntity player) {
-    if (playerCountry.get(player.getUuid()) != null) return; // Verifica si ya se obtuvo la información del jugador
+  private static void fixPlayer(ServerPlayerEntity player) {
+    var countryInfo = getCountry(player);
+    for (Pokemon pokemon : Cobblemon.INSTANCE.getStorage().getParty(player)) {
+      breedable(pokemon);
+      fixCountryInfo(pokemon, countryInfo);
+    }
+    for (Pokemon pokemon : Cobblemon.INSTANCE.getStorage().getPC(player)) {
+      breedable(pokemon);
+      fixCountryInfo(pokemon, countryInfo);
+    }
+  }
+
+  private static void fixCountryInfo(Pokemon pokemon, UserInfo countryInfo) {
+    if (countryInfo == null) return;
+    if (!pokemon.getPersistentData().contains(DayCareCountry.TAG)) {
+      pokemon.getPersistentData().putString(DayCareCountry.TAG, countryInfo.country());
+    }
+  }
+
+  public static void breedable(Pokemon pokemon) {
+    var nbt = pokemon.getPersistentData();
+    if (!nbt.getBoolean(CobbleUtilsTags.BREEDABLE_BUILDER_TAG)) {
+      nbt.putBoolean(CobbleUtilsTags.BREEDABLE_TAG, !CobbleDaycare.config.getBlackList().isBlackListed(pokemon));
+    }
+  }
+
+  public static void countryPlayer(ServerPlayerEntity player) {
+    if (playerCountry.get(player.getUuid()) != null) return;
 
     CompletableFuture.runAsync(() -> {
       try {
@@ -122,6 +196,10 @@ public class CobbleDaycare {
         e.printStackTrace();
       }
     });
+  }
+
+  public static UserInfo getCountry(ServerPlayerEntity player) {
+    return playerCountry.get(player.getUuid());
   }
 
   public record UserInfo(String country, String countryCode, String language) {

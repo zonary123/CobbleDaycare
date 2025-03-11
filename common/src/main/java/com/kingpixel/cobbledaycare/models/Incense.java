@@ -119,8 +119,7 @@ public class Incense extends ItemModel {
     if (nbtComponent == null) return false;
     NbtCompound nbt = nbtComponent.getNbt();
     if (nbt == null) return false;
-    A
-    return nbt.getString("id").equals(id);
+    return nbt.getString("id").equals("");
   }
 
   public String getChild(Pokemon pokemon) {
