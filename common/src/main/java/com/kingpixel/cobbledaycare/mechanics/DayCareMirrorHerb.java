@@ -1,4 +1,4 @@
-package com.kingpixel.cobbledaycare.models.mechanics;
+package com.kingpixel.cobbledaycare.mechanics;
 
 import com.cobblemon.mod.common.api.moves.Move;
 import com.cobblemon.mod.common.api.moves.MoveTemplate;
@@ -6,6 +6,8 @@ import com.cobblemon.mod.common.api.moves.Moves;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbleutils.CobbleUtils;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.List;
@@ -15,7 +17,14 @@ import static com.cobblemon.mod.common.CobblemonItems.MIRROR_HERB;
 /**
  * @author Carlos Varas Alonso - 11/03/2025 9:09
  */
+@EqualsAndHashCode(callSuper = true) @Data
 public class DayCareMirrorHerb extends Mechanics {
+  private boolean active;
+
+  public DayCareMirrorHerb() {
+    this.active = true;
+  }
+
   private static void mirrorHerb(Pokemon target, Pokemon source) {
     if (CobbleDaycare.config.isDebug()) {
       CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Mirror Herb: " + target.getSpecies().showdownId());
@@ -66,5 +75,12 @@ public class DayCareMirrorHerb extends Mechanics {
   @Override
   public void applyHatch(ServerPlayerEntity player, Pokemon egg) {
 
+  }
+
+  @Override public void validateData() {
+  }
+
+  @Override public String fileName() {
+    return "mirror_herb";
   }
 }

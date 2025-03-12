@@ -1,4 +1,4 @@
-package com.kingpixel.cobbledaycare.models.mechanics;
+package com.kingpixel.cobbledaycare.mechanics;
 
 import com.cobblemon.mod.common.api.moves.BenchedMove;
 import com.cobblemon.mod.common.api.moves.Move;
@@ -74,5 +74,12 @@ public class DayCareMoves extends Mechanics {
       }
     }
     egg.getPersistentData().remove(TAG);
+  }
+
+  @Override public void validateData() {
+  }
+
+  @Override public String fileName() {
+    return "moves";
   }
 }

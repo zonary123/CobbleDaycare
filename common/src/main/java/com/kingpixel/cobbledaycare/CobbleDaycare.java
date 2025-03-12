@@ -11,10 +11,10 @@ import com.kingpixel.cobbledaycare.commands.CommandTree;
 import com.kingpixel.cobbledaycare.config.Config;
 import com.kingpixel.cobbledaycare.config.Language;
 import com.kingpixel.cobbledaycare.database.DatabaseClientFactory;
+import com.kingpixel.cobbledaycare.mechanics.*;
 import com.kingpixel.cobbledaycare.models.Incense;
 import com.kingpixel.cobbledaycare.models.Plot;
 import com.kingpixel.cobbledaycare.models.UserInformation;
-import com.kingpixel.cobbledaycare.models.mechanics.*;
 import com.kingpixel.cobbleutils.Model.CobbleUtilsTags;
 import com.kingpixel.cobbleutils.api.PermissionApi;
 import dev.architectury.event.events.common.CommandRegistrationEvent;
@@ -40,6 +40,7 @@ public class CobbleDaycare {
   public static final String PATH_LANGUAGE = PATH + "lang/";
   public static final String PATH_DATA = PATH + "data/";
   public static final String PATH_INCENSE = PATH + "incenses/";
+  public static final String PATH_MODULES = PATH + "modules/";
   private static final String API_URL_IP = "http://ip-api.com/json/";
   private static final Map<UUID, UserInfo> playerCountry = new HashMap<>();
   public static MinecraftServer server;
@@ -84,16 +85,26 @@ public class CobbleDaycare {
     language.init();
     incenses.clear();
     mechanics.clear();
-    mechanics.add(new DayCarePokemon());
-    mechanics.add(new DayCareForm());
-    mechanics.add(new DaycareIvs());
-    mechanics.add(new DayCareMirrorHerb());
-    mechanics.add(new DayCareNature());
-    mechanics.add(new DayCareShiny());
-    mechanics.add(new DayCarePokeBall());
-    mechanics.add(new DayCareAbility());
-    mechanics.add(new DayCareMoves());
-    mechanics.add(new DayCareCountry());
+    DayCarePokemon dayCarePokemon = new DayCarePokemon();
+    mechanics.add(dayCarePokemon.getInstance());
+    DayCareForm dayCareForm = new DayCareForm();
+    mechanics.add(dayCareForm.getInstance());
+    DayCareAbility dayCareAbility = new DayCareAbility();
+    mechanics.add(dayCareAbility.getInstance());
+    DaycareIvs daycareIvs = new DaycareIvs();
+    mechanics.add(daycareIvs.getInstance());
+    DayCareMirrorHerb dayCareMirrorHerb = new DayCareMirrorHerb();
+    mechanics.add(dayCareMirrorHerb.getInstance());
+    DayCareNature dayCareNature = new DayCareNature();
+    mechanics.add(dayCareNature.getInstance());
+    DayCareShiny dayCareShiny = new DayCareShiny();
+    mechanics.add(dayCareShiny.getInstance());
+    DayCarePokeBall dayCarePokeBall = new DayCarePokeBall();
+    mechanics.add(dayCarePokeBall.getInstance());
+    DayCareMoves dayCareMoves = new DayCareMoves();
+    mechanics.add(dayCareMoves.getInstance());
+    DayCareCountry dayCareCountry = new DayCareCountry();
+    mechanics.add(dayCareCountry.getInstance());
   }
 
   private static void events() {

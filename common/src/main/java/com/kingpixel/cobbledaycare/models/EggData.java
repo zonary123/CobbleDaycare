@@ -1,10 +1,13 @@
 package com.kingpixel.cobbledaycare.models;
 
 
+import com.cobblemon.mod.common.api.events.CobblemonEvents;
+import com.cobblemon.mod.common.api.pokemon.PokemonProperties;
 import com.cobblemon.mod.common.api.pokemon.stats.Stats;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
-import com.kingpixel.cobbledaycare.models.mechanics.*;
+import com.kingpixel.cobbledaycare.events.HatchEggEvent;
+import com.kingpixel.cobbledaycare.mechanics.*;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
 import com.kingpixel.cobbleutils.util.TypeMessage;
 import lombok.Getter;
@@ -72,7 +75,7 @@ public class EggData {
   public void steps(ServerPlayerEntity player, Pokemon egg, double deltaMovement) {
     steps -= deltaMovement;
     if (steps <= 0) {
-      steps = CobbleDaycare.config.getSteps();
+      steps = egg.getPersistentData().getDouble(DayCarePokemon.TAG_REFERENCE_STEPS);
       cycles--;
     }
     if (cycles <= 0) {
@@ -94,6 +97,9 @@ public class EggData {
     for (Mechanics mechanic : CobbleDaycare.mechanics) {
       mechanic.applyHatch(player, egg);
     }
+    HatchEggEvent.HATCH_EGG_EVENT.emit(player, egg);
+    PokemonProperties pokemonProperties = PokemonProperties.Companion.parse(pokemon + " " + form);
+    CobblemonEvents.HATCH_EGG_POST.emit(new com.cobblemon.mod.common.api.events.pokemon.HatchEggEvent.Post(pokemonProperties, player));
   }
 
   public void sendEggInfo(ServerPlayerEntity player) {

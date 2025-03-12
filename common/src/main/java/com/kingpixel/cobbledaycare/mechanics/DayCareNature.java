@@ -1,4 +1,4 @@
-package com.kingpixel.cobbledaycare.models.mechanics;
+package com.kingpixel.cobbledaycare.mechanics;
 
 import com.cobblemon.mod.common.CobblemonItems;
 import com.cobblemon.mod.common.api.pokemon.Natures;
@@ -41,6 +41,13 @@ public class DayCareNature extends Mechanics {
       egg.setNature(Natures.INSTANCE.getRandomNature());
     }
     egg.getPersistentData().remove(TAG_NATURE);
+  }
+
+  @Override public void validateData() {
+  }
+
+  @Override public String fileName() {
+    return "nature";
   }
 
   private boolean hasNature(List<Pokemon> parents) {

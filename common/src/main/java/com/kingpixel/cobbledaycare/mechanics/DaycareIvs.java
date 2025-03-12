@@ -1,4 +1,4 @@
-package com.kingpixel.cobbledaycare.models.mechanics;
+package com.kingpixel.cobbledaycare.mechanics;
 
 import com.cobblemon.mod.common.api.pokemon.stats.Stats;
 import com.cobblemon.mod.common.item.CobblemonItem;
@@ -20,6 +20,7 @@ import static com.cobblemon.mod.common.CobblemonItems.*;
 public class DaycareIvs extends Mechanics {
   public static final List<Stats> stats =
     Arrays.stream(Stats.values()).filter(stats1 -> stats1 != Stats.ACCURACY && stats1 != Stats.EVASION).toList();
+
 
   @Override
   public void applyEgg(ServerPlayerEntity player, Pokemon male, Pokemon female, Pokemon egg, List<Pokemon> parents, Pokemon firstEvolution) {
@@ -46,6 +47,13 @@ public class DaycareIvs extends Mechanics {
       egg.getIvs().set(stat, iv);
       egg.getPersistentData().remove(stat.getShowdownId());
     });
+  }
+
+  @Override public void validateData() {
+  }
+
+  @Override public String fileName() {
+    return "ivs";
   }
 
   private boolean hasDestinyKnot(List<Pokemon> parents) {

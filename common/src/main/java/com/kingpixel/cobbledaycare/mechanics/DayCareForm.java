@@ -1,4 +1,4 @@
-package com.kingpixel.cobbledaycare.models.mechanics;
+package com.kingpixel.cobbledaycare.mechanics;
 
 import com.cobblemon.mod.common.api.pokemon.PokemonProperties;
 import com.cobblemon.mod.common.api.pokemon.feature.ChoiceSpeciesFeatureProvider;
@@ -17,6 +17,12 @@ import java.util.List;
  */
 public class DayCareForm extends Mechanics {
   public static final String TAG = "form";
+  private boolean active;
+
+  public DayCareForm() {
+    this.active = true;
+  }
+
 
   @Override
   public void applyEgg(ServerPlayerEntity player, Pokemon male, Pokemon female, Pokemon egg, List<Pokemon> parents, Pokemon firstEvolution) {
@@ -120,5 +126,12 @@ public class DayCareForm extends Mechanics {
     String form = egg.getPersistentData().getString(TAG);
     PokemonProperties.Companion.parse(form).apply(egg);
     egg.getPersistentData().remove(TAG);
+  }
+
+  @Override public void validateData() {
+  }
+
+  @Override public String fileName() {
+    return "form";
   }
 }

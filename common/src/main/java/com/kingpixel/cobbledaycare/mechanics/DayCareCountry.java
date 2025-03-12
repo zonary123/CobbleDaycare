@@ -1,4 +1,4 @@
-package com.kingpixel.cobbledaycare.models.mechanics;
+package com.kingpixel.cobbledaycare.mechanics;
 
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
@@ -20,5 +20,12 @@ public class DayCareCountry extends Mechanics {
   }
 
   @Override public void applyHatch(ServerPlayerEntity player, Pokemon egg) {
+  }
+
+  @Override public void validateData() {
+  }
+
+  @Override public String fileName() {
+    return "country";
   }
 }

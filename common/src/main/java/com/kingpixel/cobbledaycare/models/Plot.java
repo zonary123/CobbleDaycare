@@ -7,7 +7,7 @@ import com.cobblemon.mod.common.pokemon.Gender;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.database.DatabaseClientFactory;
-import com.kingpixel.cobbledaycare.models.mechanics.Mechanics;
+import com.kingpixel.cobbledaycare.mechanics.Mechanics;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.Model.CobbleUtilsTags;
 import com.kingpixel.cobbleutils.api.PermissionApi;
@@ -162,13 +162,13 @@ public class Plot {
   public boolean checkEgg(ServerPlayerEntity player, UserInformation userInformation) {
     try {
       boolean update = false;
-      int sizeEggs = eggs.size();
       if (!hasTwoParents()) {
         if (CobbleDaycare.config.isDebug()) {
           CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Plot.checkEgg: !hasTwoParents");
         }
         return false;
       }
+      int sizeEggs = eggs.size();
       if (sizeEggs >= limitEggs(player)) {
         if (CobbleDaycare.config.isDebug()) {
           CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Plot.checkEgg: limitEggs < sizeEggs");
@@ -178,6 +178,12 @@ public class Plot {
       if (hasBannedPokemons(player, userInformation)) {
         if (CobbleDaycare.config.isDebug()) {
           CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Plot.checkEgg: hasBannedPokemons");
+        }
+        return true;
+      }
+      if (notCorrectCooldown(player)) {
+        if (CobbleDaycare.config.isDebug()) {
+          CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Plot.checkEgg: notCorrectCooldown");
         }
         return true;
       }
@@ -207,6 +213,21 @@ public class Plot {
       e.printStackTrace();
       return false;
     }
+  }
+
+  private boolean notCorrectCooldown(ServerPlayerEntity player) {
+    long correctCooldown = PlayerUtils.getCooldown(CobbleDaycare.config.getCooldowns(), CobbleDaycare.config.getCooldown(), player);
+    long correctTimeToHatch = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(correctCooldown);
+
+    if (timeToHatch > correctTimeToHatch) {
+      timeToHatch = correctTimeToHatch;
+      if (CobbleDaycare.config.isDebug()) {
+        CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Plot.notCorrectCooldown");
+      }
+      return true;
+    }
+
+    return false;
   }
 
   private Pokemon createEgg(ServerPlayerEntity player) {

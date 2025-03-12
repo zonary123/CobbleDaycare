@@ -33,14 +33,20 @@ public abstract class WalkBreedingMixin {
     tp = true;
   }
 
+
   @Inject(method = "onPlayerMove", at = @At("HEAD"))
   public void breeding$onPlayerMove(PlayerMoveC2SPacket packet, CallbackInfo ci) {
     tick++;
     if (tick % CobbleDaycare.config.getTicksToWalking() == 0) {
       boolean isInPose = !player.isInPose(EntityPose.FALL_FLYING);
       boolean isInvulnerable = !player.isInvulnerable();
+      boolean isFly = false;
       boolean permittedVehicles = cobbleUtils$permittedVehicles(player);
-      if (isInPose && isInvulnerable && permittedVehicles && (!player.isTouchingWater() || player.isInPose(EntityPose.SWIMMING))) {
+      boolean result =
+        isInPose && isInvulnerable && permittedVehicles && (!player.isTouchingWater() || player.isInPose(EntityPose.SWIMMING));
+
+
+      if (result) {
         var party = Cobblemon.INSTANCE.getStorage().getParty(player);
 
         entity = player.getVehicle() != null ? player.getVehicle() : player;
