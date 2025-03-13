@@ -6,6 +6,8 @@ import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.Utils;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.ArrayList;
@@ -17,10 +19,33 @@ import static com.cobblemon.mod.common.CobblemonItems.*;
 /**
  * @author Carlos Varas Alonso - 31/01/2025 0:25
  */
+@EqualsAndHashCode(callSuper = true) @Data
 public class DaycareIvs extends Mechanics {
   public static final List<Stats> stats =
     Arrays.stream(Stats.values()).filter(stats1 -> stats1 != Stats.ACCURACY && stats1 != Stats.EVASION).toList();
+  private int defaultIvsTransfer;
+  private int destinyKnotIvsTransfer;
+  private int maxIvsRandom;
+  private float percentagePowerItem;
+  private float percentageDestinyKnot;
 
+  public DaycareIvs() {
+    this.defaultIvsTransfer = 3;
+    this.destinyKnotIvsTransfer = 5;
+    this.maxIvsRandom = 31;
+    this.percentagePowerItem = 100f;
+    this.percentageDestinyKnot = 100f;
+  }
+
+  @Override public String replace(String text) {
+    return text
+      .replace("%destinyknot%", String.format("%.2f", percentageDestinyKnot))
+      .replace("%poweritem%", String.format("%.2f", percentagePowerItem))
+      .replace("%maxivs%", String.valueOf(maxIvsRandom))
+      .replace("%defaultIvsTransfer%", String.valueOf(defaultIvsTransfer))
+      .replace("%destinyKnotIvsTransfer%", String.valueOf(destinyKnotIvsTransfer))
+      .replace("%maxIvsRandom%", String.valueOf(maxIvsRandom));
+  }
 
   @Override
   public void applyEgg(ServerPlayerEntity player, Pokemon male, Pokemon female, Pokemon egg, List<Pokemon> parents, Pokemon firstEvolution) {
@@ -28,14 +53,15 @@ public class DaycareIvs extends Mechanics {
     if (CobbleDaycare.config.isDebug()) {
       CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "DaycareIvs -> applyEgg -> parents: " + cloneStats);
     }
-    int numIvsToTransfer = CobbleDaycare.config.getOptionsMecanics().getDefaultIvsTransfer();
+    int numIvsToTransfer = getDefaultIvsTransfer();
 
-    if (hasDestinyKnot(parents)) {
-      numIvsToTransfer = CobbleDaycare.config.getOptionsMecanics().getDestinyKnotIvsTransfer();
+    if (hasDestinyKnot(parents) && Utils.RANDOM.nextFloat() * 100 < getPercentageDestinyKnot()) {
+      numIvsToTransfer = getDestinyKnotIvsTransfer();
     }
     // Power Items
     for (Pokemon parent : parents) {
-      if (powerItem(parent, egg, cloneStats)) numIvsToTransfer--;
+      if (Utils.RANDOM.nextFloat() * 100 < getPercentagePowerItem())
+        if (powerItem(parent, egg, cloneStats)) numIvsToTransfer--;
     }
 
     applyLastIvs(parents, egg, cloneStats, numIvsToTransfer);
@@ -72,7 +98,7 @@ public class DaycareIvs extends Mechanics {
       applyIvs(parent, egg, stat, stats);
     }
     stats.forEach(stat -> {
-      int random = CobbleDaycare.config.getOptionsMecanics().getMaxIvsRandom() + 1;
+      int random = getMaxIvsRandom() + 1;
       if (random < 0 || random > 31) random = 31;
       int iv = Utils.RANDOM.nextInt(random + 1);
       egg.getPersistentData().putInt(stat.getShowdownId(), iv);

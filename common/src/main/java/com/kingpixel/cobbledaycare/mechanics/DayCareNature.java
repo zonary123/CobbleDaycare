@@ -5,6 +5,7 @@ import com.cobblemon.mod.common.api.pokemon.Natures;
 import com.cobblemon.mod.common.item.CobblemonItem;
 import com.cobblemon.mod.common.pokemon.Nature;
 import com.cobblemon.mod.common.pokemon.Pokemon;
+import com.kingpixel.cobbleutils.util.Utils;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.List;
@@ -14,10 +15,15 @@ import java.util.List;
  */
 public class DayCareNature extends Mechanics {
   public static final String TAG_NATURE = "Nature";
+  private float percentageEverstone;
+
+  public DayCareNature() {
+    this.percentageEverstone = 100F;
+  }
 
   @Override
   public void applyEgg(ServerPlayerEntity player, Pokemon male, Pokemon female, Pokemon egg, List<Pokemon> parents, Pokemon firstEvolution) {
-    if (hasNature(parents)) {
+    if (hasNature(parents) && Utils.RANDOM.nextFloat() * 100 < percentageEverstone) {
       for (Pokemon parent : parents) {
         if (parent.heldItem().getItem() instanceof CobblemonItem item) {
           if (item.equals(CobblemonItems.EVERSTONE)) {
@@ -48,6 +54,11 @@ public class DayCareNature extends Mechanics {
 
   @Override public String fileName() {
     return "nature";
+  }
+
+  @Override public String replace(String text) {
+    return text
+      .replace("%everstone%", String.format("%.2f", percentageEverstone));
   }
 
   private boolean hasNature(List<Pokemon> parents) {

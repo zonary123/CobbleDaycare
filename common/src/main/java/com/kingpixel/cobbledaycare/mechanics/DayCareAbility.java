@@ -5,6 +5,7 @@ import com.cobblemon.mod.common.api.abilities.AbilityTemplate;
 import com.cobblemon.mod.common.api.pokemon.PokemonProperties;
 import com.cobblemon.mod.common.api.pokemon.egg.EggGroup;
 import com.cobblemon.mod.common.pokemon.Pokemon;
+import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.PokemonUtils;
 import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Data;
@@ -19,11 +20,9 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true) @Data
 public class DayCareAbility extends Mechanics {
   public static final String TAG = "ability";
-  private boolean active;
   private double percentageTransmitAH;
 
   public DayCareAbility() {
-    this.active = true;
     this.percentageTransmitAH = 60;
   }
 
@@ -33,6 +32,11 @@ public class DayCareAbility extends Mechanics {
       pokemon.getForm().getEggGroups().contains(EggGroup.DITTO);
   }
 
+  @Override public String replace(String text) {
+    return text
+      .replace("%ability%", String.format("%.2f", percentageTransmitAH))
+      .replace("%activeAbility%", isActive() ? CobbleUtils.language.getYes() : CobbleUtils.language.getNo());
+  }
 
   @Override
   public void applyEgg(ServerPlayerEntity player, Pokemon male, Pokemon female, Pokemon egg, List<Pokemon> parents,

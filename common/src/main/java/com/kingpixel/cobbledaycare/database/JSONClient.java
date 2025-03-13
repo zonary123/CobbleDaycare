@@ -30,14 +30,11 @@ public class JSONClient implements DatabaseClient {
   }
 
   @Override public UserInformation getUserInformation(ServerPlayerEntity player) {
-    boolean update = false;
     UserInformation userInformation = DatabaseClientFactory.userPlots.get(player.getUuid());
     if (userInformation == null) {
       readFile(player);
       userInformation = DatabaseClientFactory.userPlots.get(player.getUuid());
-      update = userInformation.check(CobbleDaycare.config.getSlotPlots().size());
     }
-    if (update) updateUserInformation(player, userInformation);
     return userInformation;
   }
 
@@ -46,10 +43,6 @@ public class JSONClient implements DatabaseClient {
       CobbleDaycare.PATH_DATA, player.getUuidAsString() + ".json", call -> {
         UserInformation userInformation = Utils.newWithoutSpacingGson().fromJson(call, UserInformation.class);
         DatabaseClientFactory.userPlots.put(player.getUuid(), userInformation);
-        CompletableFuture<Boolean> futureWrite = Utils.writeFileAsync(
-          CobbleDaycare.PATH_DATA, player.getUuidAsString() + ".json", Utils.newWithoutSpacingGson().toJson(userInformation)
-        );
-        futureWrite.join();
       }
     );
 

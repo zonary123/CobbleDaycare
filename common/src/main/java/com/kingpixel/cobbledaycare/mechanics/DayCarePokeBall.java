@@ -3,7 +3,6 @@ package com.kingpixel.cobbledaycare.mechanics;
 import com.cobblemon.mod.common.api.pokeball.PokeBalls;
 import com.cobblemon.mod.common.pokeball.PokeBall;
 import com.cobblemon.mod.common.pokemon.Pokemon;
-import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
@@ -16,17 +15,15 @@ import java.util.List;
 public class DayCarePokeBall extends Mechanics {
   public static final String TAG = "pokeball";
 
-
   @Override
   public void applyEgg(ServerPlayerEntity player, Pokemon male, Pokemon female, Pokemon egg, List<Pokemon> parents, Pokemon firstEvolution) {
-    Identifier id;
-    if (CobbleDaycare.config.isPokeBallFromMother()) {
-      id = female.getCaughtBall().getName();
-      egg.getPersistentData().putString(TAG, id.getNamespace() + ":" + id.getPath());
-    } else {
-      id = PokeBalls.INSTANCE.getPOKE_BALL().getName();
-      egg.getPersistentData().putString(TAG, id.getNamespace() + ":" + id.getPath());
-    }
+    Identifier id = female.getCaughtBall().getName();
+    egg.getPersistentData().putString(TAG, id.getNamespace() + ":" + id.getPath());
+  }
+
+  @Override public String replace(String text) {
+    return text
+      .replace("%pokeball%", isActive() ? CobbleUtils.language.getYes() : CobbleUtils.language.getNo());
   }
 
   @Override public void applyHatch(ServerPlayerEntity player, Pokemon egg) {

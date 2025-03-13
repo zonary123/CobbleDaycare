@@ -12,6 +12,7 @@ import com.kingpixel.cobbledaycare.config.Config;
 import com.kingpixel.cobbledaycare.config.Language;
 import com.kingpixel.cobbledaycare.database.DatabaseClientFactory;
 import com.kingpixel.cobbledaycare.mechanics.*;
+import com.kingpixel.cobbledaycare.migrate.Migrate;
 import com.kingpixel.cobbledaycare.models.Incense;
 import com.kingpixel.cobbledaycare.models.Plot;
 import com.kingpixel.cobbledaycare.models.UserInformation;
@@ -39,6 +40,7 @@ public class CobbleDaycare {
   public static final String PATH = "/config/cobbledaycare/";
   public static final String PATH_LANGUAGE = PATH + "lang/";
   public static final String PATH_DATA = PATH + "data/";
+  public static final String PATH_OLD_DATA = PATH + "old_data/";
   public static final String PATH_INCENSE = PATH + "incenses/";
   public static final String PATH_MODULES = PATH + "modules/";
   private static final String API_URL_IP = "http://ip-api.com/json/";
@@ -59,6 +61,7 @@ public class CobbleDaycare {
     files();
     DatabaseClientFactory.createDatabaseClient(config.getDataBase());
     tasks();
+    Migrate.migrate();
   }
 
   private static void tasks() {
@@ -85,26 +88,16 @@ public class CobbleDaycare {
     language.init();
     incenses.clear();
     mechanics.clear();
-    DayCarePokemon dayCarePokemon = new DayCarePokemon();
-    mechanics.add(dayCarePokemon.getInstance());
-    DayCareForm dayCareForm = new DayCareForm();
-    mechanics.add(dayCareForm.getInstance());
-    DayCareAbility dayCareAbility = new DayCareAbility();
-    mechanics.add(dayCareAbility.getInstance());
-    DaycareIvs daycareIvs = new DaycareIvs();
-    mechanics.add(daycareIvs.getInstance());
-    DayCareMirrorHerb dayCareMirrorHerb = new DayCareMirrorHerb();
-    mechanics.add(dayCareMirrorHerb.getInstance());
-    DayCareNature dayCareNature = new DayCareNature();
-    mechanics.add(dayCareNature.getInstance());
-    DayCareShiny dayCareShiny = new DayCareShiny();
-    mechanics.add(dayCareShiny.getInstance());
-    DayCarePokeBall dayCarePokeBall = new DayCarePokeBall();
-    mechanics.add(dayCarePokeBall.getInstance());
-    DayCareMoves dayCareMoves = new DayCareMoves();
-    mechanics.add(dayCareMoves.getInstance());
-    DayCareCountry dayCareCountry = new DayCareCountry();
-    mechanics.add(dayCareCountry.getInstance());
+    mechanics.add(new DayCarePokemon().getInstance());
+    mechanics.add(new DayCareForm().getInstance());
+    mechanics.add(new DayCareAbility().getInstance());
+    mechanics.add(new DaycareIvs().getInstance());
+    mechanics.add(new DayCareMirrorHerb().getInstance());
+    mechanics.add(new DayCareNature().getInstance());
+    mechanics.add(new DayCareShiny().getInstance());
+    mechanics.add(new DayCarePokeBall().getInstance());
+    mechanics.add(new DayCareEggMoves().getInstance());
+    mechanics.add(new DayCareCountry().getInstance());
   }
 
   private static void events() {
@@ -126,14 +119,24 @@ public class CobbleDaycare {
       countryPlayer(player);
       fixPlayer(player);
       UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
-      boolean update = false;
+      int numPlots = 0;
+      int size = CobbleDaycare.config.getSlotPlots().size();
+      for (int i = 0; i < size; i++) {
+        if (PermissionApi.hasPermission(player, "cobbledaycare.plot." + (i + 1), 4)) {
+          numPlots = i + 1;
+        }
+      }
+      boolean update = userInformation.check(numPlots, player);
       for (Plot plot : userInformation.getPlots()) {
         if (plot.checkEgg(player, userInformation) && !update) update = true;
       }
       if (update) DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
     });
 
-    PlayerEvent.PLAYER_QUIT.register(player -> DatabaseClientFactory.INSTANCE.removeIfNecessary(player));
+    PlayerEvent.PLAYER_QUIT.register(player -> {
+      DatabaseClientFactory.INSTANCE.updateUserInformation(player, DatabaseClientFactory.INSTANCE.getUserInformation(player));
+      DatabaseClientFactory.INSTANCE.removeIfNecessary(player);
+    });
 
     CobblemonEvents.POKEMON_CAPTURED.subscribe(Priority.HIGHEST, evt -> {
       breedable(evt.getPokemon());

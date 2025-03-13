@@ -8,6 +8,8 @@ import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.models.EggForm;
 import com.kingpixel.cobbleutils.CobbleUtils;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.List;
@@ -15,12 +17,24 @@ import java.util.List;
 /**
  * @author Carlos Varas Alonso - 11/03/2025 9:09
  */
+@EqualsAndHashCode(callSuper = true) @Data
 public class DayCareForm extends Mechanics {
   public static final String TAG = "form";
-  private boolean active;
+  private List<EggForm> eggForms;
+  private List<String> blacklistForm;
+  private List<String> blacklistFeatures;
 
   public DayCareForm() {
-    this.active = true;
+    this.eggForms = List.of(
+      new EggForm("galarian",
+        List.of("perrserker", "sirfetchd", "mrrime", "cursola", "runerigus", "obstagoon")),
+      new EggForm("paldean", List.of("clodsire")),
+      new EggForm("hisuian", List.of("overqwil", "sneasler"))
+    );
+    this.blacklistForm = List.of("halloween");
+    this.blacklistFeatures = List.of(
+      "netherite_coating"
+    );
   }
 
 
@@ -50,7 +64,7 @@ public class DayCareForm extends Mechanics {
 
     String configForm = null;
 
-    for (EggForm eggForm : CobbleDaycare.config.getEggForms()) {
+    for (EggForm eggForm : eggForms) {
       if (eggForm.getPokemons().contains(female.showdownId())) {
         configForm = eggForm.getForm();
         break;
@@ -59,7 +73,7 @@ public class DayCareForm extends Mechanics {
 
 
     if (configForm != null) {
-      if (CobbleUtils.breedconfig.getBlacklistForm().contains(configForm)) configForm = "";
+      if (getBlacklistForm().contains(configForm)) configForm = "";
       applyForm(egg, configForm);
       return;
     }
@@ -95,10 +109,10 @@ public class DayCareForm extends Mechanics {
         if (choiceForm != null) {
           String name = choiceForm.getName();
           String value = choiceForm.getValue();
-          if (CobbleUtils.breedconfig.getBlacklistFeatures().contains(name)
-            || CobbleUtils.breedconfig.getBlacklistFeatures().contains(value)
-            || CobbleUtils.breedconfig.getBlacklistForm().contains(name)
-            || CobbleUtils.breedconfig.getBlacklistForm().contains(value)) continue;
+          if (blacklistFeatures.contains(name)
+            || blacklistFeatures.contains(value)
+            || blacklistForm.contains(name)
+            || blacklistForm.contains(value)) continue;
           if (CobbleDaycare.config.isDebug()) {
             CobbleUtils.LOGGER.info("Feature -> Name: " + name + " Value: " + value);
           }
@@ -107,7 +121,7 @@ public class DayCareForm extends Mechanics {
       }
     }
 
-    if (CobbleUtils.breedconfig.getBlacklistForm().contains(form.toString()))
+    if (blacklistForm.contains(form.toString()))
       form = new StringBuilder();
 
     if (CobbleDaycare.config.isDebug()) {

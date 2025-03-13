@@ -77,7 +77,7 @@ public class PlotMenu {
 
     GooeyButton femaleButton = GooeyButton
       .builder()
-      .display(plot.getFemale() != null ? PokemonItem.from(plot.getFemale()) : male.getItemStack())
+      .display(plot.getFemale() != null ? PokemonItem.from(plot.getFemale()) : female.getItemStack())
       .with(DataComponentTypes.LORE, new LoreComponent(AdventureTranslator.toNativeL(PokemonUtils.replaceLore(plot.getFemale()))))
       .onClick(action -> {
         if (plot.getFemale() != null) {
@@ -92,7 +92,9 @@ public class PlotMenu {
       .build();
     template.set(female.getSlot(), femaleButton);
 
-    template.set(close.getSlot(), close.getButton(action -> UIManager.closeUI(player)));
+    template.set(close.getSlot(), close.getButton(action -> {
+      CobbleDaycare.language.getPrincipalMenu().open(player);
+    }));
 
     GooeyPage page = GooeyPage.builder()
       .template(template)

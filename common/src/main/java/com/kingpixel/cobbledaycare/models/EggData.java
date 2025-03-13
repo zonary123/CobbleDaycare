@@ -64,7 +64,7 @@ public class EggData {
     eggData.setSpeed(nbt.getInt(Stats.SPEED.getShowdownId()));
     eggData.setNature(nbt.getString(DayCareNature.TAG_NATURE));
     eggData.setBall(nbt.getString(DayCarePokeBall.TAG));
-    eggData.setMoves(nbt.getString(DayCareMoves.TAG));
+    eggData.setMoves(nbt.getString(DayCareEggMoves.TAG));
     eggData.setCountry(nbt.getString(DayCareCountry.TAG));
     eggData.setAbility(nbt.getString(DayCareAbility.TAG));
     eggData.setForm(nbt.getString(DayCareForm.TAG));
@@ -72,14 +72,14 @@ public class EggData {
   }
 
 
-  public void steps(ServerPlayerEntity player, Pokemon egg, double deltaMovement) {
-    steps -= deltaMovement;
+  public void steps(ServerPlayerEntity player, Pokemon egg, double deltaMovement, UserInformation userInformation) {
+    steps -= deltaMovement * userInformation.getActualMultiplier();
+    egg.setCurrentHealth(0);
     if (steps <= 0) {
       steps = egg.getPersistentData().getDouble(DayCarePokemon.TAG_REFERENCE_STEPS);
       cycles--;
     }
     if (cycles <= 0) {
-      egg.setNickname(null);
       hatch(player, egg);
       return;
     } else {
@@ -97,6 +97,8 @@ public class EggData {
     for (Mechanics mechanic : CobbleDaycare.mechanics) {
       mechanic.applyHatch(player, egg);
     }
+    egg.setNickname(null);
+    egg.heal();
     HatchEggEvent.HATCH_EGG_EVENT.emit(player, egg);
     PokemonProperties pokemonProperties = PokemonProperties.Companion.parse(pokemon + " " + form);
     CobblemonEvents.HATCH_EGG_POST.emit(new com.cobblemon.mod.common.api.events.pokemon.HatchEggEvent.Post(pokemonProperties, player));

@@ -6,6 +6,7 @@ import com.google.gson.GsonBuilder;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbleutils.adapter.PokemonAdapter;
 import com.kingpixel.cobbleutils.util.Utils;
+import lombok.Data;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.io.File;
@@ -17,7 +18,10 @@ import java.util.List;
 /**
  * Author: Carlos Varas Alonso - 31/01/2025 0:25
  */
+@Data
 public abstract class Mechanics {
+  private boolean active = true;
+
   public Mechanics getInstance() {
     return readFromFile(this.getClass());
   }
@@ -26,6 +30,9 @@ public abstract class Mechanics {
 
   public abstract String fileName();
 
+  public String replace(String text) {
+    return text;
+  }
 
   public abstract void applyEgg(ServerPlayerEntity player, Pokemon male, Pokemon female, Pokemon egg, List<Pokemon> parents,
                                 Pokemon firstEvolution);

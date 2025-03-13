@@ -39,6 +39,7 @@ public class Plot {
     this.female = null;
     this.eggs = new ArrayList<>();
     this.timeToHatch = 0;
+    this.canOpen = 0;
   }
 
   public boolean canBreed(Pokemon pokemon, SelectGender gender) {
@@ -230,7 +231,7 @@ public class Plot {
     return false;
   }
 
-  private Pokemon createEgg(ServerPlayerEntity player) {
+  public Pokemon createEgg(ServerPlayerEntity player) {
     if (CobbleDaycare.config.isDebug()) {
       CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Plot.createEgg");
     }
@@ -240,7 +241,7 @@ public class Plot {
     parents.add(this.male);
     parents.add(this.female);
     for (Mechanics mechanic : CobbleDaycare.mechanics) {
-      mechanic.applyEgg(player, this.male, this.female, egg, parents, firstEvolution);
+      if (mechanic.isActive()) mechanic.applyEgg(player, this.male, this.female, egg, parents, firstEvolution);
     }
     return egg;
   }

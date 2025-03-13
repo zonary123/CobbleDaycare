@@ -4,7 +4,11 @@ import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.api.storage.party.PlayerPartyStore;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
+import com.kingpixel.cobbledaycare.database.DatabaseClientFactory;
 import com.kingpixel.cobbledaycare.models.EggData;
+import com.kingpixel.cobbledaycare.models.UserInformation;
+import com.kingpixel.cobbleutils.util.PlayerUtils;
+import com.kingpixel.cobbleutils.util.TypeMessage;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityPose;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
@@ -18,6 +22,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.Date;
+
 @Mixin(ServerPlayNetworkHandler.class)
 public abstract class WalkBreedingMixin {
 
@@ -26,26 +32,24 @@ public abstract class WalkBreedingMixin {
   @Unique private double oldX;
   @Unique private double oldZ;
   @Unique private boolean tp;
-  @Unique private long tick;
+  @Unique private long oldTime;
 
   @Inject(method = "onTeleportConfirm", at = @At("HEAD"))
   public void breeding$handlePendingTeleport(TeleportConfirmC2SPacket packet, CallbackInfo ci) {
     tp = true;
   }
 
-
   @Inject(method = "onPlayerMove", at = @At("HEAD"))
   public void breeding$onPlayerMove(PlayerMoveC2SPacket packet, CallbackInfo ci) {
-    tick++;
-    if (tick % CobbleDaycare.config.getTicksToWalking() == 0) {
-      boolean isInPose = !player.isInPose(EntityPose.FALL_FLYING);
+    long newTime = System.currentTimeMillis();
+
+    if (oldTime < newTime) {
+      boolean isInPose = CobbleDaycare.config.isBanElytra() && !player.isInPose(EntityPose.FALL_FLYING);
       boolean isInvulnerable = !player.isInvulnerable();
-      boolean isFly = false;
+      boolean isFly = player.getAbilities().flying;
       boolean permittedVehicles = cobbleUtils$permittedVehicles(player);
       boolean result =
-        isInPose && isInvulnerable && permittedVehicles && (!player.isTouchingWater() || player.isInPose(EntityPose.SWIMMING));
-
-
+        isInPose && !isFly && isInvulnerable && permittedVehicles && (!player.isTouchingWater() || player.isInPose(EntityPose.SWIMMING));
       if (result) {
         var party = Cobblemon.INSTANCE.getStorage().getParty(player);
 
@@ -60,15 +64,46 @@ public abstract class WalkBreedingMixin {
           tp = false;
           return;
         }
-
+        UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
         for (Pokemon pokemon : party) {
           if (pokemon != null && pokemon.showdownId().equals("egg")) {
-            cobbleUtils$updateEggSteps(pokemon, deltaMovement);
+            cobbleUtils$updateEggSteps(pokemon, deltaMovement, userInformation);
           }
         }
+        long timeMultiplierSteps = userInformation.getTimeMultiplierSteps();
+        if (timeMultiplierSteps > 0) {
+          timeMultiplierSteps -= CobbleDaycare.config.getTicksToWalking();
+          userInformation.setTimeMultiplierSteps(timeMultiplierSteps);
+          if (timeMultiplierSteps <= 0) {
+            userInformation.setMultiplierSteps(CobbleDaycare.config.getMultiplierSteps());
+            userInformation.setTimeMultiplierSteps(0);
+            DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
+          }
+        }
+        cobbleDaycare$sendMessageMultiplierSteps(player, userInformation);
+      } else {
+        tp = true;
       }
 
-      tick = 0;
+      oldTime = System.currentTimeMillis() + (CobbleDaycare.config.getTicksToWalking() * 50);
+    }
+  }
+
+  @Unique
+  private void cobbleDaycare$sendMessageMultiplierSteps(ServerPlayerEntity player, UserInformation userInformation) {
+    boolean activeMultiplier = CobbleDaycare.config.isGlobalMultiplierSteps();
+    boolean haveMultiplier = userInformation.getActualMultiplier() > CobbleDaycare.config.getMultiplierSteps();
+    if (activeMultiplier || haveMultiplier) {
+      long ticks = userInformation.getTimeMultiplierSteps();
+      long cooldown = ticks * 50; // Convert ticks to milliseconds
+      PlayerUtils.sendMessage(
+        player,
+        CobbleDaycare.language.getMessageActiveStepsMultiplier()
+          .replace("%multiplier%", String.format("%.2f", userInformation.getActualMultiplier()))
+          .replace("%cooldown%", PlayerUtils.getCooldown(new Date(System.currentTimeMillis() + cooldown))),
+        CobbleDaycare.language.getPrefix(),
+        TypeMessage.ACTIONBAR
+      );
     }
   }
 
@@ -104,17 +139,15 @@ public abstract class WalkBreedingMixin {
   @Unique
   private boolean cobbleUtils$hasStepAcceleratingPokemon(PlayerPartyStore party) {
     for (Pokemon pokemon : party) {
-      if (CobbleDaycare.config.getAbilityAcceleration().contains(pokemon.getAbility().getName())) {
-        return true;
-      }
+      if (CobbleDaycare.config.getAbilityAcceleration().contains(pokemon.getAbility().getName())) return true;
     }
     return false;
   }
 
   @Unique
-  private void cobbleUtils$updateEggSteps(Pokemon egg, double deltaMovement) {
+  private void cobbleUtils$updateEggSteps(Pokemon egg, double deltaMovement, UserInformation userInformation) {
     egg.setCurrentHealth(0);
     EggData eggData = EggData.from(egg);
-    eggData.steps(player, egg, deltaMovement);
+    eggData.steps(player, egg, deltaMovement, userInformation);
   }
 }

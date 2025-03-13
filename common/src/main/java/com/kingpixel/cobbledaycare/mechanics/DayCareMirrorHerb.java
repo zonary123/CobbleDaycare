@@ -19,10 +19,8 @@ import static com.cobblemon.mod.common.CobblemonItems.MIRROR_HERB;
  */
 @EqualsAndHashCode(callSuper = true) @Data
 public class DayCareMirrorHerb extends Mechanics {
-  private boolean active;
 
   public DayCareMirrorHerb() {
-    this.active = true;
   }
 
   private static void mirrorHerb(Pokemon target, Pokemon source) {
@@ -61,6 +59,13 @@ public class DayCareMirrorHerb extends Mechanics {
         }
       }
     }
+  }
+
+  @Override public String replace(String text) {
+    String s = isActive() ? CobbleUtils.language.getYes() : CobbleUtils.language.getNo();
+    return text
+      .replace("%mirrorHerb%", s)
+      .replace("%mirrorherb%", s);
   }
 
   @Override

@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * @author Carlos Varas Alonso - 11/03/2025 9:09
  */
-public class DayCareMoves extends Mechanics {
+public class DayCareEggMoves extends Mechanics {
   public static final String TAG = "moves";
 
   private static List<String> getMoves(Pokemon pokemon) {
@@ -80,6 +80,11 @@ public class DayCareMoves extends Mechanics {
   }
 
   @Override public String fileName() {
-    return "moves";
+    return "egg_moves";
+  }
+
+  @Override public String replace(String text) {
+    return text
+      .replace("%eggmoves%", isActive() ? CobbleUtils.language.getYes() : CobbleUtils.language.getNo());
   }
 }

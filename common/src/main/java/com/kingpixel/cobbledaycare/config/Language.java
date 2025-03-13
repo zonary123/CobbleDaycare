@@ -18,12 +18,14 @@ import java.util.concurrent.CompletableFuture;
 @Setter
 public class Language {
   private String prefix;
+  private String messageActiveStepsMultiplier;
   private PrincipalMenu principalMenu;
   private PlotMenu plotMenu;
   private SelectPokemonMenu selectPokemonMenu;
 
   public Language() {
     this.prefix = "&7[&6CobbleDaycare&7] ";
+    this.messageActiveStepsMultiplier = "&7Active Steps multiplier x%multiplier% - &6%time%";
     this.principalMenu = new PrincipalMenu();
     this.plotMenu = new PlotMenu();
     this.selectPokemonMenu = new SelectPokemonMenu();
