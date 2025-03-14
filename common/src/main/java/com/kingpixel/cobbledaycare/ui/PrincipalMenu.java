@@ -3,17 +3,17 @@ package com.kingpixel.cobbledaycare.ui;
 import ca.landonjw.gooeylibs2.api.UIManager;
 import ca.landonjw.gooeylibs2.api.page.GooeyPage;
 import ca.landonjw.gooeylibs2.api.template.types.ChestTemplate;
+import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.database.DatabaseClientFactory;
 import com.kingpixel.cobbledaycare.mechanics.Mechanics;
 import com.kingpixel.cobbledaycare.models.Plot;
 import com.kingpixel.cobbledaycare.models.UserInformation;
-import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.Model.ItemModel;
 import com.kingpixel.cobbleutils.api.PermissionApi;
 import com.kingpixel.cobbleutils.util.AdventureTranslator;
-import com.kingpixel.cobbleutils.util.ItemUtils;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
+import com.kingpixel.cobbleutils.util.PokemonUtils;
 import lombok.Data;
 import net.minecraft.server.network.ServerPlayerEntity;
 
@@ -59,8 +59,8 @@ public class PrincipalMenu {
       "&7Cooldown: &6%cooldown%"
     ), 0);
     this.lore = List.of(
-      "&7Male: %male% (%malehelditem%)",
-      "&7Female: %female% (%femalehelditem%)",
+      "&7Male: %pokemon1% %form1% (%item1%)",
+      "&7Female: %pokemon2% %form2% (%item2%)",
       "&7Eggs: %eggs%/%limiteggs%",
       "&7Time to hatch: %time%"
     );
@@ -78,82 +78,85 @@ public class PrincipalMenu {
   }
 
   public void open(ServerPlayerEntity player) {
-    ChestTemplate template = ChestTemplate.builder(rows).build();
-    UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
-    int numPlots = 0;
-    int size = CobbleDaycare.config.getSlotPlots().size();
-    for (int i = 0; i < size; i++) {
-      if (PermissionApi.hasPermission(player, "cobbledaycare.plot." + (i + 1), 4)) {
-        numPlots = i + 1;
-      }
-    }
-
-    for (int i = 0; i < numPlots; i++) {
-      int slot = CobbleDaycare.config.getSlotPlots().get(i);
-      Plot plot = userInformation.getPlots().get(i);
-      ItemModel itemModel;
-      if (plot.hasEggs()) {
-        itemModel = plotWithEgg;
-      } else if (plot.notParents()) {
-        itemModel = plotWithOutParents;
-      } else {
-        itemModel = plotWithOutEgg;
+    try {
+      ChestTemplate template = ChestTemplate.builder(rows).build();
+      UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
+      int numPlots = 0;
+      int size = CobbleDaycare.config.getSlotPlots().size();
+      for (int i = 0; i < size; i++) {
+        if (PermissionApi.hasPermission(player, "cobbledaycare.plot." + (i + 1), 4)) {
+          numPlots = i + 1;
+        }
       }
 
-      template.set(slot, itemModel.getButton(plot.getEggs().size(), null, replacePlotLore(plot, player), action -> {
-        CobbleDaycare.language.getPlotMenu().open(player, plot, userInformation);
+      for (int i = 0; i < numPlots; i++) {
+        int slot = CobbleDaycare.config.getSlotPlots().get(i);
+        Plot plot = userInformation.getPlots().get(i);
+        ItemModel itemModel;
+        if (plot.hasEggs()) {
+          itemModel = plotWithEgg;
+        } else if (plot.notParents()) {
+          itemModel = plotWithOutParents;
+        } else {
+          itemModel = plotWithOutEgg;
+        }
+
+        template.set(slot, itemModel.getButton(plot.getEggs().size(), null, replacePlotLore(plot, player), action -> {
+          CobbleDaycare.language.getPlotMenu().open(player, plot, userInformation);
+        }));
+
+      }
+
+      List<String> loreInfo = new ArrayList<>(info.getLore());
+      long cooldown = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(PlayerUtils.getCooldown(CobbleDaycare.config.getCooldowns(), CobbleDaycare.config.getCooldown()
+        , player));
+      loreInfo.replaceAll(s -> {
+        for (Mechanics mechanic : CobbleDaycare.mechanics) {
+          s = mechanic.replace(s);
+        }
+        s = s.replace("%cooldown%", PlayerUtils.getCooldown(new Date(cooldown)));
+        return s;
+      });
+
+      template.set(info.getSlot(), info.getButton(1, null, loreInfo, action -> {
+
       }));
 
+      template.set(close.getSlot(), close.getButton(action -> {
+        UIManager.closeUI(player);
+      }));
+
+      GooeyPage page = GooeyPage.builder()
+        .template(template)
+        .title(AdventureTranslator.toNative(title))
+        .build();
+
+      UIManager.openUIForcefully(player, page);
+    } catch (Exception e) {
+      e.printStackTrace();
     }
-
-    List<String> loreInfo = new ArrayList<>(info.getLore());
-    long cooldown = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(PlayerUtils.getCooldown(CobbleDaycare.config.getCooldowns(), CobbleDaycare.config.getCooldown()
-      , player));
-    loreInfo.replaceAll(s -> {
-      for (Mechanics mechanic : CobbleDaycare.mechanics) {
-        s = mechanic.replace(s);
-      }
-      s = s.replace("%cooldown%", PlayerUtils.getCooldown(new Date(cooldown)));
-      return s;
-    });
-
-    template.set(info.getSlot(), info.getButton(1, null, loreInfo, action -> {
-
-    }));
-
-    template.set(close.getSlot(), close.getButton(action -> {
-      UIManager.closeUI(player);
-    }));
-
-    GooeyPage page = GooeyPage.builder()
-      .template(template)
-      .title(AdventureTranslator.toNative(title))
-      .build();
-
-    UIManager.openUIForcefully(player, page);
   }
 
   private List<String> replacePlotLore(Plot plot, ServerPlayerEntity player) {
     List<String> newLore = new ArrayList<>(lore);
 
     String cooldown = PlayerUtils.getCooldown(new Date(plot.getTimeToHatch()));
-    newLore.replaceAll(s -> s
-      .replace("%male%", plot.getMale() != null ? plot.getMale().getSpecies().getName() : CobbleUtils.language.getUnknown())
-      .replace("%malehelditem%", plot.getMale() != null ? ItemUtils.getNameItem(plot.getMale().getHeldItem$common()) : CobbleUtils.language.getUnknown())
-      .replace("%female%", plot.getFemale() != null ? plot.getFemale().getSpecies().getName() :
-        CobbleUtils.language.getUnknown())
-      .replace("%femalehelditem%", plot.getFemale() != null ?
-        ItemUtils.getNameItem(plot.getFemale().getHeldItem$common()) : CobbleUtils.language.getUnknown())
-      .replace("%eggs%", String.valueOf(plot.getEggs().size()))
-      .replace("%limiteggs%", String.valueOf(plot.limitEggs(player)))
-      .replace("%time%", cooldown)
-      .replace("%cooldown%", cooldown)
-    );
-    return newLore;
-  }
+    Pokemon male = plot.getMale();
+    Pokemon female = plot.getFemale();
+    List<Pokemon> parents = new ArrayList<>();
+    parents.add(male);
+    parents.add(female);
 
-  private List<String> replaceInfoLore(ServerPlayerEntity player) {
-    return info.getLore();
+    newLore.replaceAll(s -> {
+      s = s
+        .replace("%eggs%", String.valueOf(plot.getEggs().size()))
+        .replace("%limiteggs%", String.valueOf(plot.limitEggs(player)))
+        .replace("%time%", cooldown)
+        .replace("%cooldown%", cooldown);
+      return PokemonUtils.replace(s, parents);
+    });
+
+    return newLore;
   }
 
 

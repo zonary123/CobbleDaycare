@@ -139,7 +139,7 @@ public class CobbleDaycare {
     });
 
     CobblemonEvents.POKEMON_CAPTURED.subscribe(Priority.HIGHEST, evt -> {
-      breedable(evt.getPokemon());
+      fixBreedable(evt.getPokemon());
       return Unit.INSTANCE;
     });
   }
@@ -147,11 +147,11 @@ public class CobbleDaycare {
   private static void fixPlayer(ServerPlayerEntity player) {
     var countryInfo = getCountry(player);
     for (Pokemon pokemon : Cobblemon.INSTANCE.getStorage().getParty(player)) {
-      breedable(pokemon);
+      fixBreedable(pokemon);
       fixCountryInfo(pokemon, countryInfo);
     }
     for (Pokemon pokemon : Cobblemon.INSTANCE.getStorage().getPC(player)) {
-      breedable(pokemon);
+      fixBreedable(pokemon);
       fixCountryInfo(pokemon, countryInfo);
     }
   }
@@ -163,10 +163,10 @@ public class CobbleDaycare {
     }
   }
 
-  public static void breedable(Pokemon pokemon) {
+  public static void fixBreedable(Pokemon pokemon) {
     var nbt = pokemon.getPersistentData();
     if (!nbt.getBoolean(CobbleUtilsTags.BREEDABLE_BUILDER_TAG)) {
-      nbt.putBoolean(CobbleUtilsTags.BREEDABLE_TAG, !CobbleDaycare.config.getBlackList().isBlackListed(pokemon));
+      setBreedable(pokemon, !Plot.isNotBreedable(pokemon));
     }
   }
 
@@ -214,6 +214,10 @@ public class CobbleDaycare {
 
   public static UserInfo getCountry(ServerPlayerEntity player) {
     return playerCountry.get(player.getUuid());
+  }
+
+  public static void setBreedable(Pokemon pokemon, boolean value) {
+    pokemon.getPersistentData().putBoolean(CobbleUtilsTags.BREEDABLE_TAG, value);
   }
 
   public record UserInfo(String country, String countryCode, String language) {

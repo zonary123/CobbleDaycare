@@ -17,6 +17,7 @@ import com.kingpixel.cobbleutils.util.PokemonUtils;
 import lombok.Data;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.LoreComponent;
+import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.List;
@@ -67,13 +68,16 @@ public class PlotMenu {
       .build();
     template.set(male.getSlot(), maleButton);
 
-    template.set(egg.getSlot(), egg.getButton(1, null, null, action -> {
+    ItemStack displayEgg = plot.getEggs().isEmpty() ? egg.getItemStack() : PokemonItem.from(plot.getEggs().getFirst());
+    GooeyButton eggButton = egg.getButton(1, null, null, action -> {
       if (plot.hasEggs()) {
         plot.giveEggs(player);
         DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
         CobbleDaycare.language.getPrincipalMenu().open(player);
       }
-    }));
+    });
+    eggButton.setDisplay(displayEgg);
+    template.set(egg.getSlot(), eggButton);
 
     GooeyButton femaleButton = GooeyButton
       .builder()

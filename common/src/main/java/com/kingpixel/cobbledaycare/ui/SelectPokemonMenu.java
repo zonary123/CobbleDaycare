@@ -101,6 +101,7 @@ public class SelectPokemonMenu {
 
   private void addPokemon(Pokemon pokemon, Plot plot, ServerPlayerEntity player, SelectGender gender,
                           UserInformation userInformation, List<Button> buttons) {
+    CobbleDaycare.fixBreedable(pokemon);
     if (plot.canBreed(pokemon, gender)) {
       GooeyButton button = GooeyButton
         .builder()

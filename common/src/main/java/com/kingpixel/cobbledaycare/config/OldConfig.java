@@ -1,12 +1,10 @@
 package com.kingpixel.cobbledaycare.config;
 
+import com.kingpixel.cobbledaycare.models.EggForm;
+import com.kingpixel.cobbledaycare.models.PokemonRareMecanic;
 import com.kingpixel.cobbleutils.Model.FilterPokemons;
 import com.kingpixel.cobbleutils.Model.ItemModel;
-import com.kingpixel.cobbleutils.Model.PokemonChance;
 import com.kingpixel.cobbleutils.Model.Sound;
-import com.kingpixel.cobbleutils.features.breeding.models.EggData;
-import com.kingpixel.cobbleutils.features.breeding.models.Incense;
-import com.kingpixel.cobbleutils.features.breeding.models.SelectMenu;
 import lombok.Data;
 import lombok.Getter;
 import lombok.ToString;
@@ -93,15 +91,13 @@ public class OldConfig {
   private ItemModel femaleSelectItem;
   private ItemModel infoItem;
   private ItemModel emptySlots;
-  private SelectMenu selectMenu;
 
   private List<Integer> maleSlots;
   private List<Integer> eggSlots;
   private List<Integer> femaleSlots;
 
-  private List<EggData.EggForm> eggForms;
-  private List<EggData.PokemonRareMecanic> pokemonRareMechanics;
-  private List<Incense> incenses;
+  private List<EggForm> eggForms;
+  private List<PokemonRareMecanic> pokemonRareMechanics;
   private FilterPokemons pokemonsForDoubleDitto;
 
 
@@ -205,26 +201,9 @@ public class OldConfig {
     this.notCompatible = "%prefix% <#d65549>%pokemon1% and %pokemon2% is not compatible!";
     this.maleSelectItem = new ItemModel(10, "minecraft:light_blue_wool", "Male", List.of(""), 0);
     this.femaleSelectItem = new ItemModel(16, "minecraft:pink_wool", "Female", List.of(""), 0);
-    this.incenses = Incense.defaultIncenses();
     this.blacklistForm = List.of("halloween");
 
-    this.eggForms = List.of(
-      new EggData.EggForm("galarian",
-        List.of("perrserker", "sirfetchd", "mrrime", "cursola", "runerigus", "obstagoon")),
-      new EggData.EggForm("paldean", List.of("clodsire")),
-      new EggData.EggForm("hisuian", List.of("overqwil", "sneasler"))
-    );
 
-    this.pokemonRareMechanics = List.of(
-      new EggData.PokemonRareMecanic(List.of(
-        new PokemonChance("nidoranf", 50),
-        new PokemonChance("nidoranm", 50)
-      )),
-      new EggData.PokemonRareMecanic(List.of(
-        new PokemonChance("illumise", 50),
-        new PokemonChance("volbeat", 50)
-      ))
-    );
     pokemonsForDoubleDitto = new FilterPokemons();
     pokemonsForDoubleDitto.setLegendarys(false);
     closeItem = null;

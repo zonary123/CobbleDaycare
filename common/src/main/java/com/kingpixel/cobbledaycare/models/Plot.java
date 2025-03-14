@@ -12,6 +12,7 @@ import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.Model.CobbleUtilsTags;
 import com.kingpixel.cobbleutils.api.PermissionApi;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
+import com.kingpixel.cobbleutils.util.PokemonUtils;
 import com.kingpixel.cobbleutils.util.TypeMessage;
 import lombok.Data;
 import lombok.ToString;
@@ -42,6 +43,11 @@ public class Plot {
     this.canOpen = 0;
   }
 
+
+  public static boolean isNotBreedable(Pokemon pokemon) {
+    return pokemon.getForm().getEggGroups().contains(EggGroup.UNDISCOVERED) || CobbleDaycare.config.getBlackList().isBlackListed(pokemon);
+  }
+
   public boolean canBreed(Pokemon pokemon, SelectGender gender) {
     if (!pokemon.getPersistentData().getBoolean(CobbleUtilsTags.BREEDABLE_TAG)) return false;
     if (gender == SelectGender.MALE) {
@@ -51,8 +57,7 @@ public class Plot {
       Gender pokemonGender = pokemon.getGender();
       if (!pokemonGender.equals(Gender.FEMALE) && !pokemonGender.equals(Gender.GENDERLESS)) return false;
     }
-    if (pokemon.getForm().getEggGroups().contains(EggGroup.UNDISCOVERED)) return false;
-    if (CobbleDaycare.config.getBlackList().isBlackListed(pokemon)) return false;
+    if (isNotBreedable(pokemon)) return false;
     Pokemon other = getEmptyParent();
     if (other == null) return true;
     if (other.getGender().equals(Gender.GENDERLESS)) {
@@ -174,6 +179,15 @@ public class Plot {
         if (CobbleDaycare.config.isDebug()) {
           CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Plot.checkEgg: limitEggs < sizeEggs");
         }
+        if (userInformation.isNotifyLimitEggs()) {
+          PlayerUtils.sendMessage(
+            player,
+            CobbleDaycare.language.getMessageLimitEggs()
+              .replace("%plot%", userInformation.getPlots().indexOf(this) + ""),
+            CobbleDaycare.language.getPrefix(),
+            TypeMessage.CHAT
+          );
+        }
         return false;
       }
       if (hasBannedPokemons(player, userInformation)) {
@@ -203,6 +217,18 @@ public class Plot {
         } else {
           if (CobbleDaycare.config.isDebug()) {
             CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Egg created: " + egg.showdownId());
+          }
+          if (userInformation.isNotifyCreateEgg()) {
+            List<Pokemon> pokemons = new ArrayList<>();
+            pokemons.add(male);
+            pokemons.add(female);
+            pokemons.add(egg);
+            PlayerUtils.sendMessage(
+              player,
+              PokemonUtils.replace(CobbleDaycare.language.getMessageEggCreated(), pokemons),
+              CobbleDaycare.language.getPrefix(),
+              TypeMessage.CHAT
+            );
           }
           eggs.add(egg);
           update = true;
@@ -247,25 +273,31 @@ public class Plot {
   }
 
   private boolean hasBannedPokemons(ServerPlayerEntity player, UserInformation userInformation) {
-    boolean banned = false;
-    if (male != null) banned = CobbleDaycare.config.getBlackList().isBlackListed(male);
-    if (banned) {
+    boolean maleBanned = false;
+    boolean femaleBanned = false;
+    if (male != null) maleBanned = CobbleDaycare.config.getBlackList().isBlackListed(male);
+    if (maleBanned) {
       sendBanNotification(player, male, userInformation);
       male = null;
-      return banned;
     }
-    if (female != null) banned = CobbleDaycare.config.getBlackList().isBlackListed(female);
-    if (banned) {
+    if (female != null) femaleBanned = CobbleDaycare.config.getBlackList().isBlackListed(female);
+    if (femaleBanned) {
       sendBanNotification(player, female, userInformation);
       female = null;
     }
-    return banned;
+    return maleBanned || femaleBanned;
   }
 
   private void sendBanNotification(ServerPlayerEntity player, Pokemon pokemon, UserInformation userInformation) {
     Cobblemon.INSTANCE.getStorage().getParty(player).add(pokemon);
     if (userInformation.isNotifyBanPokemon()) {
-
+      PlayerUtils.sendMessage(
+        player,
+        CobbleDaycare.language.getMessageBanPokemon()
+          .replace("%pokemon%", pokemon.getSpecies().showdownId()),
+        CobbleDaycare.language.getPrefix(),
+        TypeMessage.CHAT
+      );
     }
   }
 

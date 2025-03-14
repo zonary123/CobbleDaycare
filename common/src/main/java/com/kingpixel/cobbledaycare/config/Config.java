@@ -32,7 +32,7 @@ public class Config {
   private boolean showIvs;
   private boolean spawnEggWorld;
   private boolean dobbleDitto;
-  private boolean banElytra;
+  private boolean allowElytra;
   private int raritySpawnEgg;
   private long ticksToWalking;
   private boolean globalMultiplierSteps;
@@ -61,7 +61,7 @@ public class Config {
     this.showIvs = false;
     this.dobbleDitto = false;
     this.spawnEggWorld = true;
-    this.banElytra = true;
+    this.allowElytra = true;
     this.commands = List.of("daycare", "pokebreed", "breed");
     this.commandEggInfo = "egginfo";
     this.globalMultiplierSteps = false;
@@ -107,7 +107,7 @@ public class Config {
 
   public void check() {
     if (ticksToWalking < 20) ticksToWalking = 20;
-    
+
   }
 
   public double getSteps(Pokemon pokemon) {

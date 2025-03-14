@@ -145,6 +145,7 @@ public class CommandTree {
                     if (context.getSource().isExecutedByPlayer()) {
                       ServerPlayerEntity player = context.getSource().getPlayer();
                       if (player == null) return 0;
+                      
                       Plot plot = new Plot();
                       Pokemon male = PartySlotArgumentType.Companion.getPokemon(context, "male");
                       boolean maleCanBreed = plot.canBreed(male, SelectGender.MALE);

@@ -44,7 +44,7 @@ public abstract class WalkBreedingMixin {
     long newTime = System.currentTimeMillis();
 
     if (oldTime < newTime) {
-      boolean isInPose = CobbleDaycare.config.isBanElytra() && !player.isInPose(EntityPose.FALL_FLYING);
+      boolean isInPose = CobbleDaycare.config.isAllowElytra() || !player.isInPose(EntityPose.FALL_FLYING);
       boolean isInvulnerable = !player.isInvulnerable();
       boolean isFly = player.getAbilities().flying;
       boolean permittedVehicles = cobbleUtils$permittedVehicles(player);

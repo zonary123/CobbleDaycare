@@ -1,8 +1,7 @@
 package com.kingpixel.cobbledaycare.events;
 
 import com.cobblemon.mod.common.pokemon.Pokemon;
-import com.kingpixel.cobbleutils.features.breeding.events.HatchEggListener;
-import lombok.Getter;
+import lombok.Data;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.ArrayList;
@@ -11,28 +10,25 @@ import java.util.List;
 /**
  * @author Carlos Varas Alonso - 28/06/2024 8:43
  */
-@Getter
+@Data
 public class HatchEggEvent {
   public static final HatchEggEvent HATCH_EGG_EVENT = new HatchEggEvent();
   private final List<HatchEggListener> hatchEggListeners = new ArrayList<>();
 
-  public void register(HatchEggListener listener) {
+  public void subscribe(HatchEggListener listener) {
     hatchEggListeners.add(listener);
   }
 
-  public void unregister(HatchEggListener listener) {
+  public void unsubscribe(HatchEggListener listener) {
     hatchEggListeners.remove(listener);
   }
 
   public void emit(ServerPlayerEntity player, Pokemon pokemon) {
-    notifyHatchEgg(player, pokemon);
-  }
-
-  private void notifyHatchEgg(ServerPlayerEntity player, Pokemon pokemon) {
     for (HatchEggListener listener : hatchEggListeners) {
-      listener.HatchEgg(player, pokemon);
+      listener.onHatchEgg(player, pokemon);
     }
   }
+
 
   public void clear() {
     hatchEggListeners.clear();

@@ -19,6 +19,9 @@ import java.util.concurrent.CompletableFuture;
 public class Language {
   private String prefix;
   private String messageActiveStepsMultiplier;
+  private String messageEggCreated;
+  private String messageLimitEggs;
+  private String messageBanPokemon;
   private PrincipalMenu principalMenu;
   private PlotMenu plotMenu;
   private SelectPokemonMenu selectPokemonMenu;
@@ -26,6 +29,9 @@ public class Language {
   public Language() {
     this.prefix = "&7[&6CobbleDaycare&7] ";
     this.messageActiveStepsMultiplier = "&7Active Steps multiplier x%multiplier% - &6%time%";
+    this.messageEggCreated = "%prefix% &6%pokemon1% %form1% &7and &6%pokemon2% %form2% &7have created %pokemon3% %form3%";
+    this.messageLimitEggs = "%prefix% &aYou have reached the limit of eggs in the plot";
+    this.messageBanPokemon = "%prefix% &cThis pokemon %pokemon% %form% %item% is banned in the plot %plot%";
     this.principalMenu = new PrincipalMenu();
     this.plotMenu = new PlotMenu();
     this.selectPokemonMenu = new SelectPokemonMenu();

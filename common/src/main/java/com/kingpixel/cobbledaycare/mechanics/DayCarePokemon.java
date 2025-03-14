@@ -81,6 +81,7 @@ public class DayCarePokemon extends Mechanics {
 
     double steps = CobbleDaycare.config.getSteps(firstEvolution);
     egg.getPersistentData().putString(TAG_POKEMON, firstEvolution.getSpecies().showdownId());
+    egg.getPersistentData().putString(TAG_OLD_POKEMON, firstEvolution.getSpecies().showdownId());
     egg.getPersistentData().putDouble(TAG_STEPS, steps);
     egg.getPersistentData().putDouble(TAG_REFERENCE_STEPS, steps);
     egg.getPersistentData().putInt(TAG_CYCLES, firstEvolution.getSpecies().getEggCycles());
