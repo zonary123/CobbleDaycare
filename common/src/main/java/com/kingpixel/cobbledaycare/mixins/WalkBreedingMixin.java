@@ -96,11 +96,13 @@ public abstract class WalkBreedingMixin {
     if (activeMultiplier || haveMultiplier) {
       long ticks = userInformation.getTimeMultiplierSteps();
       long cooldown = ticks * 50; // Convert ticks to milliseconds
+      String s = PlayerUtils.getCooldown(new Date(System.currentTimeMillis() + cooldown));
       PlayerUtils.sendMessage(
         player,
         CobbleDaycare.language.getMessageActiveStepsMultiplier()
           .replace("%multiplier%", String.format("%.2f", userInformation.getActualMultiplier()))
-          .replace("%cooldown%", PlayerUtils.getCooldown(new Date(System.currentTimeMillis() + cooldown))),
+          .replace("%cooldown%", s)
+          .replace("%time%", s),
         CobbleDaycare.language.getPrefix(),
         TypeMessage.ACTIONBAR
       );

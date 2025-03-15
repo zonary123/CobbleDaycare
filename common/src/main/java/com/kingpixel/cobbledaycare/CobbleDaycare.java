@@ -57,7 +57,7 @@ public class CobbleDaycare {
     events();
   }
 
-  private static void load() {
+  public static void load() {
     files();
     DatabaseClientFactory.createDatabaseClient(config.getDataBase());
     tasks();
@@ -146,13 +146,19 @@ public class CobbleDaycare {
 
   private static void fixPlayer(ServerPlayerEntity player) {
     var countryInfo = getCountry(player);
-    for (Pokemon pokemon : Cobblemon.INSTANCE.getStorage().getParty(player)) {
-      fixBreedable(pokemon);
-      fixCountryInfo(pokemon, countryInfo);
+    var party = Cobblemon.INSTANCE.getStorage().getParty(player);
+    if (party != null) {
+      for (Pokemon pokemon : party) {
+        fixBreedable(pokemon);
+        fixCountryInfo(pokemon, countryInfo);
+      }
     }
-    for (Pokemon pokemon : Cobblemon.INSTANCE.getStorage().getPC(player)) {
-      fixBreedable(pokemon);
-      fixCountryInfo(pokemon, countryInfo);
+    var pc = Cobblemon.INSTANCE.getStorage().getPC(player);
+    if (pc != null) {
+      for (Pokemon pokemon : pc) {
+        fixBreedable(pokemon);
+        fixCountryInfo(pokemon, countryInfo);
+      }
     }
   }
 

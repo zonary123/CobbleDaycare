@@ -2,9 +2,7 @@ package com.kingpixel.cobbledaycare.mechanics;
 
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
-import com.kingpixel.cobbleutils.adapter.PokemonAdapter;
 import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Data;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -30,9 +28,7 @@ public abstract class Mechanics {
 
   public abstract String fileName();
 
-  public String replace(String text) {
-    return text;
-  }
+  public abstract String replace(String text);
 
   public abstract void applyEgg(ServerPlayerEntity player, Pokemon male, Pokemon female, Pokemon egg, List<Pokemon> parents,
                                 Pokemon firstEvolution);
@@ -41,9 +37,7 @@ public abstract class Mechanics {
 
   public <T> T readFromFile(Class<T> clazz) {
     try {
-      Gson gson = new GsonBuilder()
-        .registerTypeAdapter(Pokemon.class, PokemonAdapter.INSTANCE)
-        .create();
+      Gson gson = Utils.newGson();
       String filePath = Utils.getAbsolutePath(CobbleDaycare.PATH_MODULES + fileName() + ".json").getAbsolutePath();
 
       File file = new File(filePath);
@@ -74,10 +68,7 @@ public abstract class Mechanics {
   }
 
   public <T> void writeToFile(T object, String filePath) {
-    Gson gson = new GsonBuilder()
-      .registerTypeAdapter(Pokemon.class, PokemonAdapter.INSTANCE)
-      .setPrettyPrinting()
-      .create();
+    Gson gson = Utils.newGson();
     try {
       File file = new File(filePath);
       File parentDir = file.getParentFile();

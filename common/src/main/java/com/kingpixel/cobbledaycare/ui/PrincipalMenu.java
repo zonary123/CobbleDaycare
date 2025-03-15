@@ -1,6 +1,7 @@
 package com.kingpixel.cobbledaycare.ui;
 
 import ca.landonjw.gooeylibs2.api.UIManager;
+import ca.landonjw.gooeylibs2.api.button.GooeyButton;
 import ca.landonjw.gooeylibs2.api.page.GooeyPage;
 import ca.landonjw.gooeylibs2.api.template.types.ChestTemplate;
 import com.cobblemon.mod.common.pokemon.Pokemon;
@@ -15,6 +16,9 @@ import com.kingpixel.cobbleutils.util.AdventureTranslator;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
 import com.kingpixel.cobbleutils.util.PokemonUtils;
 import lombok.Data;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.LoreComponent;
+import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.ArrayList;
@@ -34,12 +38,13 @@ public class PrincipalMenu {
   private ItemModel plotWithEgg;
   private ItemModel plotWithOutEgg;
   private ItemModel plotWithOutParents;
+  private ItemModel profileOptions;
   private ItemModel close;
 
   public PrincipalMenu() {
     this.rows = 3;
     this.title = "&6Plots Menu";
-    this.info = new ItemModel(4, "minecraft:book", "<#82d448>ɪɴꜰᴏʀᴍᴀᴛɪᴏɴ", List.of(
+    this.info = new ItemModel(5, "minecraft:book", "<#82d448>ɪɴꜰᴏʀᴍᴀᴛɪᴏɴ", List.of(
       "<#82d448>--- ᴀʙɪʟɪᴛʏ ---",
       "&7Transmit Ah: &6%ability% %activeAbility%",
       "<#82d448>---- ɪᴠꜱ ----",
@@ -74,6 +79,9 @@ public class PrincipalMenu {
     ), 0);
     this.close = new ItemModel(22, "item:1:minecraft:barrier", "&cClose", List.of(
       "&7Click to close the menu"
+    ), 0);
+    this.profileOptions = new ItemModel(3, "item:1:minecraft:player_head", "&6Profile Options", List.of(
+      "&7Click to open the profile options"
     ), 0);
   }
 
@@ -125,6 +133,20 @@ public class PrincipalMenu {
       template.set(close.getSlot(), close.getButton(action -> {
         UIManager.closeUI(player);
       }));
+
+      GooeyButton profileButton = profileOptions.getButton(action -> {
+        CobbleDaycare.language.getProfileMenu().open(player, userInformation);
+      });
+
+      if (profileOptions.getItem().contains("minecraft:player_head")) {
+        ItemStack headItem = PlayerUtils.getHeadItem(player);
+        headItem.set(DataComponentTypes.CUSTOM_NAME, AdventureTranslator.toNative(profileOptions.getDisplayname()));
+        headItem.set(DataComponentTypes.LORE,
+          new LoreComponent(AdventureTranslator.toNativeL(profileOptions.getLore())));
+        profileButton.setDisplay(headItem);
+      }
+
+      template.set(profileOptions.getSlot(), profileButton);
 
       GooeyPage page = GooeyPage.builder()
         .template(template)

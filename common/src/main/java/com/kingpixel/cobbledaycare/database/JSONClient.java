@@ -42,6 +42,13 @@ public class JSONClient implements DatabaseClient {
     CompletableFuture<Boolean> futureRead = Utils.readFileAsync(
       CobbleDaycare.PATH_DATA, player.getUuidAsString() + ".json", call -> {
         UserInformation userInformation = Utils.newWithoutSpacingGson().fromJson(call, UserInformation.class);
+        if (userInformation == null) {
+          userInformation = new UserInformation(player);
+          CompletableFuture<Boolean> futureWrite = Utils.writeFileAsync(
+            CobbleDaycare.PATH_DATA, player.getUuidAsString() + ".json", Utils.newWithoutSpacingGson().toJson(userInformation)
+          );
+          futureWrite.join();
+        }
         DatabaseClientFactory.userPlots.put(player.getUuid(), userInformation);
       }
     );
@@ -58,10 +65,11 @@ public class JSONClient implements DatabaseClient {
 
 
   @Override public UserInformation updateUserInformation(ServerPlayerEntity player, UserInformation userInformation) {
+    if (player == null || userInformation == null) return null;
     DatabaseClientFactory.userPlots.put(player.getUuid(), userInformation);
     Utils.writeFileAsync(
       CobbleDaycare.PATH_DATA, player.getUuid().toString() + ".json", Utils.newWithoutSpacingGson().toJson(userInformation)
-    );
+    ).join();
     return userInformation;
   }
 

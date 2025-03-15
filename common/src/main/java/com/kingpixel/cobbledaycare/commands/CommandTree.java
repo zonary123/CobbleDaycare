@@ -11,6 +11,9 @@ import com.kingpixel.cobbledaycare.models.SelectGender;
 import com.kingpixel.cobbledaycare.models.UserInformation;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.api.PermissionApi;
+import com.kingpixel.cobbleutils.util.AdventureTranslator;
+import com.kingpixel.cobbleutils.util.PlayerUtils;
+import com.kingpixel.cobbleutils.util.TypeMessage;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -20,6 +23,7 @@ import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -45,7 +49,6 @@ public class CommandTree {
               ".other"), 4))
             .then(
               CommandManager.argument("player", EntityArgumentType.player())
-
                 .executes(context -> {
                   ServerPlayerEntity player = EntityArgumentType.getPlayer(context, "player");
                   CobbleDaycare.language.getPrincipalMenu().open(player);
@@ -57,7 +60,10 @@ public class CommandTree {
             .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.admin", "cobbledaycare" +
               ".reload"), 4))
             .executes(context -> {
-              CobbleDaycare.init();
+              context.getSource().sendMessage(
+                AdventureTranslator.toNative(CobbleDaycare.language.getMessageReload(), CobbleDaycare.language.getPrefix())
+              );
+              CobbleDaycare.load();
               return 1;
             })
         ).then(
@@ -116,16 +122,30 @@ public class CommandTree {
 
     dispatcher.register(
       CommandManager.literal("hatch")
-        .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.hatch", "cobbledaycare.admin")
+        .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.hatch.base", "cobbledaycare" +
+            ".admin")
           , 4))
         .then(
           CommandManager.argument("slot", PartySlotArgumentType.Companion.partySlot())
             .executes(context -> {
               if (context.getSource().isExecutedByPlayer()) {
                 ServerPlayerEntity player = context.getSource().getPlayer();
+                var userInfo = DatabaseClientFactory.INSTANCE.getUserInformation(player);
+                if (userInfo.hasCooldownHatch(player)) {
+                  PlayerUtils.sendMessage(
+                    player,
+                    CobbleDaycare.language.getMessageCooldownHatch()
+                      .replace("%cooldown%", PlayerUtils.getCooldown(new Date(userInfo.getCooldownHatch()))),
+                    CobbleDaycare.language.getPrefix(),
+                    TypeMessage.CHAT
+                  );
+                  return 0;
+                }
                 Pokemon pokemon = PartySlotArgumentType.Companion.getPokemon(context, "slot");
                 if (pokemon.getSpecies().showdownId().equals("egg")) {
                   EggData.from(pokemon).hatch(player, pokemon);
+                  userInfo.setCooldownHatch(player);
+                  DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInfo);
                 }
               }
               return 1;
@@ -135,7 +155,8 @@ public class CommandTree {
 
     dispatcher.register(
       CommandManager.literal("breed")
-        .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.breed", "cobbledaycare.admin")
+        .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.breed.base", "cobbledaycare" +
+            ".admin")
           , 4))
         .then(
           CommandManager.argument("male", PartySlotArgumentType.Companion.partySlot())
@@ -145,7 +166,17 @@ public class CommandTree {
                     if (context.getSource().isExecutedByPlayer()) {
                       ServerPlayerEntity player = context.getSource().getPlayer();
                       if (player == null) return 0;
-                      
+                      var userInfo = DatabaseClientFactory.INSTANCE.getUserInformation(player);
+                      if (userInfo.hasCooldownBreed(player)) {
+                        PlayerUtils.sendMessage(
+                          player,
+                          CobbleDaycare.language.getMessageCooldownBreed()
+                            .replace("%cooldown%", PlayerUtils.getCooldown(new Date(userInfo.getCooldownBreed()))),
+                          CobbleDaycare.language.getPrefix(),
+                          TypeMessage.CHAT
+                        );
+                        return 0;
+                      }
                       Plot plot = new Plot();
                       Pokemon male = PartySlotArgumentType.Companion.getPokemon(context, "male");
                       boolean maleCanBreed = plot.canBreed(male, SelectGender.MALE);
@@ -153,10 +184,14 @@ public class CommandTree {
                       Pokemon female = PartySlotArgumentType.Companion.getPokemon(context, "female");
                       boolean femaleCanBreed = plot.canBreed(female, SelectGender.FEMALE);
                       plot.setFemale(female);
-                      CobbleUtils.LOGGER.info("maleCanBreed: " + maleCanBreed);
-                      CobbleUtils.LOGGER.info("femaleCanBreed: " + femaleCanBreed);
+                      if (CobbleDaycare.config.isDebug()) {
+                        CobbleUtils.LOGGER.info("maleCanBreed: " + maleCanBreed);
+                        CobbleUtils.LOGGER.info("femaleCanBreed: " + femaleCanBreed);
+                      }
                       if (maleCanBreed && femaleCanBreed) {
                         Cobblemon.INSTANCE.getStorage().getParty(player).add(plot.createEgg(player));
+                        userInfo.setCooldownBreed(player);
+                        DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInfo);
                       }
                     }
                     return 1;

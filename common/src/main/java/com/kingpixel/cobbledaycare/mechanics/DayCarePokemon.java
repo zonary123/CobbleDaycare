@@ -106,6 +106,10 @@ public class DayCarePokemon extends Mechanics {
     return "pokemon";
   }
 
+  @Override public String replace(String text) {
+    return text;
+  }
+
   public Pokemon getEvolutionPokemonEgg(Pokemon pokemon) {
     return getEvolutionPokemonEgg(pokemon.getSpecies());
   }

@@ -25,6 +25,7 @@ import java.util.concurrent.CompletableFuture;
 @Setter
 public class Config {
   private boolean debug;
+  private boolean canUseNativeGUI;
   private String lang;
   private DataBaseConfig dataBase;
   private String commandEggInfo;
@@ -39,8 +40,10 @@ public class Config {
   private float multiplierSteps;
   private double defaultSteps;
   private Map<EggGroup, Double> steps;
-  private int cooldowninstaBreedInSeconds;
-  private int cooldowninstaHatchInSeconds;
+  private int defaultCooldownBreed;
+  private Map<String, Integer> cooldownsBreed;
+  private int defaultCooldownHatch;
+  private Map<String, Integer> cooldownsHatch;
   private int cooldownToOpenMenus;
   private List<Integer> slotPlots;
   private int cooldown;
@@ -56,6 +59,7 @@ public class Config {
 
   public Config() {
     this.debug = false;
+    this.canUseNativeGUI = false;
     this.lang = "en";
     this.dataBase = new DataBaseConfig();
     this.showIvs = false;
@@ -74,6 +78,7 @@ public class Config {
     }
     this.blackList = new PokemonBlackList();
     this.blackList.getPokemons().add("egg");
+    this.blackList.getLabels().add("basculegion");
     this.blackList.getLabels().add("legendary");
     this.limitEggs = new HashMap<>();
     this.limitEggs.put("", 1);
@@ -83,7 +88,7 @@ public class Config {
       "steamengine");
     this.reduceEggStepsVehicle = 2f;
     this.multiplierSteps = 1.0f;
-    this.permittedVehicles = List.of("minecraft:boat", "minecraft:horse", "cobblmeon:pokemon");
+    this.permittedVehicles = List.of("minecraft:boat", "minecraft:horse", "cobblemon:pokemon");
     this.cooldownToOpenMenus = 3;
     this.cooldown = 30;
     this.cooldowns = Map.of(
@@ -98,10 +103,14 @@ public class Config {
     this.slotPlots.add(14);
     this.slotPlots.add(16);
     this.raritySpawnEgg = 2048;
-    this.cooldowninstaBreedInSeconds = 60;
-    this.cooldowninstaHatchInSeconds = 60;
-    this.dobbleDittoFilter = new FilterPokemons();
+    this.defaultCooldownBreed = 60;
+    this.cooldownsBreed = new HashMap<>();
+    this.cooldownsBreed.put("group.vip", 30);
+    this.defaultCooldownHatch = 60;
+    this.cooldownsHatch = new HashMap<>();
+    this.cooldownsHatch.put("group.vip", 30);
     this.whitelist = new ArrayList<>();
+    this.dobbleDittoFilter = new FilterPokemons();
 
   }
 
@@ -130,24 +139,18 @@ public class Config {
         CompletableFuture<Boolean> futureWrite = Utils.writeFileAsync(
           CobbleDaycare.PATH, "config.json", Utils.newGson().toJson(CobbleDaycare.config)
         );
-        if (futureWrite.join()) {
-          CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Config file created");
-        } else {
+        if (!futureWrite.join()) {
           CobbleUtils.LOGGER.error("Error creating config file");
         }
       }
     );
 
-    if (futureRead.join()) {
-      CobbleUtils.LOGGER.info("CobbleDaycare Config file loaded");
-    } else {
+    if (!futureRead.join()) {
       CobbleDaycare.config = this;
       CompletableFuture<Boolean> futureWrite = Utils.writeFileAsync(
         CobbleDaycare.PATH, "config.json", Utils.newGson().toJson(CobbleDaycare.config)
       );
-      if (futureWrite.join()) {
-        CobbleUtils.LOGGER.info("Config file created");
-      } else {
+      if (!futureWrite.join()) {
         CobbleUtils.LOGGER.error("Error creating config file");
       }
     }

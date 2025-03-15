@@ -148,4 +148,8 @@ public class DayCareForm extends Mechanics {
   @Override public String fileName() {
     return "form";
   }
+
+  @Override public String replace(String text) {
+    return text;
+  }
 }

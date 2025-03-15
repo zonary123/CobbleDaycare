@@ -3,6 +3,8 @@ package com.kingpixel.cobbledaycare.models;
 import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
+import com.kingpixel.cobbleutils.api.PermissionApi;
+import com.kingpixel.cobbleutils.util.PlayerUtils;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,6 +14,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Carlos Varas Alonso - 31/01/2025 1:16
@@ -28,6 +31,8 @@ public class UserInformation {
   private boolean notifyBanPokemon;
   private float multiplierSteps;
   private long timeMultiplierSteps;
+  private long cooldownHatch;
+  private long cooldownBreed;
   private List<Plot> plots;
 
   public UserInformation() {
@@ -38,6 +43,8 @@ public class UserInformation {
     this.notifyBanPokemon = true;
     this.multiplierSteps = 1.0f;
     this.timeMultiplierSteps = 0;
+    this.cooldownHatch = 0;
+    this.cooldownBreed = 0;
     this.plots = new ArrayList<>();
   }
 
@@ -49,11 +56,35 @@ public class UserInformation {
     this.notifyBanPokemon = true;
     this.multiplierSteps = 1.0f;
     this.timeMultiplierSteps = 0;
+    this.cooldownHatch = 0;
+    this.cooldownBreed = 0;
     this.plots = new ArrayList<>();
   }
 
   public double getActualMultiplier() {
     return Math.max(CobbleDaycare.config.getMultiplierSteps(), multiplierSteps);
+  }
+
+  public boolean hasCooldownHatch(ServerPlayerEntity player) {
+    if (PermissionApi.hasPermission(player, "cobbledaycare.hatch.bypass", 4)) return false;
+    return cooldownHatch > System.currentTimeMillis();
+  }
+
+  public void setCooldownHatch(ServerPlayerEntity player) {
+    this.cooldownHatch = System.currentTimeMillis() +
+      TimeUnit.SECONDS.toMillis(PlayerUtils.getCooldown(CobbleDaycare.config.getCooldownsHatch(),
+        CobbleDaycare.config.getDefaultCooldownHatch(), player));
+  }
+
+  public boolean hasCooldownBreed(ServerPlayerEntity player) {
+    if (PermissionApi.hasPermission(player, "cobbledaycare.breed.bypass", 4)) return false;
+    return cooldownBreed > System.currentTimeMillis();
+  }
+
+  public void setCooldownBreed(ServerPlayerEntity player) {
+    this.cooldownBreed =
+      System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(PlayerUtils.getCooldown(CobbleDaycare.config.getCooldownsBreed(),
+        CobbleDaycare.config.getDefaultCooldownBreed(), player));
   }
 
   public boolean check(int numPlots, ServerPlayerEntity player) {

@@ -28,4 +28,8 @@ public class DayCareCountry extends Mechanics {
   @Override public String fileName() {
     return "country";
   }
+
+  @Override public String replace(String text) {
+    return text;
+  }
 }

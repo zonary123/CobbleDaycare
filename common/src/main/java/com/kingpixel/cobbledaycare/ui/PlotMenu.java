@@ -70,8 +70,7 @@ public class PlotMenu {
 
     ItemStack displayEgg = plot.getEggs().isEmpty() ? egg.getItemStack() : PokemonItem.from(plot.getEggs().getFirst());
     GooeyButton eggButton = egg.getButton(1, null, null, action -> {
-      if (plot.hasEggs()) {
-        plot.giveEggs(player);
+      if (plot.giveEggs(player)) {
         DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
         CobbleDaycare.language.getPrincipalMenu().open(player);
       }

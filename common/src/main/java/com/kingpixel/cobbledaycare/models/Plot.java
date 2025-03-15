@@ -50,11 +50,10 @@ public class Plot {
 
   public boolean canBreed(Pokemon pokemon, SelectGender gender) {
     if (!pokemon.getPersistentData().getBoolean(CobbleUtilsTags.BREEDABLE_TAG)) return false;
+    Gender pokemonGender = pokemon.getGender();
     if (gender == SelectGender.MALE) {
-      Gender pokemonGender = pokemon.getGender();
       if (!pokemonGender.equals(Gender.MALE) && !pokemonGender.equals(Gender.GENDERLESS)) return false;
     } else {
-      Gender pokemonGender = pokemon.getGender();
       if (!pokemonGender.equals(Gender.FEMALE) && !pokemonGender.equals(Gender.GENDERLESS)) return false;
     }
     if (isNotBreedable(pokemon)) return false;
@@ -63,8 +62,12 @@ public class Plot {
     if (other.getGender().equals(Gender.GENDERLESS)) {
       boolean otherIsDitto = other.getForm().getEggGroups().contains(EggGroup.DITTO);
       boolean pokemonIsDitto = pokemon.getForm().getEggGroups().contains(EggGroup.DITTO);
-      if (!CobbleDaycare.config.isDobbleDitto() && (pokemonIsDitto && otherIsDitto))
+      if (!CobbleDaycare.config.isDobbleDitto() && (pokemonIsDitto && otherIsDitto)) {
+        if (CobbleDaycare.config.isDebug()) {
+          CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "DobbleDitto -> " + pokemon.showdownId());
+        }
         return false;
+      }
       if (otherIsDitto) {
         return true;
       } else {
@@ -72,7 +75,8 @@ public class Plot {
       }
     }
     for (EggGroup eggGroup : pokemon.getForm().getEggGroups()) {
-      if (other.getForm().getEggGroups().contains(eggGroup)) return true;
+      if (other.getForm().getEggGroups().contains(eggGroup) || pokemon.getForm().getEggGroups().contains(EggGroup.DITTO))
+        return true;
     }
     return false;
   }
@@ -130,8 +134,8 @@ public class Plot {
     }
   }
 
-  public void giveEggs(ServerPlayerEntity player) {
-    if (!hasEggs()) return;
+  public boolean giveEggs(ServerPlayerEntity player) {
+    if (!hasEggs()) return false;
     boolean update = false;
     List<Pokemon> remove = new ArrayList<>();
     for (Pokemon egg : eggs) {
@@ -143,6 +147,7 @@ public class Plot {
       eggs.removeAll(remove);
       update = true;
     }
+    return update;
   }
 
   public boolean check(ServerPlayerEntity player) {
