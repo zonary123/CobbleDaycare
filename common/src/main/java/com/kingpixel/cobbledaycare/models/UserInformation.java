@@ -107,10 +107,14 @@ public class UserInformation {
       for (int i = plots.size() - 1; i >= numPlots; i--) {
         Plot plot = plots.get(i);
         var party = Cobblemon.INSTANCE.getStorage().getParty(player);
-        // Transfer Pokémon and eggs to the player
-        party.add(plot.getMale());
-        party.add(plot.getFemale());
-        for (Pokemon egg : plot.getEggs()) party.add(egg);
+        var male = plot.getMale();
+        if (male != null) party.add(male);
+        var female = plot.getFemale();
+        if (female != null) party.add(female);
+        for (Pokemon egg : plot.getEggs()) {
+          if (egg != null) party.add(egg);
+        }
+        
         // Remove the excess plot
         plots.remove(i);
         update = true;

@@ -13,7 +13,6 @@ import com.kingpixel.cobbledaycare.config.Language;
 import com.kingpixel.cobbledaycare.database.DatabaseClientFactory;
 import com.kingpixel.cobbledaycare.mechanics.*;
 import com.kingpixel.cobbledaycare.migrate.Migrate;
-import com.kingpixel.cobbledaycare.models.Incense;
 import com.kingpixel.cobbledaycare.models.Plot;
 import com.kingpixel.cobbledaycare.models.UserInformation;
 import com.kingpixel.cobbleutils.Model.CobbleUtilsTags;
@@ -49,8 +48,8 @@ public class CobbleDaycare {
   public static Config config = new Config();
   public static Language language = new Language();
   public static List<Mechanics> mechanics = new ArrayList<>();
-  public static List<Incense> incenses = new ArrayList<>();
   public static Task task;
+  private static boolean added;
 
   public static void init() {
     load();
@@ -86,7 +85,6 @@ public class CobbleDaycare {
   private static void files() {
     config.init();
     language.init();
-    incenses.clear();
     mechanics.clear();
     mechanics.add(new DayCarePokemon().getInstance());
     mechanics.add(new DayCareForm().getInstance());
@@ -98,6 +96,7 @@ public class CobbleDaycare {
     mechanics.add(new DayCarePokeBall().getInstance());
     mechanics.add(new DayCareEggMoves().getInstance());
     mechanics.add(new DayCareCountry().getInstance());
+    mechanics.add(new DayCareInciense().getInstance());
   }
 
   private static void events() {

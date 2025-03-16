@@ -48,26 +48,29 @@ public class Plot {
     return pokemon.getForm().getEggGroups().contains(EggGroup.UNDISCOVERED) || CobbleDaycare.config.getBlackList().isBlackListed(pokemon);
   }
 
+  private boolean isDitto(Pokemon pokemon) {
+    if (pokemon == null) return false;
+    return pokemon.getForm().getEggGroups().contains(EggGroup.DITTO);
+  }
+
   public boolean canBreed(Pokemon pokemon, SelectGender gender) {
+    if (pokemon == null) return false;
+    if (isNotBreedable(pokemon)) return false;
+    Pokemon other = getEmptyParent();
+    boolean otherIsDitto = isDitto(other);
+    boolean pokemonIsDitto = isDitto(pokemon);
+    if (pokemonIsDitto && otherIsDitto) return CobbleDaycare.config.isDobbleDitto();
     if (!pokemon.getPersistentData().getBoolean(CobbleUtilsTags.BREEDABLE_TAG)) return false;
     Gender pokemonGender = pokemon.getGender();
     if (gender == SelectGender.MALE) {
-      if (!pokemonGender.equals(Gender.MALE) && !pokemonGender.equals(Gender.GENDERLESS)) return false;
+      if (!pokemonGender.equals(Gender.MALE) && !pokemonGender.equals(Gender.GENDERLESS) && !otherIsDitto)
+        return false;
     } else {
-      if (!pokemonGender.equals(Gender.FEMALE) && !pokemonGender.equals(Gender.GENDERLESS)) return false;
+      if (!pokemonGender.equals(Gender.FEMALE) && !pokemonGender.equals(Gender.GENDERLESS) && !otherIsDitto)
+        return false;
     }
-    if (isNotBreedable(pokemon)) return false;
-    Pokemon other = getEmptyParent();
     if (other == null) return true;
     if (other.getGender().equals(Gender.GENDERLESS)) {
-      boolean otherIsDitto = other.getForm().getEggGroups().contains(EggGroup.DITTO);
-      boolean pokemonIsDitto = pokemon.getForm().getEggGroups().contains(EggGroup.DITTO);
-      if (!CobbleDaycare.config.isDobbleDitto() && (pokemonIsDitto && otherIsDitto)) {
-        if (CobbleDaycare.config.isDebug()) {
-          CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "DobbleDitto -> " + pokemon.showdownId());
-        }
-        return false;
-      }
       if (otherIsDitto) {
         return true;
       } else {
@@ -161,10 +164,9 @@ public class Plot {
   public int limitEggs(ServerPlayerEntity player) {
     int limit = 1;
     for (Map.Entry<String, Integer> limitEgg : CobbleDaycare.config.getLimitEggs().entrySet()) {
-      if (limitEgg.getValue() < limit) continue;
+      if (limit > limitEgg.getValue()) continue;
       if (PermissionApi.hasPermission(player, limitEgg.getKey(), 4)) {
         limit = limitEgg.getValue();
-        break;
       }
     }
     return limit;

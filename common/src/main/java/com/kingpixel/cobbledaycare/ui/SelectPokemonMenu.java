@@ -3,8 +3,6 @@ package com.kingpixel.cobbledaycare.ui;
 import ca.landonjw.gooeylibs2.api.UIManager;
 import ca.landonjw.gooeylibs2.api.button.Button;
 import ca.landonjw.gooeylibs2.api.button.GooeyButton;
-import ca.landonjw.gooeylibs2.api.button.linked.LinkType;
-import ca.landonjw.gooeylibs2.api.button.linked.LinkedPageButton;
 import ca.landonjw.gooeylibs2.api.helpers.PaginationHelper;
 import ca.landonjw.gooeylibs2.api.page.GooeyPage;
 import ca.landonjw.gooeylibs2.api.page.LinkedPage;
@@ -30,10 +28,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author Carlos Varas Alonso - 11/03/2025 5:56
+ * Author: Carlos Varas Alonso - 11/03/2025 5:56
  */
 @Data
 public class SelectPokemonMenu {
+  private static final int POKEMONS_PER_PAGE = 45;
   private int rows;
   private String title;
   private Rectangle rectangle;
@@ -53,68 +52,76 @@ public class SelectPokemonMenu {
     panels.add(new PanelsConfig(new ItemModel("minecraft:gray_stained_glass_pane"), rows));
   }
 
-  public void open(ServerPlayerEntity player, Plot plot, UserInformation userInformation, SelectGender gender) {
-    ChestTemplate template = ChestTemplate.builder(6)
-      .build();
+  public void open(ServerPlayerEntity player, Plot plot, UserInformation userInformation, SelectGender gender, int position) {
+    ChestTemplate template = ChestTemplate.builder(6).build();
 
-    List<Button> buttons = getButtons(plot, player, gender, userInformation);
+    List<Button> buttons = getButtons(plot, player, gender, userInformation, position);
 
     PanelsConfig.applyConfig(template, panels);
     rectangle.apply(template);
 
-
-    LinkedPage.Builder builder = LinkedPage.builder()
-      .title(AdventureTranslator.toNative(title));
-
+    LinkedPage.Builder builder = LinkedPage.builder().title(AdventureTranslator.toNative(title));
 
     template.set(close.getSlot(), close.getButton(action -> {
       CobbleDaycare.language.getPlotMenu().open(player, plot, userInformation);
     }));
 
-    LinkedPageButton previousButton = LinkedPageButton.builder()
-      .display(previous.getItemStack())
-      .linkType(LinkType.Previous)
-      .build();
-    template.set(previous.getSlot(), previousButton);
+    if (position > 0) {
+      GooeyButton previousButton = GooeyButton.builder()
+        .display(previous.getItemStack())
+        .onClick(action -> open(player, plot, userInformation, gender, position - POKEMONS_PER_PAGE))
+        .build();
+      template.set(previous.getSlot(), previousButton);
+    }
 
-    LinkedPageButton nextButton = LinkedPageButton.builder()
-      .display(next.getItemStack())
-      .linkType(LinkType.Next)
-      .build();
-    template.set(next.getSlot(), nextButton);
+    if (buttons.size() == POKEMONS_PER_PAGE) {
+      GooeyButton nextButton = GooeyButton.builder()
+        .display(next.getItemStack())
+        .onClick(action -> open(player, plot, userInformation, gender, position + POKEMONS_PER_PAGE))
+        .build();
+      template.set(next.getSlot(), nextButton);
+    }
 
     GooeyPage page = PaginationHelper.createPagesFromPlaceholders(template, buttons, builder);
 
     UIManager.openUIForcefully(player, page);
   }
 
-  private List<Button> getButtons(Plot plot, ServerPlayerEntity player, SelectGender gender, UserInformation userInformation) {
+  private List<Button> getButtons(Plot plot, ServerPlayerEntity player, SelectGender gender, UserInformation userInformation, int position) {
     List<Button> buttons = new ArrayList<>();
-    for (Pokemon pokemon : Cobblemon.INSTANCE.getStorage().getParty(player)) {
-      addPokemon(pokemon, plot, player, gender, userInformation, buttons);
+    List<Pokemon> allPokemons = new ArrayList<>();
+    for (Pokemon pokemon : Cobblemon.INSTANCE.getStorage().getParty(player).toGappyList()) {
+      if (plot.canBreed(pokemon, gender)) {
+        allPokemons.add(pokemon);
+      }
     }
-    for (Pokemon pokemon : Cobblemon.INSTANCE.getStorage().getPC(player)) {
-      addPokemon(pokemon, plot, player, gender, userInformation, buttons);
+    Cobblemon.INSTANCE.getStorage().getPC(player).iterator().forEachRemaining(pokemon -> {
+      if (plot.canBreed(pokemon, gender)) {
+        allPokemons.add(pokemon);
+      }
+    });
+
+    int end = Math.min(position + POKEMONS_PER_PAGE, allPokemons.size());
+
+    for (int i = position; i < end; i++) {
+      addPokemon(allPokemons.get(i), plot, player, gender, userInformation, buttons);
     }
+
     return buttons;
   }
 
-  private void addPokemon(Pokemon pokemon, Plot plot, ServerPlayerEntity player, SelectGender gender,
-                          UserInformation userInformation, List<Button> buttons) {
+  private void addPokemon(Pokemon pokemon, Plot plot, ServerPlayerEntity player, SelectGender gender, UserInformation userInformation, List<Button> buttons) {
+    if (pokemon == null) return;
     CobbleDaycare.fixBreedable(pokemon);
-    if (plot.canBreed(pokemon, gender)) {
-      GooeyButton button = GooeyButton
-        .builder()
-        .display(PokemonItem.from(pokemon))
-        .with(DataComponentTypes.CUSTOM_NAME, AdventureTranslator.toNative(PokemonUtils.getTranslatedName(pokemon)))
-        .with(DataComponentTypes.LORE, new LoreComponent(AdventureTranslator.toNativeL(PokemonUtils.replaceLore(pokemon))))
-        .onClick(action -> {
-          plot.addPokemon(player, pokemon, gender, userInformation);
-          CobbleDaycare.language.getPlotMenu().open(player, plot, userInformation);
-        }).build();
-      buttons.add(button);
-    }
+    GooeyButton button = GooeyButton.builder()
+      .display(PokemonItem.from(pokemon))
+      .with(DataComponentTypes.CUSTOM_NAME, AdventureTranslator.toNative(PokemonUtils.getTranslatedName(pokemon)))
+      .with(DataComponentTypes.LORE, new LoreComponent(AdventureTranslator.toNativeL(PokemonUtils.replaceLore(pokemon))))
+      .onClick(action -> {
+        plot.addPokemon(player, pokemon, gender, userInformation);
+        CobbleDaycare.language.getPlotMenu().open(player, plot, userInformation);
+      }).build();
+    buttons.add(button);
+
   }
-
-
 }

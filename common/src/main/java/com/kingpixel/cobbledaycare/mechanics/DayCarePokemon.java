@@ -71,11 +71,11 @@ public class DayCarePokemon extends Mechanics {
         male = temp;
       }
       firstEvolution = female;
-      String lure_species = null;
-      if (lure_species == null) {
-        firstEvolution = getEvolutionPokemonEgg(firstEvolution.getSpecies());
+      var incensePokemon = DayCareInciense.INSTANCE().applyIncense(firstEvolution);
+      if (incensePokemon != null) {
+        firstEvolution = incensePokemon;
       } else {
-        firstEvolution = PokemonProperties.Companion.parse(lure_species).create();
+        firstEvolution = getEvolutionPokemonEgg(firstEvolution.getSpecies());
       }
     }
 

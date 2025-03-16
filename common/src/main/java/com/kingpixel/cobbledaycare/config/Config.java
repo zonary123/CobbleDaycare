@@ -7,16 +7,17 @@ import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.Model.DataBaseConfig;
 import com.kingpixel.cobbleutils.Model.FilterPokemons;
 import com.kingpixel.cobbleutils.Model.PokemonBlackList;
+import com.kingpixel.cobbleutils.util.PlayerUtils;
+import com.kingpixel.cobbleutils.util.TypeMessage;
 import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Getter;
 import lombok.Setter;
+import net.minecraft.server.network.ServerPlayerEntity;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Carlos Varas Alonso - 30/01/2025 23:47
@@ -24,6 +25,7 @@ import java.util.concurrent.CompletableFuture;
 @Getter
 @Setter
 public class Config {
+  private static Map<UUID, Long> cooldownsOpenMenus = new HashMap<>();
   private boolean debug;
   private boolean canUseNativeGUI;
   private String lang;
@@ -117,6 +119,23 @@ public class Config {
   public void check() {
     if (ticksToWalking < 20) ticksToWalking = 20;
 
+  }
+
+  public boolean hasOpenCooldown(ServerPlayerEntity player) {
+    Long cooldown = cooldownsOpenMenus.get(player.getUuid());
+    boolean b = cooldown != null && cooldown > System.currentTimeMillis();
+    if (!b) {
+      cooldownsOpenMenus.put(player.getUuid(), System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(cooldownToOpenMenus));
+      return false;
+    }
+    PlayerUtils.sendMessage(
+      player,
+      CobbleDaycare.language.getMessageCooldownOpenMenu()
+        .replace("%cooldown%", PlayerUtils.getCooldown(new Date(cooldown))),
+      CobbleDaycare.language.getPrefix(),
+      TypeMessage.CHAT
+    );
+    return true;
   }
 
   public double getSteps(Pokemon pokemon) {

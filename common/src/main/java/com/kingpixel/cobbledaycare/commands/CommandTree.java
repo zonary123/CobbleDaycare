@@ -5,10 +5,8 @@ import com.cobblemon.mod.common.command.argument.PartySlotArgumentType;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.database.DatabaseClientFactory;
-import com.kingpixel.cobbledaycare.models.EggData;
-import com.kingpixel.cobbledaycare.models.Plot;
-import com.kingpixel.cobbledaycare.models.SelectGender;
-import com.kingpixel.cobbledaycare.models.UserInformation;
+import com.kingpixel.cobbledaycare.mechanics.DayCareInciense;
+import com.kingpixel.cobbledaycare.models.*;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.api.PermissionApi;
 import com.kingpixel.cobbleutils.util.AdventureTranslator;
@@ -17,8 +15,10 @@ import com.kingpixel.cobbleutils.util.TypeMessage;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.command.argument.EntityArgumentType;
+import net.minecraft.item.ItemStack;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -67,6 +67,32 @@ public class CommandTree {
               return 1;
             })
         ).then(
+          CommandManager.literal("incense")
+            .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.admin", "cobbledaycare.incense"), 4))
+            .then(
+              CommandManager.argument("player", EntityArgumentType.player())
+                .then(
+                  CommandManager.argument("incense", StringArgumentType.string())
+                    .suggests((context, builder) -> {
+                      for (Incense incense : DayCareInciense.incenses) {
+                        builder.suggest(incense.getId());
+                      }
+                      return builder.buildFuture();
+                    })
+                    .executes(context -> {
+                      ServerPlayerEntity player = EntityArgumentType.getPlayer(context, "player");
+                      String s = StringArgumentType.getString(context, "incense");
+                      var incense = DayCareInciense.INSTANCE().getIncense(s);
+                      if (incense != null) {
+                        ItemStack itemStack = incense.getItemStackIncense(1);
+                        player.getInventory().insertStack(itemStack);
+                      }
+                      return 1;
+                    })
+                )
+            )
+        )
+        .then(
           CommandManager.literal("multiplierSteps")
             .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.admin", "cobbledaycare" +
               ".multipliersteps"), 4))

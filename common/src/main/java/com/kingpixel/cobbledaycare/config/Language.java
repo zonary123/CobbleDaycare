@@ -26,6 +26,7 @@ public class Language {
   private String messageEggCreated;
   private String messageLimitEggs;
   private String messageBanPokemon;
+  private String messageCooldownOpenMenu;
   private PrincipalMenu principalMenu;
   private PlotMenu plotMenu;
   private SelectPokemonMenu selectPokemonMenu;
@@ -38,8 +39,9 @@ public class Language {
     this.messageCooldownHatch = "%prefix% &7Cooldown to hatch %cooldown%";
     this.messageActiveStepsMultiplier = "&7Active Steps multiplier x%multiplier% - &6%cooldown%";
     this.messageEggCreated = "%prefix% &6%pokemon1% %form1% &7and &6%pokemon2% %form2% &7have created %pokemon3% %form3%";
-    this.messageLimitEggs = "%prefix% &aYou have reached the limit of eggs in the plot";
+    this.messageLimitEggs = "%prefix% &aYou have reached the limit of eggs in the plot %plot%";
     this.messageBanPokemon = "%prefix% &cThis pokemon %pokemon% %form% %item% is banned in the plot %plot%";
+    this.messageCooldownOpenMenu = "%prefix% &7You must wait %cooldown% to open the menu again";
     this.principalMenu = new PrincipalMenu();
     this.plotMenu = new PlotMenu();
     this.selectPokemonMenu = new SelectPokemonMenu();
