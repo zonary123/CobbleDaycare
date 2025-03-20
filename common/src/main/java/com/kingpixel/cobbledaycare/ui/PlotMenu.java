@@ -58,15 +58,14 @@ public class PlotMenu {
         .display(plot.getMale() != null ? PokemonItem.from(plot.getMale()) : male.getItemStack())
         .with(DataComponentTypes.LORE, new LoreComponent(AdventureTranslator.toNativeL(PokemonUtils.replaceLore(plot.getMale()))))
         .onClick(action -> {
+          if (CobbleDaycare.config.hasOpenCooldown(action.getPlayer())) return;
           if (plot.getMale() != null) {
             Cobblemon.INSTANCE.getStorage().getParty(player).add(plot.getMale());
             plot.setMale(null);
             DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
             open(player, plot, userInformation);
           } else {
-            if (!CobbleDaycare.config.hasOpenCooldown(action.getPlayer()))
-              CobbleDaycare.language.getSelectPokemonMenu().open(player, plot, userInformation, SelectGender.MALE, 0);
-
+            CobbleDaycare.language.getSelectPokemonMenu().open(player, plot, userInformation, SelectGender.MALE, 0);
           }
         })
         .build();
@@ -87,14 +86,14 @@ public class PlotMenu {
         .display(plot.getFemale() != null ? PokemonItem.from(plot.getFemale()) : female.getItemStack())
         .with(DataComponentTypes.LORE, new LoreComponent(AdventureTranslator.toNativeL(PokemonUtils.replaceLore(plot.getFemale()))))
         .onClick(action -> {
+          if (CobbleDaycare.config.hasOpenCooldown(action.getPlayer())) return;
           if (plot.getFemale() != null) {
             Cobblemon.INSTANCE.getStorage().getParty(player).add(plot.getFemale());
             plot.setFemale(null);
             DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
             open(player, plot, userInformation);
           } else {
-            if (!CobbleDaycare.config.hasOpenCooldown(action.getPlayer()))
-              CobbleDaycare.language.getSelectPokemonMenu().open(player, plot, userInformation, SelectGender.FEMALE, 0);
+            CobbleDaycare.language.getSelectPokemonMenu().open(player, plot, userInformation, SelectGender.FEMALE, 0);
           }
         })
         .build();

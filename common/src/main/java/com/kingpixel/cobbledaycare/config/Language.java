@@ -19,6 +19,7 @@ import java.util.concurrent.CompletableFuture;
 @Setter
 public class Language {
   private String prefix;
+  private String eggName;
   private String messageReload;
   private String messageCooldownBreed;
   private String messageCooldownHatch;
@@ -34,6 +35,7 @@ public class Language {
 
   public Language() {
     this.prefix = "&7[&6CobbleDaycare&7] ";
+    this.eggName = "%steps%/%cycles% %pokemon%";
     this.messageReload = "%prefix% &aReloaded";
     this.messageCooldownBreed = "%prefix% &7Cooldown to breed %cooldown%";
     this.messageCooldownHatch = "%prefix% &7Cooldown to hatch %cooldown%";

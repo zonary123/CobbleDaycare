@@ -140,6 +140,11 @@ public class DayCareForm extends Mechanics {
     String form = egg.getPersistentData().getString(TAG);
     PokemonProperties.Companion.parse(form).apply(egg);
     egg.getPersistentData().remove(TAG);
+    CobbleDaycare.fixBreedable(egg);
+  }
+
+  @Override public void commandCreateEgg(ServerPlayerEntity player, Pokemon pokemon) {
+
   }
 
   @Override public void validateData() {

@@ -4,16 +4,16 @@ package com.kingpixel.cobbledaycare.database;
 import com.kingpixel.cobbledaycare.models.UserInformation;
 import com.kingpixel.cobbleutils.Model.DataBaseConfig;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Carlos Varas Alonso - 24/07/2024 21:03
  */
 public class DatabaseClientFactory {
   public static DatabaseClient INSTANCE;
-  public static Map<UUID, UserInformation> userPlots = new HashMap<>();
+  public static Map<UUID, UserInformation> userPlots = new ConcurrentHashMap<>();
 
   public static DatabaseClient createDatabaseClient(DataBaseConfig database) {
     if (INSTANCE != null) {

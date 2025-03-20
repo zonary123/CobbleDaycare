@@ -90,7 +90,12 @@ public class EggData {
   }
 
   private void updateName(Pokemon egg) {
-    egg.setNickname(Text.literal((int) steps + "/" + cycles));
+    egg.setNickname(Text.literal(
+      CobbleDaycare.language.getEggName()
+        .replace("%steps%", String.format("%.2f", steps))
+        .replace("%cycles%", String.valueOf(cycles))
+        .replace("%pokemon%", pokemon)
+    ));
   }
 
   public void hatch(ServerPlayerEntity player, Pokemon egg) {

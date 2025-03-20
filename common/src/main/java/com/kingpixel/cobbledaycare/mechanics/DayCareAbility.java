@@ -70,6 +70,10 @@ public class DayCareAbility extends Mechanics {
     egg.getPersistentData().remove(TAG);
   }
 
+  @Override public void commandCreateEgg(ServerPlayerEntity player, Pokemon pokemon) {
+
+  }
+
   @Override public void validateData() {
   }
 

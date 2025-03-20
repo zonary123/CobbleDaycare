@@ -35,6 +35,8 @@ public abstract class Mechanics {
 
   public abstract void applyHatch(ServerPlayerEntity player, Pokemon egg);
 
+  public abstract void commandCreateEgg(ServerPlayerEntity player, Pokemon pokemon);
+
   public <T> T readFromFile(Class<T> clazz) {
     try {
       Gson gson = Utils.newGson();

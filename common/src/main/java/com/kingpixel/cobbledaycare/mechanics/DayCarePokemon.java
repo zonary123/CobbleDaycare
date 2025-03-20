@@ -99,6 +99,10 @@ public class DayCarePokemon extends Mechanics {
     egg.getPersistentData().remove(TAG_CYCLES);
   }
 
+  @Override public void commandCreateEgg(ServerPlayerEntity player, Pokemon pokemon) {
+
+  }
+
   @Override public void validateData() {
   }
 

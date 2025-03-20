@@ -55,6 +55,7 @@ public class Plot {
 
   public boolean canBreed(Pokemon pokemon, SelectGender gender) {
     if (pokemon == null) return false;
+    CobbleDaycare.fixBreedable(pokemon);
     if (isNotBreedable(pokemon)) return false;
     Pokemon other = getEmptyParent();
     boolean otherIsDitto = isDitto(other);

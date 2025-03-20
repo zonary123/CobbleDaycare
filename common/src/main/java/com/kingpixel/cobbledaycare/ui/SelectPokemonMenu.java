@@ -69,7 +69,10 @@ public class SelectPokemonMenu {
     if (position > 0) {
       GooeyButton previousButton = GooeyButton.builder()
         .display(previous.getItemStack())
-        .onClick(action -> open(player, plot, userInformation, gender, position - POKEMONS_PER_PAGE))
+        .onClick(action -> {
+          if (CobbleDaycare.config.hasOpenCooldown(action.getPlayer())) return;
+          open(player, plot, userInformation, gender, position - POKEMONS_PER_PAGE);
+        })
         .build();
       template.set(previous.getSlot(), previousButton);
     }
@@ -77,7 +80,10 @@ public class SelectPokemonMenu {
     if (buttons.size() == POKEMONS_PER_PAGE) {
       GooeyButton nextButton = GooeyButton.builder()
         .display(next.getItemStack())
-        .onClick(action -> open(player, plot, userInformation, gender, position + POKEMONS_PER_PAGE))
+        .onClick(action -> {
+          if (CobbleDaycare.config.hasOpenCooldown(action.getPlayer())) return;
+          open(player, plot, userInformation, gender, position + POKEMONS_PER_PAGE);
+        })
         .build();
       template.set(next.getSlot(), nextButton);
     }
@@ -112,7 +118,6 @@ public class SelectPokemonMenu {
 
   private void addPokemon(Pokemon pokemon, Plot plot, ServerPlayerEntity player, SelectGender gender, UserInformation userInformation, List<Button> buttons) {
     if (pokemon == null) return;
-    CobbleDaycare.fixBreedable(pokemon);
     GooeyButton button = GooeyButton.builder()
       .display(PokemonItem.from(pokemon))
       .with(DataComponentTypes.CUSTOM_NAME, AdventureTranslator.toNative(PokemonUtils.getTranslatedName(pokemon)))

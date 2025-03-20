@@ -4,6 +4,7 @@ import ca.landonjw.gooeylibs2.api.tasks.Task;
 import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.api.Priority;
 import com.cobblemon.mod.common.api.events.CobblemonEvents;
+import com.cobblemon.mod.common.api.properties.CustomPokemonProperty;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -15,6 +16,7 @@ import com.kingpixel.cobbledaycare.mechanics.*;
 import com.kingpixel.cobbledaycare.migrate.Migrate;
 import com.kingpixel.cobbledaycare.models.Plot;
 import com.kingpixel.cobbledaycare.models.UserInformation;
+import com.kingpixel.cobbledaycare.properties.BreedablePropertyType;
 import com.kingpixel.cobbleutils.Model.CobbleUtilsTags;
 import com.kingpixel.cobbleutils.api.PermissionApi;
 import dev.architectury.event.events.common.CommandRegistrationEvent;
@@ -112,6 +114,7 @@ public class CobbleDaycare {
       for (int i = 0; i < config.getSlotPlots().size(); i++) {
         PermissionApi.hasPermission(server.getCommandSource(), "cobbledaycare.plot." + i + 1, 4);
       }
+      CustomPokemonProperty.Companion.register(BreedablePropertyType.getInstance());
     });
 
     PlayerEvent.PLAYER_JOIN.register(player -> {
@@ -125,6 +128,7 @@ public class CobbleDaycare {
           numPlots = i + 1;
         }
       }
+      if (numPlots == 0) numPlots = 1;
       boolean update = userInformation.check(numPlots, player);
       for (Plot plot : userInformation.getPlots()) {
         if (plot.checkEgg(player, userInformation) && !update) update = true;

@@ -22,6 +22,10 @@ public class DayCareCountry extends Mechanics {
   @Override public void applyHatch(ServerPlayerEntity player, Pokemon egg) {
   }
 
+  @Override public void commandCreateEgg(ServerPlayerEntity player, Pokemon pokemon) {
+
+  }
+
   @Override public void validateData() {
   }
 

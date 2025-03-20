@@ -13,6 +13,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import static com.cobblemon.mod.common.CobblemonItems.*;
 
@@ -23,6 +24,15 @@ import static com.cobblemon.mod.common.CobblemonItems.*;
 public class DaycareIvs extends Mechanics {
   public static final List<Stats> stats =
     Arrays.stream(Stats.values()).filter(stats1 -> stats1 != Stats.ACCURACY && stats1 != Stats.EVASION).toList();
+  private static final Map<Stats, String> oldStats = Map.of(
+    Stats.HP, "HP",
+    Stats.ATTACK, "Attack",
+    Stats.DEFENCE, "Defense",
+    Stats.SPECIAL_ATTACK, "SpecialAttack",
+    Stats.SPECIAL_DEFENCE, "SpecialDefense",
+    Stats.SPEED, "Speed"
+  );
+
   private int defaultIvsTransfer;
   private int destinyKnotIvsTransfer;
   private int maxIvsRandom;
@@ -69,10 +79,21 @@ public class DaycareIvs extends Mechanics {
 
   @Override public void applyHatch(ServerPlayerEntity player, Pokemon egg) {
     stats.forEach(stat -> {
-      int iv = egg.getPersistentData().getInt(stat.getShowdownId());
+      int iv;
+      String oldStat = oldStats.get(stat);
+      if (egg.getPersistentData().contains(oldStat)) {
+        iv = egg.getPersistentData().getInt(oldStat);
+      } else {
+        iv = egg.getPersistentData().getInt(stat.getShowdownId());
+      }
       egg.getIvs().set(stat, iv);
       egg.getPersistentData().remove(stat.getShowdownId());
+      egg.getPersistentData().remove(oldStat);
     });
+  }
+
+  @Override public void commandCreateEgg(ServerPlayerEntity player, Pokemon pokemon) {
+
   }
 
   @Override public void validateData() {
