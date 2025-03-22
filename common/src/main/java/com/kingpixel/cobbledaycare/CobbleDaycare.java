@@ -174,9 +174,9 @@ public class CobbleDaycare {
 
   public static void fixBreedable(Pokemon pokemon) {
     var nbt = pokemon.getPersistentData();
-    if (!nbt.getBoolean(CobbleUtilsTags.BREEDABLE_BUILDER_TAG)) {
-      setBreedable(pokemon, !Plot.isNotBreedable(pokemon));
-    }
+    boolean isNotBreedable = Plot.isNotBreedable(pokemon);
+    if (!nbt.getBoolean(CobbleUtilsTags.BREEDABLE_BUILDER_TAG)) setBreedable(pokemon, !isNotBreedable);
+    if (isNotBreedable) setBreedable(pokemon, false);
   }
 
   public static void countryPlayer(ServerPlayerEntity player) {
@@ -227,6 +227,7 @@ public class CobbleDaycare {
 
   public static void setBreedable(Pokemon pokemon, boolean value) {
     pokemon.getPersistentData().putBoolean(CobbleUtilsTags.BREEDABLE_TAG, value);
+    pokemon.getPersistentData().putBoolean(CobbleUtilsTags.BREEDABLE_BUILDER_TAG, true);
   }
 
   public record UserInfo(String country, String countryCode, String language) {
