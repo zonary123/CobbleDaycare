@@ -3,6 +3,7 @@ package com.kingpixel.cobbledaycare.mechanics;
 import com.cobblemon.mod.common.api.pokemon.PokemonProperties;
 import com.cobblemon.mod.common.api.pokemon.PokemonSpecies;
 import com.cobblemon.mod.common.api.pokemon.egg.EggGroup;
+import com.cobblemon.mod.common.pokemon.Gender;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.cobblemon.mod.common.pokemon.Species;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
@@ -27,6 +28,7 @@ public class DayCarePokemon extends Mechanics {
   public static final String TAG_STEPS = "steps";
   public static final String TAG_REFERENCE_STEPS = "reference_steps";
   public static final String TAG_CYCLES = "cycles";
+  public static final String TAG_GENDER = "gender";
   private List<PokemonRareMecanic> pokemonRareMechanics;
 
   public DayCarePokemon() {
@@ -84,6 +86,7 @@ public class DayCarePokemon extends Mechanics {
     egg.getPersistentData().putString(TAG_OLD_POKEMON, firstEvolution.getSpecies().showdownId());
     egg.getPersistentData().putDouble(TAG_STEPS, steps);
     egg.getPersistentData().putDouble(TAG_REFERENCE_STEPS, steps);
+    egg.getPersistentData().putString(TAG_GENDER, firstEvolution.getGender().name());
     egg.getPersistentData().putInt(TAG_CYCLES, firstEvolution.getSpecies().getEggCycles());
   }
 
@@ -91,12 +94,20 @@ public class DayCarePokemon extends Mechanics {
     String pokemon = egg.getPersistentData().getString(TAG_POKEMON);
     if (pokemon.isEmpty()) pokemon = egg.getPersistentData().getString(TAG_OLD_POKEMON);
     PokemonProperties.Companion.parse(pokemon).apply(egg);
+    String genderString = egg.getPersistentData().getString(TAG_GENDER);
+    try {
+      if (!genderString.isEmpty()) {
+        egg.setGender(Gender.valueOf(genderString));
+      }
+    } catch (IllegalArgumentException ignored) {
+    }
     egg.heal();
     egg.getPersistentData().remove(TAG_POKEMON);
     egg.getPersistentData().remove(TAG_OLD_POKEMON);
     egg.getPersistentData().remove(TAG_STEPS);
     egg.getPersistentData().remove(TAG_REFERENCE_STEPS);
     egg.getPersistentData().remove(TAG_CYCLES);
+    egg.getPersistentData().remove(TAG_GENDER);
   }
 
   @Override public void commandCreateEgg(ServerPlayerEntity player, Pokemon pokemon) {

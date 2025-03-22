@@ -99,6 +99,7 @@ public class PrincipalMenu {
           }
         }
         if (numPlots == 0) numPlots = 1;
+        userInformation.check(numPlots, player);
         for (int i = 0; i < numPlots; i++) {
           int slot = CobbleDaycare.config.getSlotPlots().get(i);
           Plot plot = userInformation.getPlots().get(i);

@@ -13,12 +13,15 @@ import java.util.Set;
  * @author Carlos Varas Alonso - 04/08/2024 19:40
  */
 public class BreedablePropertyType implements CustomPokemonPropertyType<BreedableProperty> {
-  public static final BreedablePropertyType INSTANCE = new BreedablePropertyType();
+  private static final BreedablePropertyType INSTANCE = new BreedablePropertyType();
 
   public BreedablePropertyType() {
   }
 
   public static BreedablePropertyType getInstance() {
+    if (INSTANCE == null) {
+      return new BreedablePropertyType();
+    }
     return INSTANCE;
   }
 

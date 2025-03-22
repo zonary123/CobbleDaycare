@@ -26,6 +26,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Author: Carlos Varas Alonso - 11/03/2025 5:56
@@ -53,44 +54,46 @@ public class SelectPokemonMenu {
   }
 
   public void open(ServerPlayerEntity player, Plot plot, UserInformation userInformation, SelectGender gender, int position) {
-    ChestTemplate template = ChestTemplate.builder(6).build();
+    CompletableFuture.runAsync(() -> {
+      ChestTemplate template = ChestTemplate.builder(6).build();
 
-    List<Button> buttons = getButtons(plot, player, gender, userInformation, position);
+      List<Button> buttons = getButtons(plot, player, gender, userInformation, position);
 
-    PanelsConfig.applyConfig(template, panels);
-    rectangle.apply(template);
+      PanelsConfig.applyConfig(template, panels);
+      rectangle.apply(template);
 
-    LinkedPage.Builder builder = LinkedPage.builder().title(AdventureTranslator.toNative(title));
+      LinkedPage.Builder builder = LinkedPage.builder().title(AdventureTranslator.toNative(title));
 
-    template.set(close.getSlot(), close.getButton(action -> {
-      CobbleDaycare.language.getPlotMenu().open(player, plot, userInformation);
-    }));
+      template.set(close.getSlot(), close.getButton(action -> {
+        CobbleDaycare.language.getPlotMenu().open(player, plot, userInformation);
+      }));
 
-    if (position > 0) {
-      GooeyButton previousButton = GooeyButton.builder()
-        .display(previous.getItemStack())
-        .onClick(action -> {
-          if (CobbleDaycare.config.hasOpenCooldown(action.getPlayer())) return;
-          open(player, plot, userInformation, gender, position - POKEMONS_PER_PAGE);
-        })
-        .build();
-      template.set(previous.getSlot(), previousButton);
-    }
+      if (position > 0) {
+        GooeyButton previousButton = GooeyButton.builder()
+          .display(previous.getItemStack())
+          .onClick(action -> {
+            if (CobbleDaycare.config.hasOpenCooldown(action.getPlayer())) return;
+            open(player, plot, userInformation, gender, position - POKEMONS_PER_PAGE);
+          })
+          .build();
+        template.set(previous.getSlot(), previousButton);
+      }
 
-    if (buttons.size() == POKEMONS_PER_PAGE) {
-      GooeyButton nextButton = GooeyButton.builder()
-        .display(next.getItemStack())
-        .onClick(action -> {
-          if (CobbleDaycare.config.hasOpenCooldown(action.getPlayer())) return;
-          open(player, plot, userInformation, gender, position + POKEMONS_PER_PAGE);
-        })
-        .build();
-      template.set(next.getSlot(), nextButton);
-    }
+      if (buttons.size() == POKEMONS_PER_PAGE) {
+        GooeyButton nextButton = GooeyButton.builder()
+          .display(next.getItemStack())
+          .onClick(action -> {
+            if (CobbleDaycare.config.hasOpenCooldown(action.getPlayer())) return;
+            open(player, plot, userInformation, gender, position + POKEMONS_PER_PAGE);
+          })
+          .build();
+        template.set(next.getSlot(), nextButton);
+      }
 
-    GooeyPage page = PaginationHelper.createPagesFromPlaceholders(template, buttons, builder);
+      GooeyPage page = PaginationHelper.createPagesFromPlaceholders(template, buttons, builder);
 
-    UIManager.openUIForcefully(player, page);
+      UIManager.openUIForcefully(player, page);
+    });
   }
 
   private List<Button> getButtons(Plot plot, ServerPlayerEntity player, SelectGender gender, UserInformation userInformation, int position) {
