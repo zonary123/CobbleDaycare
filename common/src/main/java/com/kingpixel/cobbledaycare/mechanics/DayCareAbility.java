@@ -66,7 +66,7 @@ public class DayCareAbility extends Mechanics {
     }
     if (abilityTemplate == null) abilityTemplate = randomAbility;
 
-    PokemonProperties.Companion.parse(abilityTemplate.getName()).apply(egg);
+    PokemonProperties.Companion.parse("ability=" + abilityTemplate.getName()).apply(egg);
     egg.getPersistentData().remove(TAG);
   }
 
