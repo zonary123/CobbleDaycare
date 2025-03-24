@@ -41,51 +41,55 @@ public abstract class WalkBreedingMixin {
 
   @Inject(method = "onPlayerMove", at = @At("HEAD"))
   public void breeding$onPlayerMove(PlayerMoveC2SPacket packet, CallbackInfo ci) {
-    long newTime = System.currentTimeMillis();
+    try {
+      long newTime = System.currentTimeMillis();
 
-    if (oldTime < newTime) {
-      boolean isInPose = CobbleDaycare.config.isAllowElytra() || !player.isInPose(EntityPose.FALL_FLYING);
-      boolean isInvulnerable = !player.isInvulnerable();
-      boolean isFly = player.getAbilities().flying;
-      boolean permittedVehicles = cobbleUtils$permittedVehicles(player);
-      boolean result =
-        isInPose && !isFly && isInvulnerable && permittedVehicles && (!player.isTouchingWater() || player.isInPose(EntityPose.SWIMMING));
-      if (result) {
-        var party = Cobblemon.INSTANCE.getStorage().getParty(player);
+      if (oldTime < newTime) {
+        boolean isInPose = CobbleDaycare.config.isAllowElytra() || !player.isInPose(EntityPose.FALL_FLYING);
+        boolean isInvulnerable = !player.isInvulnerable();
+        boolean isFly = player.getAbilities().flying;
+        boolean permittedVehicles = cobbleUtils$permittedVehicles(player);
+        boolean result =
+          isInPose && !isFly && isInvulnerable && permittedVehicles && (!player.isTouchingWater() || player.isInPose(EntityPose.SWIMMING));
+        if (result) {
+          var party = Cobblemon.INSTANCE.getStorage().getParty(player);
 
-        entity = player.getVehicle() != null ? player.getVehicle() : player;
-        if (entity == null) return;
+          entity = player.getVehicle() != null ? player.getVehicle() : player;
+          if (entity == null) return;
 
-        double deltaMovement = cobbleUtils$getDeltaMovement(packet, party, entity);
+          double deltaMovement = cobbleUtils$getDeltaMovement(packet, party, entity);
 
-        oldX = entity.getX();
-        oldZ = entity.getZ();
-        if (deltaMovement <= 0 || tp) {
-          tp = false;
-          return;
-        }
-        UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
-        for (Pokemon pokemon : party) {
-          if (pokemon != null && pokemon.showdownId().equals("egg")) {
-            cobbleUtils$updateEggSteps(pokemon, deltaMovement, userInformation);
+          oldX = entity.getX();
+          oldZ = entity.getZ();
+          if (deltaMovement <= 0 || tp) {
+            tp = false;
+            return;
           }
-        }
-        long timeMultiplierSteps = userInformation.getTimeMultiplierSteps();
-        if (timeMultiplierSteps > 0) {
-          timeMultiplierSteps -= CobbleDaycare.config.getTicksToWalking();
-          userInformation.setTimeMultiplierSteps(timeMultiplierSteps);
-          if (timeMultiplierSteps <= 0) {
-            userInformation.setMultiplierSteps(CobbleDaycare.config.getMultiplierSteps());
-            userInformation.setTimeMultiplierSteps(0);
-            DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
+          UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
+          for (Pokemon pokemon : party) {
+            if (pokemon != null && pokemon.showdownId().equals("egg")) {
+              cobbleUtils$updateEggSteps(pokemon, deltaMovement, userInformation);
+            }
           }
+          long timeMultiplierSteps = userInformation.getTimeMultiplierSteps();
+          if (timeMultiplierSteps > 0) {
+            timeMultiplierSteps -= CobbleDaycare.config.getTicksToWalking();
+            userInformation.setTimeMultiplierSteps(timeMultiplierSteps);
+            if (timeMultiplierSteps <= 0) {
+              userInformation.setMultiplierSteps(CobbleDaycare.config.getMultiplierSteps());
+              userInformation.setTimeMultiplierSteps(0);
+              DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
+            }
+          }
+          cobbleDaycare$sendMessageMultiplierSteps(player, userInformation);
+        } else {
+          tp = true;
         }
-        cobbleDaycare$sendMessageMultiplierSteps(player, userInformation);
-      } else {
-        tp = true;
+
+        oldTime = System.currentTimeMillis() + (CobbleDaycare.config.getTicksToWalking() * 50);
       }
-
-      oldTime = System.currentTimeMillis() + (CobbleDaycare.config.getTicksToWalking() * 50);
+    } catch (Exception e) {
+      e.printStackTrace();
     }
   }
 

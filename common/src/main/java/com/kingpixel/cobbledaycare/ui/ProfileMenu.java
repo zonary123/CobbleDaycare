@@ -15,7 +15,6 @@ import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * @author Carlos Varas Alonso - 14/03/2025 22:25
@@ -48,46 +47,45 @@ public class ProfileMenu {
   }
 
   public void open(ServerPlayerEntity player, UserInformation userInformation) {
-    CompletableFuture.runAsync(() -> {
-      ChestTemplate template = ChestTemplate
-        .builder(rows)
-        .build();
+    ChestTemplate template = ChestTemplate
+      .builder(rows)
+      .build();
 
-      PanelsConfig.applyConfig(template, panels);
+    PanelsConfig.applyConfig(template, panels);
 
-      template.set(notifyCreateEgg.getSlot(), notifyCreateEgg.getButton(1, null, replaceLore(notifyCreateEgg.getLore(),
-          userInformation.isNotifyCreateEgg()),
-        action -> {
-          userInformation.setNotifyCreateEgg(!userInformation.isNotifyCreateEgg());
-          DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
-          open(player, userInformation);
-        }));
-
-      template.set(notifyLimitEggs.getSlot(), notifyLimitEggs.getButton(1, null, replaceLore(notifyLimitEggs.getLore(),
-        userInformation.isNotifyLimitEggs()), action -> {
-        userInformation.setNotifyLimitEggs(!userInformation.isNotifyLimitEggs());
+    template.set(notifyCreateEgg.getSlot(), notifyCreateEgg.getButton(1, null, replaceLore(notifyCreateEgg.getLore(),
+        userInformation.isNotifyCreateEgg()),
+      action -> {
+        userInformation.setNotifyCreateEgg(!userInformation.isNotifyCreateEgg());
         DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
         open(player, userInformation);
       }));
 
-      template.set(notifyBanPokemon.getSlot(), notifyBanPokemon.getButton(1, null, replaceLore(notifyBanPokemon.getLore(),
-        userInformation.isNotifyBanPokemon()), action -> {
-        userInformation.setNotifyBanPokemon(!userInformation.isNotifyBanPokemon());
-        DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
-        open(player, userInformation);
-      }));
+    template.set(notifyLimitEggs.getSlot(), notifyLimitEggs.getButton(1, null, replaceLore(notifyLimitEggs.getLore(),
+      userInformation.isNotifyLimitEggs()), action -> {
+      userInformation.setNotifyLimitEggs(!userInformation.isNotifyLimitEggs());
+      DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
+      open(player, userInformation);
+    }));
 
-      template.set(close.getSlot(), close.getButton(action -> {
-        CobbleDaycare.language.getPrincipalMenu().open(player);
-      }));
+    template.set(notifyBanPokemon.getSlot(), notifyBanPokemon.getButton(1, null, replaceLore(notifyBanPokemon.getLore(),
+      userInformation.isNotifyBanPokemon()), action -> {
+      userInformation.setNotifyBanPokemon(!userInformation.isNotifyBanPokemon());
+      DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
+      open(player, userInformation);
+    }));
 
-      GooeyPage page = GooeyPage.builder()
-        .template(template)
-        .title(AdventureTranslator.toNative(title))
-        .build();
+    template.set(close.getSlot(), close.getButton(action -> {
+      CobbleDaycare.language.getPrincipalMenu().open(player);
+    }));
 
-      UIManager.openUIForcefully(player, page);
-    });
+    GooeyPage page = GooeyPage.builder()
+      .template(template)
+      .title(AdventureTranslator.toNative(title))
+      .build();
+
+    UIManager.openUIForcefully(player, page);
+
   }
 
   private List<String> replaceLore(List<String> lore, boolean value) {

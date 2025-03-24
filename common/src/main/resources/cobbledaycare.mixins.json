@@ -4,7 +4,6 @@
   "package": "com.kingpixel.cobbledaycare.mixins",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "EggMixin",
     "PastureBlockMixin",
     "WalkBreedingMixin"
   ],

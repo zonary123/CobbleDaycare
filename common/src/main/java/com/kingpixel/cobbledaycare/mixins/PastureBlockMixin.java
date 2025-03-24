@@ -22,9 +22,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class PastureBlockMixin {
   @Inject(method = "onUse", at = @At("HEAD"), cancellable = true)
   public void onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit, CallbackInfoReturnable<ActionResult> cir) {
-    if (player == null) return;
-    if (CobbleDaycare.config.isCanUseNativeGUI() && player.isInPose(EntityPose.CROUCHING)) return;
-    CobbleDaycare.language.getPrincipalMenu().open((ServerPlayerEntity) player);
-    cir.setReturnValue(ActionResult.FAIL);
+    try {
+      if (player == null) return;
+      if (CobbleDaycare.config.isCanUseNativeGUI() && player.isInPose(EntityPose.CROUCHING)) return;
+      CobbleDaycare.language.getPrincipalMenu().open((ServerPlayerEntity) player);
+      cir.setReturnValue(ActionResult.FAIL);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 }
