@@ -6,6 +6,7 @@ import com.cobblemon.mod.common.api.pokemon.feature.SpeciesFeatureProvider;
 import com.cobblemon.mod.common.api.pokemon.feature.SpeciesFeatures;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
+import com.kingpixel.cobbledaycare.models.EggBuilder;
 import com.kingpixel.cobbledaycare.models.EggForm;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import lombok.Data;
@@ -39,10 +40,10 @@ public class DayCareForm extends Mechanics {
 
 
   @Override
-  public void applyEgg(ServerPlayerEntity player, Pokemon male, Pokemon female, Pokemon egg, List<Pokemon> parents, Pokemon firstEvolution) {
+  public void applyEgg(EggBuilder builder) {
     StringBuilder form = new StringBuilder();
-
-
+    Pokemon female = builder.getFemale();
+    Pokemon egg = builder.getEgg();
     switch (female.getSpecies().showdownId()) {
       case "perrserker":
       case "sirfetchd":

@@ -3,11 +3,10 @@ package com.kingpixel.cobbledaycare.mechanics;
 import com.cobblemon.mod.common.api.pokeball.PokeBalls;
 import com.cobblemon.mod.common.pokeball.PokeBall;
 import com.cobblemon.mod.common.pokemon.Pokemon;
+import com.kingpixel.cobbledaycare.models.EggBuilder;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
-
-import java.util.List;
 
 /**
  * @author Carlos Varas Alonso - 11/03/2025 9:09
@@ -16,9 +15,9 @@ public class DayCarePokeBall extends Mechanics {
   public static final String TAG = "pokeball";
 
   @Override
-  public void applyEgg(ServerPlayerEntity player, Pokemon male, Pokemon female, Pokemon egg, List<Pokemon> parents, Pokemon firstEvolution) {
-    Identifier id = female.getCaughtBall().getName();
-    egg.getPersistentData().putString(TAG, id.getNamespace() + ":" + id.getPath());
+  public void applyEgg(EggBuilder builder) {
+    Identifier id = builder.getFemale().getCaughtBall().getName();
+    builder.getEgg().getPersistentData().putString(TAG, id.getNamespace() + ":" + id.getPath());
   }
 
   @Override public String replace(String text) {

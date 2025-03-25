@@ -270,13 +270,24 @@ public class Plot {
       CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Plot.createEgg");
     }
     Pokemon egg = PokemonProperties.Companion.parse("egg").create();
-    Pokemon firstEvolution = new Pokemon();
+    Pokemon firstEvolution = female;
     List<Pokemon> parents = new ArrayList<>();
     parents.add(this.male);
     parents.add(this.female);
+    EggBuilder eggBuilder = EggBuilder.builder()
+      .firstEvolution(firstEvolution)
+      .parents(parents)
+      .egg(egg)
+      .female(female)
+      .male(male)
+      .player(player)
+      .build();
     for (Mechanics mechanic : CobbleDaycare.mechanics) {
-      if (mechanic.isActive()) mechanic.applyEgg(player, this.male, this.female, egg, parents, firstEvolution);
+      if (mechanic.isActive()) mechanic.applyEgg(eggBuilder);
     }
+    // Update the Plot with the modified values from the EggBuilder
+    this.male = eggBuilder.getMale();
+    this.female = eggBuilder.getFemale();
     return egg;
   }
 

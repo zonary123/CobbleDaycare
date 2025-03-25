@@ -5,6 +5,7 @@ import com.cobblemon.mod.common.api.pokemon.Natures;
 import com.cobblemon.mod.common.item.CobblemonItem;
 import com.cobblemon.mod.common.pokemon.Nature;
 import com.cobblemon.mod.common.pokemon.Pokemon;
+import com.kingpixel.cobbledaycare.models.EggBuilder;
 import com.kingpixel.cobbleutils.util.Utils;
 import net.minecraft.server.network.ServerPlayerEntity;
 
@@ -22,7 +23,9 @@ public class DayCareNature extends Mechanics {
   }
 
   @Override
-  public void applyEgg(ServerPlayerEntity player, Pokemon male, Pokemon female, Pokemon egg, List<Pokemon> parents, Pokemon firstEvolution) {
+  public void applyEgg(EggBuilder builder) {
+    Pokemon egg = builder.getEgg();
+    List<Pokemon> parents = builder.getParents();
     if (hasNature(parents) && Utils.RANDOM.nextFloat() * 100 < percentageEverstone) {
       for (Pokemon parent : parents) {
         if (parent.heldItem().getItem() instanceof CobblemonItem item) {

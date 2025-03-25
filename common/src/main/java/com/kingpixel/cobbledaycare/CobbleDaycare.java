@@ -19,6 +19,7 @@ import com.kingpixel.cobbledaycare.models.UserInformation;
 import com.kingpixel.cobbledaycare.properties.BreedablePropertyType;
 import com.kingpixel.cobbleutils.Model.CobbleUtilsTags;
 import com.kingpixel.cobbleutils.api.PermissionApi;
+import com.kingpixel.cobbleutils.util.PokemonUtils;
 import dev.architectury.event.events.common.CommandRegistrationEvent;
 import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.event.events.common.PlayerEvent;
@@ -90,7 +91,6 @@ public class CobbleDaycare {
     mechanics.clear();
     mechanics.add(new DayCarePokemon().getInstance());
     mechanics.add(new DayCareForm().getInstance());
-    mechanics.add(new DayCareAbility().getInstance());
     mechanics.add(new DaycareIvs().getInstance());
     mechanics.add(new DayCareMirrorHerb().getInstance());
     mechanics.add(new DayCareNature().getInstance());
@@ -98,6 +98,7 @@ public class CobbleDaycare {
     mechanics.add(new DayCarePokeBall().getInstance());
     mechanics.add(new DayCareEggMoves().getInstance());
     mechanics.add(new DayCareCountry().getInstance());
+    mechanics.add(new DayCareAbility().getInstance());
     mechanics.add(new DayCareInciense().getInstance());
   }
 
@@ -149,19 +150,21 @@ public class CobbleDaycare {
 
   private static void fixPlayer(ServerPlayerEntity player) {
     var countryInfo = getCountry(player);
+
     var party = Cobblemon.INSTANCE.getStorage().getParty(player);
-    if (party != null) {
-      for (Pokemon pokemon : party) {
-        fixBreedable(pokemon);
-        fixCountryInfo(pokemon, countryInfo);
-      }
+    for (Pokemon pokemon : party) {
+      fixBreedable(pokemon);
+      fixCountryInfo(pokemon, countryInfo);
+      if (config.isFixIlegalAbilities())
+        PokemonUtils.isLegalAbility(pokemon);
     }
+
     var pc = Cobblemon.INSTANCE.getStorage().getPC(player);
-    if (pc != null) {
-      for (Pokemon pokemon : pc) {
-        fixBreedable(pokemon);
-        fixCountryInfo(pokemon, countryInfo);
-      }
+    for (Pokemon pokemon : pc) {
+      fixBreedable(pokemon);
+      fixCountryInfo(pokemon, countryInfo);
+      if (config.isFixIlegalAbilities())
+        PokemonUtils.isLegalAbility(pokemon);
     }
   }
 

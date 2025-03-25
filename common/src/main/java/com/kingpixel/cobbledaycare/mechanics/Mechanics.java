@@ -3,6 +3,7 @@ package com.kingpixel.cobbledaycare.mechanics;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.google.gson.Gson;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
+import com.kingpixel.cobbledaycare.models.EggBuilder;
 import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Data;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -11,7 +12,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.List;
 
 /**
  * Author: Carlos Varas Alonso - 31/01/2025 0:25
@@ -30,8 +30,7 @@ public abstract class Mechanics {
 
   public abstract String replace(String text);
 
-  public abstract void applyEgg(ServerPlayerEntity player, Pokemon male, Pokemon female, Pokemon egg, List<Pokemon> parents,
-                                Pokemon firstEvolution);
+  public abstract void applyEgg(EggBuilder eggBuilder);
 
   public abstract void applyHatch(ServerPlayerEntity player, Pokemon egg);
 

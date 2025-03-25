@@ -9,6 +9,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.kingpixel.cobbledaycare.models.EggBuilder;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import net.minecraft.server.network.ServerPlayerEntity;
 
@@ -29,12 +30,12 @@ public class DayCareEggMoves extends Mechanics {
   }
 
   @Override
-  public void applyEgg(ServerPlayerEntity player, Pokemon male, Pokemon female, Pokemon egg, List<Pokemon> parents, Pokemon firstEvolution) {
-    List<String> moves = new ArrayList<>(getMoves(male));
-    moves.addAll(getMoves(female));
+  public void applyEgg(EggBuilder builder) {
+    List<String> moves = new ArrayList<>(getMoves(builder.getMale()));
+    moves.addAll(getMoves(builder.getFemale()));
 
     List<String> names = new ArrayList<>();
-    for (MoveTemplate eggMove : firstEvolution.getForm().getMoves().getEggMoves()) {
+    for (MoveTemplate eggMove : builder.getFirstEvolution().getForm().getMoves().getEggMoves()) {
       if (moves.contains(eggMove.getName())) {
         names.add(eggMove.getName());
       }
@@ -47,7 +48,7 @@ public class DayCareEggMoves extends Mechanics {
       JsonObject jsonObject = new JsonObject();
       jsonObject.add("moves", jsonArray);
 
-      egg.getPersistentData().putString(TAG, jsonObject.toString());
+      builder.getEgg().getPersistentData().putString(TAG, jsonObject.toString());
     }
   }
 

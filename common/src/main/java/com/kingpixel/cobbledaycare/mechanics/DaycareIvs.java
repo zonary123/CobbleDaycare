@@ -4,6 +4,7 @@ import com.cobblemon.mod.common.api.pokemon.stats.Stats;
 import com.cobblemon.mod.common.item.CobblemonItem;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
+import com.kingpixel.cobbledaycare.models.EggBuilder;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Data;
@@ -58,7 +59,9 @@ public class DaycareIvs extends Mechanics {
   }
 
   @Override
-  public void applyEgg(ServerPlayerEntity player, Pokemon male, Pokemon female, Pokemon egg, List<Pokemon> parents, Pokemon firstEvolution) {
+  public void applyEgg(EggBuilder builder) {
+    List<Pokemon> parents = builder.getParents();
+    Pokemon egg = builder.getEgg();
     List<Stats> cloneStats = new ArrayList<>(stats);
     if (CobbleDaycare.config.isDebug()) {
       CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "DaycareIvs -> applyEgg -> parents: " + cloneStats);

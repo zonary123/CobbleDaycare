@@ -7,7 +7,9 @@ import com.cobblemon.mod.common.pokemon.Gender;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.cobblemon.mod.common.pokemon.Species;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
+import com.kingpixel.cobbledaycare.models.EggBuilder;
 import com.kingpixel.cobbledaycare.models.PokemonRareMecanic;
+import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.Model.PokemonChance;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -60,17 +62,27 @@ public class DayCarePokemon extends Mechanics {
   }
 
   @Override
-  public void applyEgg(ServerPlayerEntity player, Pokemon male, Pokemon female, Pokemon egg, List<Pokemon> parents, Pokemon firstEvolution) {
+  public void applyEgg(EggBuilder builder) {
+    Pokemon male = builder.getMale();
+    Pokemon female = builder.getFemale();
+    Pokemon egg = builder.getEgg();
+    Pokemon firstEvolution;
     boolean maleIsDitto = male.getForm().getEggGroups().contains(EggGroup.DITTO);
     boolean femaleIsDitto = female.getForm().getEggGroups().contains(EggGroup.DITTO);
     boolean dobbleDitto = maleIsDitto && femaleIsDitto;
+
     if (dobbleDitto) {
+      if (CobbleDaycare.config.isDebug()) {
+        CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Dobble Ditto");
+      }
       firstEvolution = CobbleDaycare.config.getDobbleDittoFilter().generateRandomPokemon(CobbleDaycare.MOD_ID, "egg");
     } else {
       if (femaleIsDitto) {
-        Pokemon temp = female;
-        female = male;
-        male = temp;
+        // Swap male and female in the builder
+        builder.setMale(female);
+        builder.setFemale(male);
+        male = builder.getMale();
+        female = builder.getFemale();
       }
       firstEvolution = female;
       var incensePokemon = DayCareInciense.INSTANCE().applyIncense(firstEvolution);
@@ -80,6 +92,8 @@ public class DayCarePokemon extends Mechanics {
         firstEvolution = getEvolutionPokemonEgg(firstEvolution.getSpecies());
       }
     }
+
+    builder.setFirstEvolution(firstEvolution);
 
     double steps = CobbleDaycare.config.getSteps(firstEvolution);
     egg.getPersistentData().putString(TAG_POKEMON, firstEvolution.getSpecies().showdownId());

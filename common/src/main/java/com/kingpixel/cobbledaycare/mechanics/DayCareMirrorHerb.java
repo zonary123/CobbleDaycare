@@ -5,6 +5,7 @@ import com.cobblemon.mod.common.api.moves.MoveTemplate;
 import com.cobblemon.mod.common.api.moves.Moves;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
+import com.kingpixel.cobbledaycare.models.EggBuilder;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -69,7 +70,9 @@ public class DayCareMirrorHerb extends Mechanics {
   }
 
   @Override
-  public void applyEgg(ServerPlayerEntity player, Pokemon male, Pokemon female, Pokemon egg, List<Pokemon> parents, Pokemon firstEvolution) {
+  public void applyEgg(EggBuilder builder) {
+    Pokemon male = builder.getMale();
+    Pokemon female = builder.getFemale();
     boolean hasMaleMirrorHerb = male.heldItem().getItem() == MIRROR_HERB;
     boolean hasFemaleMirrorHerb = female.heldItem().getItem() == MIRROR_HERB;
 

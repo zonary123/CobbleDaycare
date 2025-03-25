@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 public class Config {
   private static Map<UUID, Long> cooldownsOpenMenus = new HashMap<>();
   private boolean debug;
+  private boolean fixIlegalAbilities;
   private boolean canUseNativeGUI;
   private String lang;
   private DataBaseConfig dataBase;
@@ -61,6 +62,7 @@ public class Config {
 
   public Config() {
     this.debug = false;
+    this.fixIlegalAbilities = false;
     this.canUseNativeGUI = false;
     this.lang = "en";
     this.dataBase = new DataBaseConfig();

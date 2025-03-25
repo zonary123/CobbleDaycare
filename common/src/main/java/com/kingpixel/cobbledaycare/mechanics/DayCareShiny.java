@@ -2,13 +2,12 @@ package com.kingpixel.cobbledaycare.mechanics;
 
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
+import com.kingpixel.cobbledaycare.models.EggBuilder;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import net.minecraft.server.network.ServerPlayerEntity;
-
-import java.util.List;
 
 /**
  * @author Carlos Varas Alonso - 31/01/2025 0:25
@@ -42,7 +41,10 @@ public class DayCareShiny extends Mechanics {
   }
 
   @Override
-  public void applyEgg(ServerPlayerEntity player, Pokemon male, Pokemon female, Pokemon egg, List<Pokemon> parents, Pokemon firstEvolution) {
+  public void applyEgg(EggBuilder builder) {
+    Pokemon male = builder.getMale();
+    Pokemon female = builder.getFemale();
+    Pokemon egg = builder.getEgg();
     float shinyrate = getPercentageShiny();
     float multiplier = getMultiplierShiny();
 
@@ -79,7 +81,7 @@ public class DayCareShiny extends Mechanics {
   }
 
   @Override public void commandCreateEgg(ServerPlayerEntity player, Pokemon pokemon) {
-    
+
   }
 
   @Override public void validateData() {

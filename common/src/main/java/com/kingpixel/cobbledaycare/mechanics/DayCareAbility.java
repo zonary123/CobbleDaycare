@@ -1,18 +1,19 @@
 package com.kingpixel.cobbledaycare.mechanics;
 
 import com.cobblemon.mod.common.api.abilities.Abilities;
+import com.cobblemon.mod.common.api.abilities.Ability;
 import com.cobblemon.mod.common.api.abilities.AbilityTemplate;
 import com.cobblemon.mod.common.api.pokemon.PokemonProperties;
 import com.cobblemon.mod.common.api.pokemon.egg.EggGroup;
 import com.cobblemon.mod.common.pokemon.Pokemon;
+import com.kingpixel.cobbledaycare.CobbleDaycare;
+import com.kingpixel.cobbledaycare.models.EggBuilder;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.PokemonUtils;
 import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import net.minecraft.server.network.ServerPlayerEntity;
-
-import java.util.List;
 
 /**
  * @author Carlos Varas Alonso - 11/03/2025 9:09
@@ -39,34 +40,43 @@ public class DayCareAbility extends Mechanics {
   }
 
   @Override
-  public void applyEgg(ServerPlayerEntity player, Pokemon male, Pokemon female, Pokemon egg, List<Pokemon> parents,
-                       Pokemon firstEvolution) {
+  public void applyEgg(EggBuilder builder) {
+    Pokemon male = builder.getMale();
+    Pokemon female = builder.getFemale();
+    Pokemon firstEvolution = builder.getFirstEvolution();
     boolean hasAh = PokemonUtils.isAH(male) || PokemonUtils.isAH(female);
     boolean getAh = Utils.RANDOM.nextDouble(100) <= percentageTransmitAH;
     boolean notDitto = isDitto(male) || isDitto(female);
 
+    Ability ability;
     if (getAh && hasAh && !notDitto) {
-      egg.getPersistentData().putString(TAG, PokemonUtils.getAH(firstEvolution).getName());
+      ability = PokemonUtils.getAH(firstEvolution);
     } else {
-      egg.getPersistentData().putString(TAG, PokemonUtils.getRandomAbility(firstEvolution).getName());
+      ability = PokemonUtils.getRandomAbility(firstEvolution);
     }
-
+    String data = ability.getName();
+    if (CobbleDaycare.config.isDebug()) {
+      CobbleUtils.LOGGER.info("Ability: " + data + " applied to " + firstEvolution.getSpecies().showdownId());
+    }
+    builder.getEgg().getPersistentData().putString(TAG, data);
   }
 
   @Override
   public void applyHatch(ServerPlayerEntity player, Pokemon egg) {
     String ability = egg.getPersistentData().getString(TAG);
-    AbilityTemplate abilityTemplate;
-    AbilityTemplate randomAbility =
-      PokemonUtils.getRandomAbility(egg).getTemplate();
-    if (ability.isEmpty()) {
-      abilityTemplate = randomAbility;
-    } else {
-      abilityTemplate = Abilities.INSTANCE.get(ability);
+    if (!ability.isEmpty()) {
+      AbilityTemplate abilityTemplate = Abilities.INSTANCE.get(ability);
+      if (abilityTemplate != null) {
+        PokemonProperties.Companion.parse("ability=" + abilityTemplate.getName()).apply(egg);
+        if (CobbleDaycare.config.isDebug()) {
+          CobbleUtils.LOGGER.info("Ability: " + abilityTemplate.getName() + " applied to " + egg.getSpecies().showdownId());
+        }
+      } else {
+        CobbleUtils.LOGGER.error("Ability not found: " + ability);
+      }
     }
-    if (abilityTemplate == null) abilityTemplate = randomAbility;
 
-    PokemonProperties.Companion.parse("ability=" + abilityTemplate.getName()).apply(egg);
+
     egg.getPersistentData().remove(TAG);
   }
 
