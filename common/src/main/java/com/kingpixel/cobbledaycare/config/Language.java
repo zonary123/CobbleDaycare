@@ -28,6 +28,7 @@ public class Language {
   private String messageLimitEggs;
   private String messageBanPokemon;
   private String messageCooldownOpenMenu;
+  private String messageItNotEgg;
   private PrincipalMenu principalMenu;
   private PlotMenu plotMenu;
   private SelectPokemonMenu selectPokemonMenu;
@@ -44,6 +45,7 @@ public class Language {
     this.messageLimitEggs = "%prefix% &aYou have reached the limit of eggs in the plot %plot%";
     this.messageBanPokemon = "%prefix% &cThis pokemon %pokemon% %form% %item% is banned in the plot %plot%";
     this.messageCooldownOpenMenu = "%prefix% &7You must wait %cooldown% to open the menu again";
+    this.messageItNotEgg = "%prefix% &cThis is not an egg";
     this.principalMenu = new PrincipalMenu();
     this.plotMenu = new PlotMenu();
     this.selectPokemonMenu = new SelectPokemonMenu();

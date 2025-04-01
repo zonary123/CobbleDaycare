@@ -16,6 +16,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.item.ItemStack;
@@ -137,7 +138,12 @@ public class CommandTree {
                   if (pokemon.getSpecies().showdownId().equals("egg")) {
                     EggData.from(pokemon).sendEggInfo(player);
                   } else {
-
+                    PlayerUtils.sendMessage(
+                      player,
+                      CobbleDaycare.language.getMessageItNotEgg(),
+                      CobbleDaycare.language.getPrefix(),
+                      TypeMessage.CHAT
+                    );
                   }
                 }
                 return 1;
@@ -154,28 +160,21 @@ public class CommandTree {
         .then(
           CommandManager.argument("slot", PartySlotArgumentType.Companion.partySlot())
             .executes(context -> {
-              if (context.getSource().isExecutedByPlayer()) {
-                ServerPlayerEntity player = context.getSource().getPlayer();
-                var userInfo = DatabaseClientFactory.INSTANCE.getUserInformation(player);
-                if (userInfo.hasCooldownHatch(player)) {
-                  PlayerUtils.sendMessage(
-                    player,
-                    CobbleDaycare.language.getMessageCooldownHatch()
-                      .replace("%cooldown%", PlayerUtils.getCooldown(new Date(userInfo.getCooldownHatch()))),
-                    CobbleDaycare.language.getPrefix(),
-                    TypeMessage.CHAT
-                  );
-                  return 0;
-                }
-                Pokemon pokemon = PartySlotArgumentType.Companion.getPokemon(context, "slot");
-                if (pokemon.getSpecies().showdownId().equals("egg")) {
-                  EggData.from(pokemon).hatch(player, pokemon);
-                  userInfo.setCooldownHatch(player);
-                  DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInfo);
-                }
-              }
+              var player = context.getSource().getPlayer();
+              hatch(context, player);
               return 1;
-            })
+            }).then(
+              CommandManager.argument("player", EntityArgumentType.players())
+                .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.hatch.other",
+                  "cobbledaycare.admin"), 4))
+                .executes(context -> {
+                  var players = EntityArgumentType.getPlayers(context, "player");
+                  for (ServerPlayerEntity player : players) {
+                    hatch(context, player);
+                  }
+                  return 1;
+                })
+            )
         )
     );
 
@@ -189,42 +188,76 @@ public class CommandTree {
             .then(
               CommandManager.argument("female", PartySlotArgumentType.Companion.partySlot())
                 .executes(context -> {
-                    if (context.getSource().isExecutedByPlayer()) {
-                      ServerPlayerEntity player = context.getSource().getPlayer();
-                      if (player == null) return 0;
-                      var userInfo = DatabaseClientFactory.INSTANCE.getUserInformation(player);
-                      if (userInfo.hasCooldownBreed(player)) {
-                        PlayerUtils.sendMessage(
-                          player,
-                          CobbleDaycare.language.getMessageCooldownBreed()
-                            .replace("%cooldown%", PlayerUtils.getCooldown(new Date(userInfo.getCooldownBreed()))),
-                          CobbleDaycare.language.getPrefix(),
-                          TypeMessage.CHAT
-                        );
-                        return 0;
-                      }
-                      Plot plot = new Plot();
-                      Pokemon male = PartySlotArgumentType.Companion.getPokemon(context, "male");
-                      boolean maleCanBreed = plot.canBreed(male, SelectGender.MALE);
-                      plot.setMale(male);
-                      Pokemon female = PartySlotArgumentType.Companion.getPokemon(context, "female");
-                      boolean femaleCanBreed = plot.canBreed(female, SelectGender.FEMALE);
-                      plot.setFemale(female);
-                      if (CobbleDaycare.config.isDebug()) {
-                        CobbleUtils.LOGGER.info("maleCanBreed: " + maleCanBreed);
-                        CobbleUtils.LOGGER.info("femaleCanBreed: " + femaleCanBreed);
-                      }
-                      if (maleCanBreed && femaleCanBreed) {
-                        Cobblemon.INSTANCE.getStorage().getParty(player).add(plot.createEgg(player));
-                        userInfo.setCooldownBreed(player);
-                        DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInfo);
-                      }
-                    }
-                    return 1;
+                    var player = context.getSource().getPlayer();
+                    return breed(context, player);
                   }
+                ).then(
+                  CommandManager.argument("player", EntityArgumentType.players())
+                    .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.breed.other",
+                      "cobbledaycare.admin"), 4))
+                    .executes(context -> {
+                      var players = EntityArgumentType.getPlayers(context, "player");
+                      for (ServerPlayerEntity player : players) {
+                        breed(context, player);
+                      }
+                      return 1;
+                    })
                 )
             )
         )
     );
+  }
+
+  private static int hatch(CommandContext<ServerCommandSource> context, ServerPlayerEntity player) {
+    var userInfo = DatabaseClientFactory.INSTANCE.getUserInformation(player);
+    if (userInfo.hasCooldownHatch(player)) {
+      PlayerUtils.sendMessage(
+        player,
+        CobbleDaycare.language.getMessageCooldownHatch()
+          .replace("%cooldown%", PlayerUtils.getCooldown(new Date(userInfo.getCooldownHatch()))),
+        CobbleDaycare.language.getPrefix(),
+        TypeMessage.CHAT
+      );
+      return 0;
+    }
+    Pokemon pokemon = PartySlotArgumentType.Companion.getPokemon(context, "slot");
+    if (pokemon.getSpecies().showdownId().equals("egg")) {
+      EggData.from(pokemon).hatch(player, pokemon);
+      userInfo.setCooldownHatch(player);
+      DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInfo);
+    }
+    return 1;
+  }
+
+  private static int breed(CommandContext<ServerCommandSource> context, ServerPlayerEntity player) {
+    if (player == null) return 0;
+    var userInfo = DatabaseClientFactory.INSTANCE.getUserInformation(player);
+    if (userInfo.hasCooldownBreed(player)) {
+      PlayerUtils.sendMessage(
+        player,
+        CobbleDaycare.language.getMessageCooldownBreed()
+          .replace("%cooldown%", PlayerUtils.getCooldown(new Date(userInfo.getCooldownBreed()))),
+        CobbleDaycare.language.getPrefix(),
+        TypeMessage.CHAT
+      );
+      return 0;
+    }
+    Plot plot = new Plot();
+    Pokemon male = PartySlotArgumentType.Companion.getPokemon(context, "male");
+    boolean maleCanBreed = plot.canBreed(male, SelectGender.MALE);
+    plot.setMale(male);
+    Pokemon female = PartySlotArgumentType.Companion.getPokemon(context, "female");
+    boolean femaleCanBreed = plot.canBreed(female, SelectGender.FEMALE);
+    plot.setFemale(female);
+    if (CobbleDaycare.config.isDebug()) {
+      CobbleUtils.LOGGER.info("maleCanBreed: " + maleCanBreed);
+      CobbleUtils.LOGGER.info("femaleCanBreed: " + femaleCanBreed);
+    }
+    if (maleCanBreed && femaleCanBreed) {
+      Cobblemon.INSTANCE.getStorage().getParty(player).add(plot.createEgg(player));
+      userInfo.setCooldownBreed(player);
+      DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInfo);
+    }
+    return 1;
   }
 }
