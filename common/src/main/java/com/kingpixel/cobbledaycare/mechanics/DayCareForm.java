@@ -44,6 +44,7 @@ public class DayCareForm extends Mechanics {
     StringBuilder form = new StringBuilder();
     Pokemon female = builder.getFemale();
     Pokemon egg = builder.getEgg();
+    Pokemon firstEvolution = builder.getFirstEvolution();
     switch (female.getSpecies().showdownId()) {
       case "perrserker":
       case "sirfetchd":
@@ -75,7 +76,7 @@ public class DayCareForm extends Mechanics {
 
     if (configForm != null) {
       if (getBlacklistForm().contains(configForm)) configForm = "";
-      applyForm(egg, configForm);
+      applyForm(egg, configForm, firstEvolution);
       return;
     }
 
@@ -129,11 +130,12 @@ public class DayCareForm extends Mechanics {
       CobbleUtils.LOGGER.info("Form: " + form);
     }
 
-    applyForm(egg, form.toString());
+    applyForm(egg, form.toString(),firstEvolution);
   }
 
-  private void applyForm(Pokemon egg, String form) {
+  private void applyForm(Pokemon egg, String form, Pokemon firstEvolution) {
     egg.getPersistentData().putString(TAG, form);
+    PokemonProperties.Companion.parse(form).apply(firstEvolution);
   }
 
   @Override

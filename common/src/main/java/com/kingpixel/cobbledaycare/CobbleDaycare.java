@@ -17,6 +17,7 @@ import com.kingpixel.cobbledaycare.migrate.Migrate;
 import com.kingpixel.cobbledaycare.models.Plot;
 import com.kingpixel.cobbledaycare.models.UserInformation;
 import com.kingpixel.cobbledaycare.properties.BreedablePropertyType;
+import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.Model.CobbleUtilsTags;
 import com.kingpixel.cobbleutils.api.PermissionApi;
 import com.kingpixel.cobbleutils.util.PokemonUtils;
@@ -64,6 +65,7 @@ public class CobbleDaycare {
     DatabaseClientFactory.createDatabaseClient(config.getDataBase());
     tasks();
     Migrate.migrate();
+    CobbleUtils.info(MOD_ID, "1.0.0","https://github.com/zonary123/CobbleDaycare");
   }
 
   private static void tasks() {

@@ -35,4 +35,4 @@ include("common")
 include("fabric")
 include("neoforge")
 
-rootProject.name = "CobbleStop"
+rootProject.name = "CobbleDaycare"
