@@ -8,11 +8,13 @@ import com.kingpixel.cobbledaycare.database.DatabaseClientFactory;
 import com.kingpixel.cobbledaycare.mechanics.DayCareInciense;
 import com.kingpixel.cobbledaycare.models.*;
 import com.kingpixel.cobbleutils.CobbleUtils;
+import com.kingpixel.cobbleutils.Model.CobbleUtilsTags;
 import com.kingpixel.cobbleutils.api.PermissionApi;
 import com.kingpixel.cobbleutils.util.AdventureTranslator;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
 import com.kingpixel.cobbleutils.util.TypeMessage;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -113,6 +115,31 @@ public class CommandTree {
                             userInformation.setTimeMultiplierSteps(seconds * 20L);
                             userInformation.setMultiplierSteps(multiplier);
                             DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
+                          }
+                          return 1;
+                        })
+                    )
+                )
+            )
+        )
+        .then(
+          CommandManager.literal("breedable")
+            .requires(
+              source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.admin", "cobbledaycare.breedable"), 4))
+            .then(
+              CommandManager.argument("player", EntityArgumentType.players())
+                .then(
+                  CommandManager.argument("slot", PartySlotArgumentType.Companion.partySlot())
+                    .then(
+                      CommandManager.argument("breedable", BoolArgumentType.bool())
+                        .executes(context -> {
+                          var players = EntityArgumentType.getPlayers(context, "player");
+                          boolean breedable = BoolArgumentType.getBool(context, "breedable");
+                          for (ServerPlayerEntity player : players) {
+                            Pokemon pokemon = PartySlotArgumentType.Companion.getPokemonOf(context, "slot", player);
+                            if (pokemon == null) continue;
+                            CobbleDaycare.setBreedable(pokemon, breedable);
+                            pokemon.getPersistentData().putBoolean(CobbleUtilsTags.BREEDABLE_BUILDER_TAG, !breedable);
                           }
                           return 1;
                         })

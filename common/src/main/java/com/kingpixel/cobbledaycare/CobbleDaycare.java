@@ -33,7 +33,6 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * @author Carlos Varas Alonso - 23/07/2024 9:24
@@ -65,7 +64,7 @@ public class CobbleDaycare {
     DatabaseClientFactory.createDatabaseClient(config.getDataBase());
     tasks();
     Migrate.migrate();
-    CobbleUtils.info(MOD_ID, "1.0.0","https://github.com/zonary123/CobbleDaycare");
+    CobbleUtils.info(MOD_ID, "1.0.0", "https://github.com/zonary123/CobbleDaycare");
   }
 
   private static void tasks() {
@@ -187,43 +186,41 @@ public class CobbleDaycare {
   public static void countryPlayer(ServerPlayerEntity player) {
     if (playerCountry.get(player.getUuid()) != null) return;
 
-    CompletableFuture.runAsync(() -> {
-      try {
-        URL url = new URL(API_URL_IP + player.getIp());
-        // Establece la conexión HTTP con la API
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setRequestMethod("GET");
+    try {
+      URL url = new URL(API_URL_IP + player.getIp());
+      // Establece la conexión HTTP con la API
+      HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+      conn.setRequestMethod("GET");
 
-        // Usar try-with-resources para asegurar el cierre de BufferedReader
-        try (BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
-          // Parsear la respuesta en un JsonObject
-          JsonObject json = JsonParser.parseReader(in).getAsJsonObject();
+      // Usar try-with-resources para asegurar el cierre de BufferedReader
+      try (BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
+        // Parsear la respuesta en un JsonObject
+        JsonObject json = JsonParser.parseReader(in).getAsJsonObject();
 
-          // Verifica si el JSON tiene la información del país
-          if (json.has("country")) {
-            String country = json.get("country").getAsString();
-            String countryCode = json.get("countryCode").getAsString();
+        // Verifica si el JSON tiene la información del país
+        if (json.has("country")) {
+          String country = json.get("country").getAsString();
+          String countryCode = json.get("countryCode").getAsString();
 
-            // Determina el idioma según el código del país
-            String language = switch (countryCode) {
-              case "AR", "ES" -> "es";
-              case "US", "GB", "AU" -> "en";
-              default -> "en"; // Idioma por defecto
-            };
+          // Determina el idioma según el código del país
+          String language = switch (countryCode) {
+            case "AR", "ES" -> "es";
+            case "US", "GB", "AU" -> "en";
+            default -> "en"; // Idioma por defecto
+          };
 
-            // Crea y almacena la información del usuario
-            UserInfo userInfo = new UserInfo(country, countryCode, language);
-            playerCountry.put(player.getUuid(), userInfo);
-          }
-        } finally {
-          conn.disconnect(); // Desconectar la conexión HTTP
+          // Crea y almacena la información del usuario
+          UserInfo userInfo = new UserInfo(country, countryCode, language);
+          playerCountry.put(player.getUuid(), userInfo);
         }
-
-      } catch (Exception e) {
-        // Maneja cualquier excepción que ocurra durante la solicitud
-        e.printStackTrace();
+      } finally {
+        conn.disconnect(); // Desconectar la conexión HTTP
       }
-    });
+
+    } catch (Exception e) {
+      // Maneja cualquier excepción que ocurra durante la solicitud
+      e.printStackTrace();
+    }
   }
 
   public static UserInfo getCountry(ServerPlayerEntity player) {
@@ -232,7 +229,6 @@ public class CobbleDaycare {
 
   public static void setBreedable(Pokemon pokemon, boolean value) {
     pokemon.getPersistentData().putBoolean(CobbleUtilsTags.BREEDABLE_TAG, value);
-    pokemon.getPersistentData().putBoolean(CobbleUtilsTags.BREEDABLE_BUILDER_TAG, true);
   }
 
   public record UserInfo(String country, String countryCode, String language) {
