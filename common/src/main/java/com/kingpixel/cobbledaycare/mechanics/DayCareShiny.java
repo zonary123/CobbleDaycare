@@ -80,8 +80,8 @@ public class DayCareShiny extends Mechanics {
     egg.getPersistentData().remove(TAG);
   }
 
-  @Override public void commandCreateEgg(ServerPlayerEntity player, Pokemon pokemon) {
-
+  @Override public void createEgg(ServerPlayerEntity player, Pokemon pokemon, Pokemon egg) {
+    egg.getPersistentData().putBoolean(TAG, pokemon.getShiny());
   }
 
   @Override public void validateData() {

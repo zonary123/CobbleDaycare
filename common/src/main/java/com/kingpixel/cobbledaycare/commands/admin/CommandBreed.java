@@ -1,0 +1,88 @@
+package com.kingpixel.cobbledaycare.commands.admin;
+
+import com.cobblemon.mod.common.Cobblemon;
+import com.cobblemon.mod.common.command.argument.PartySlotArgumentType;
+import com.cobblemon.mod.common.pokemon.Pokemon;
+import com.kingpixel.cobbledaycare.CobbleDaycare;
+import com.kingpixel.cobbledaycare.database.DatabaseClientFactory;
+import com.kingpixel.cobbledaycare.models.Plot;
+import com.kingpixel.cobbledaycare.models.SelectGender;
+import com.kingpixel.cobbleutils.CobbleUtils;
+import com.kingpixel.cobbleutils.api.PermissionApi;
+import com.kingpixel.cobbleutils.util.PlayerUtils;
+import com.kingpixel.cobbleutils.util.TypeMessage;
+import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
+import net.minecraft.command.argument.EntityArgumentType;
+import net.minecraft.server.command.CommandManager;
+import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.network.ServerPlayerEntity;
+
+import java.util.Date;
+import java.util.List;
+
+/**
+ * @author Carlos Varas Alonso - 05/04/2025 2:09
+ */
+public class CommandBreed {
+  public static void register(CommandDispatcher<ServerCommandSource> dispatcher,
+                              LiteralArgumentBuilder<ServerCommandSource> base) {
+    dispatcher.register(
+      base.then(
+        CommandManager.argument("male", PartySlotArgumentType.Companion.partySlot())
+          .then(
+            CommandManager.argument("female", PartySlotArgumentType.Companion.partySlot())
+              .executes(context -> {
+                  var player = context.getSource().getPlayer();
+                  return breed(context, player);
+                }
+              ).then(
+                CommandManager.argument("player", EntityArgumentType.players())
+                  .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.breed.other",
+                    "cobbledaycare.admin"), 4))
+                  .executes(context -> {
+                    var players = EntityArgumentType.getPlayers(context, "player");
+                    for (ServerPlayerEntity player : players) {
+                      breed(context, player);
+                    }
+                    return 1;
+                  })
+              )
+          )
+      )
+    );
+  }
+
+  private static int breed(CommandContext<ServerCommandSource> context, ServerPlayerEntity player) {
+    if (player == null) return 0;
+    var userInfo = DatabaseClientFactory.INSTANCE.getUserInformation(player);
+    if (userInfo.hasCooldownBreed(player)) {
+      PlayerUtils.sendMessage(
+        player,
+        CobbleDaycare.language.getMessageCooldownBreed()
+          .replace("%cooldown%", PlayerUtils.getCooldown(new Date(userInfo.getCooldownBreed()))),
+        CobbleDaycare.language.getPrefix(),
+        TypeMessage.CHAT
+      );
+      return 0;
+    }
+    Plot plot = new Plot();
+    Pokemon male = PartySlotArgumentType.Companion.getPokemon(context, "male");
+    boolean maleCanBreed = plot.canBreed(male, SelectGender.MALE);
+    plot.setMale(male);
+    Pokemon female = PartySlotArgumentType.Companion.getPokemon(context, "female");
+    boolean femaleCanBreed = plot.canBreed(female, SelectGender.FEMALE);
+    plot.setFemale(female);
+    if (CobbleDaycare.config.isDebug()) {
+      CobbleUtils.LOGGER.info("maleCanBreed: " + maleCanBreed);
+      CobbleUtils.LOGGER.info("femaleCanBreed: " + femaleCanBreed);
+    }
+    if (maleCanBreed && femaleCanBreed) {
+      Cobblemon.INSTANCE.getStorage().getParty(player).add(plot.createEgg(player));
+      userInfo.setCooldownBreed(player);
+      DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInfo);
+    }
+    return 1;
+  }
+}

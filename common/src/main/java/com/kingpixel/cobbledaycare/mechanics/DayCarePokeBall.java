@@ -42,8 +42,9 @@ public class DayCarePokeBall extends Mechanics {
     egg.getPersistentData().remove(TAG);
   }
 
-  @Override public void commandCreateEgg(ServerPlayerEntity player, Pokemon pokemon) {
-
+  @Override public void createEgg(ServerPlayerEntity player, Pokemon pokemon, Pokemon egg) {
+    Identifier id = pokemon.getCaughtBall().getName();
+    egg.getPersistentData().putString(TAG, id.getNamespace() + ":" + id.getPath());
   }
 
   @Override public void validateData() {

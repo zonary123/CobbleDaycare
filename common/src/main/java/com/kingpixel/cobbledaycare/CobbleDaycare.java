@@ -12,7 +12,10 @@ import com.kingpixel.cobbledaycare.commands.CommandTree;
 import com.kingpixel.cobbledaycare.config.Config;
 import com.kingpixel.cobbledaycare.config.Language;
 import com.kingpixel.cobbledaycare.database.DatabaseClientFactory;
-import com.kingpixel.cobbledaycare.mechanics.*;
+import com.kingpixel.cobbledaycare.mechanics.DayCareCountry;
+import com.kingpixel.cobbledaycare.mechanics.DayCareForm;
+import com.kingpixel.cobbledaycare.mechanics.DayCarePokemon;
+import com.kingpixel.cobbledaycare.mechanics.Mechanics;
 import com.kingpixel.cobbledaycare.migrate.Migrate;
 import com.kingpixel.cobbledaycare.models.Plot;
 import com.kingpixel.cobbledaycare.models.UserInformation;
@@ -27,6 +30,7 @@ import dev.architectury.event.events.common.PlayerEvent;
 import kotlin.Unit;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
+import org.reflections.Reflections;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -60,11 +64,11 @@ public class CobbleDaycare {
   }
 
   public static void load() {
+    CobbleUtils.info(MOD_ID, "1.0.0", "https://github.com/zonary123/CobbleDaycare");
     files();
     DatabaseClientFactory.createDatabaseClient(config.getDataBase());
     tasks();
     Migrate.migrate();
-    CobbleUtils.info(MOD_ID, "1.0.0", "https://github.com/zonary123/CobbleDaycare");
   }
 
   private static void tasks() {
@@ -90,17 +94,59 @@ public class CobbleDaycare {
     config.init();
     language.init();
     mechanics.clear();
-    mechanics.add(new DayCarePokemon().getInstance());
-    mechanics.add(new DayCareForm().getInstance());
-    mechanics.add(new DaycareIvs().getInstance());
-    mechanics.add(new DayCareMirrorHerb().getInstance());
-    mechanics.add(new DayCareNature().getInstance());
-    mechanics.add(new DayCareShiny().getInstance());
-    mechanics.add(new DayCarePokeBall().getInstance());
-    mechanics.add(new DayCareEggMoves().getInstance());
-    mechanics.add(new DayCareCountry().getInstance());
-    mechanics.add(new DayCareAbility().getInstance());
-    mechanics.add(new DayCareInciense().getInstance());
+
+    // Paquete donde se encuentran las clases
+    String packageName = "com.kingpixel.cobbledaycare.mechanics";
+
+    // Lista de nombres de clases a excluir
+    List<String> excludeClassNames = List.of(
+      "Mechanics"
+    );
+
+    // Clases específicas que deben estar al principio
+    List<Class<? extends Mechanics>> specificClasses = List.of(
+      DayCarePokemon.class,
+      DayCareForm.class
+    );
+
+    // Agregar las clases específicas al principio de la lista
+    for (Class<? extends Mechanics> specificClass : specificClasses) {
+      try {
+        Mechanics instance = specificClass.getDeclaredConstructor().newInstance();
+        mechanics.add(instance.getInstance());
+      } catch (Exception e) {
+        CobbleUtils.LOGGER.error(MOD_ID, "Error instantiating specific mechanics class: " + specificClass.getName());
+        e.printStackTrace();
+      }
+    }
+
+    // Obtener todas las clases del paquete
+    try {
+      Reflections reflections = new Reflections(packageName);
+      Set<Class<? extends Mechanics>> allClasses = reflections.getSubTypesOf(Mechanics.class);
+
+      // Instanciar y agregar cada clase a la lista de mechanics, excluyendo las especificadas
+      for (Class<? extends Mechanics> mechanicsClass : allClasses) {
+        if (!excludeClassNames.contains(mechanicsClass.getSimpleName()) && !specificClasses.contains(mechanicsClass)) {
+          try {
+            Mechanics instance = mechanicsClass.getDeclaredConstructor().newInstance();
+            mechanics.add(instance.getInstance());
+          } catch (Exception e) {
+            CobbleUtils.LOGGER.error(MOD_ID, "Error instantiating mechanics class: " + mechanicsClass.getName());
+            e.printStackTrace();
+          }
+        }
+      }
+    } catch (Exception e) {
+      CobbleUtils.LOGGER.error(MOD_ID, "Error loading mechanics classes from package: " + packageName);
+      e.printStackTrace();
+    }
+    mechanics.removeIf(mechanic -> mechanic == null || !mechanic.isActive());
+    List<String> activeMechanics = new ArrayList<>();
+    for (Mechanics mechanic : mechanics) {
+      activeMechanics.add(mechanic.fileName());
+    }
+    CobbleUtils.LOGGER.info(MOD_ID, "Active mechanics:\n- " + String.join("\n- ", activeMechanics));
   }
 
   private static void events() {

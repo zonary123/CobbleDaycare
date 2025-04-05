@@ -85,7 +85,7 @@ public class DayCareMirrorHerb extends Mechanics {
 
   }
 
-  @Override public void commandCreateEgg(ServerPlayerEntity player, Pokemon pokemon) {
+  @Override public void createEgg(ServerPlayerEntity player, Pokemon pokemon, Pokemon egg) {
 
   }
 

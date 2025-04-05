@@ -24,6 +24,7 @@ public abstract class Mechanics {
     return readFromFile(this.getClass());
   }
 
+
   public abstract void validateData();
 
   public abstract String fileName();
@@ -34,7 +35,7 @@ public abstract class Mechanics {
 
   public abstract void applyHatch(ServerPlayerEntity player, Pokemon egg);
 
-  public abstract void commandCreateEgg(ServerPlayerEntity player, Pokemon pokemon);
+  public abstract void createEgg(ServerPlayerEntity player, Pokemon pokemon, Pokemon egg);
 
   public <T> T readFromFile(Class<T> clazz) {
     try {

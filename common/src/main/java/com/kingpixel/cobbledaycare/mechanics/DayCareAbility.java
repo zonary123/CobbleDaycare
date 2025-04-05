@@ -80,8 +80,12 @@ public class DayCareAbility extends Mechanics {
     egg.getPersistentData().remove(TAG);
   }
 
-  @Override public void commandCreateEgg(ServerPlayerEntity player, Pokemon pokemon) {
-
+  @Override public void createEgg(ServerPlayerEntity player, Pokemon pokemon, Pokemon egg) {
+    String ability = PokemonUtils.getAH(pokemon).getName();
+    egg.getPersistentData().putString(TAG, ability);
+    if (CobbleDaycare.config.isDebug()) {
+      CobbleUtils.LOGGER.info("Ability: " + ability + " applied to " + pokemon.getSpecies().showdownId());
+    }
   }
 
   @Override public void validateData() {

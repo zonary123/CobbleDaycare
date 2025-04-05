@@ -30,6 +30,7 @@ dependencies {
     // Lombok
     compileOnly("org.projectlombok:lombok:${property("lombok_version")}")
     annotationProcessor("org.projectlombok:lombok:${property("lombok_version")}")
+    implementation("org.reflections:reflections:0.10.2")
 
     //Discord
     api("club.minnced:discord-webhooks:${property("discord_webhooks_version")}")

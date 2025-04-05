@@ -130,7 +130,7 @@ public class DayCareForm extends Mechanics {
       CobbleUtils.LOGGER.info("Form: " + form);
     }
 
-    applyForm(egg, form.toString(),firstEvolution);
+    applyForm(egg, form.toString(), firstEvolution);
   }
 
   private void applyForm(Pokemon egg, String form, Pokemon firstEvolution) {
@@ -146,7 +146,7 @@ public class DayCareForm extends Mechanics {
     CobbleDaycare.fixBreedable(egg);
   }
 
-  @Override public void commandCreateEgg(ServerPlayerEntity player, Pokemon pokemon) {
+  @Override public void createEgg(ServerPlayerEntity player, Pokemon pokemon, Pokemon egg) {
 
   }
 

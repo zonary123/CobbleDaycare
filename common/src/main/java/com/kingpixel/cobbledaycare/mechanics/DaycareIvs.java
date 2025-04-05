@@ -95,8 +95,12 @@ public class DaycareIvs extends Mechanics {
     });
   }
 
-  @Override public void commandCreateEgg(ServerPlayerEntity player, Pokemon pokemon) {
-
+  @Override public void createEgg(ServerPlayerEntity player, Pokemon pokemon, Pokemon egg) {
+    stats.forEach(stat -> {
+      int iv = pokemon.getIvs().getOrDefault(stat);
+      egg.getPersistentData().putInt(stat.getShowdownId(), iv);
+      egg.getIvs().set(stat, iv);
+    });
   }
 
   @Override public void validateData() {

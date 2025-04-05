@@ -124,8 +124,12 @@ public class DayCarePokemon extends Mechanics {
     egg.getPersistentData().remove(TAG_GENDER);
   }
 
-  @Override public void commandCreateEgg(ServerPlayerEntity player, Pokemon pokemon) {
-
+  @Override public void createEgg(ServerPlayerEntity player, Pokemon pokemon, Pokemon egg) {
+    egg.getPersistentData().putString(TAG_POKEMON, pokemon.getSpecies().showdownId());
+    egg.getPersistentData().putDouble(TAG_STEPS, CobbleDaycare.config.getSteps(pokemon));
+    egg.getPersistentData().putDouble(TAG_REFERENCE_STEPS, CobbleDaycare.config.getSteps(pokemon));
+    egg.getPersistentData().putString(TAG_GENDER, pokemon.getGender().name());
+    egg.getPersistentData().putInt(TAG_CYCLES, pokemon.getSpecies().getEggCycles());
   }
 
   @Override public void validateData() {
