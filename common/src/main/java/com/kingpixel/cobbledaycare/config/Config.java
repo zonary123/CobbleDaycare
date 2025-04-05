@@ -27,12 +27,12 @@ import java.util.concurrent.TimeUnit;
 public class Config {
   private static Map<UUID, Long> cooldownsOpenMenus = new HashMap<>();
   private boolean debug;
-  private boolean fixIlegalAbilities;
-  private boolean canUseNativeGUI;
   private String lang;
   private DataBaseConfig dataBase;
   private String commandEggInfo;
   private List<String> commands;
+  private boolean fixIlegalAbilities;
+  private boolean canUseNativeGUI;
   private boolean showIvs;
   private boolean spawnEggWorld;
   private boolean dobbleDitto;
@@ -43,20 +43,20 @@ public class Config {
   private float multiplierSteps;
   private double defaultSteps;
   private Map<EggGroup, Double> steps;
+  private int cooldown;
+  private Map<String, Integer> cooldowns;
   private int defaultCooldownBreed;
   private Map<String, Integer> cooldownsBreed;
   private int defaultCooldownHatch;
   private Map<String, Integer> cooldownsHatch;
   private int cooldownToOpenMenus;
   private List<Integer> slotPlots;
-  private int cooldown;
   private double multiplierAbilityAcceleration;
   private List<String> abilityAcceleration;
   private double reduceEggStepsVehicle;
   private List<String> permittedVehicles;
   private List<String> whitelist;
   private Map<String, Integer> limitEggs;
-  private Map<String, Integer> cooldowns;
   private PokemonBlackList blackList;
   private FilterPokemons dobbleDittoFilter;
 
