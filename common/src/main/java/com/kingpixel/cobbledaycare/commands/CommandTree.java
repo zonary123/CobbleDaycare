@@ -54,20 +54,11 @@ public class CommandTree {
     }
 
     if (!CobbleDaycare.config.getCommandEggInfo().isEmpty()) {
-      CommandEggInfo.register(dispatcher, CommandManager.literal(CobbleDaycare.config.getCommandEggInfo())
-        .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.egginfo.base", "cobbledaycare" +
-            ".admin"),
-          4)));
+      CommandEggInfo.register(dispatcher, CommandManager.literal(CobbleDaycare.config.getCommandEggInfo()));
     }
 
-    CommandHatch.register(dispatcher, CommandManager.literal("hatch")
-      .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.hatch.base", "cobbledaycare" +
-          ".admin"),
-        4)));
-    CommandBreed.register(dispatcher, CommandManager.literal("breed")
-      .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.breed.base", "cobbledaycare" +
-          ".admin"),
-        4)));
+    CommandHatch.register(dispatcher, CommandManager.literal("hatch"));
+    CommandBreed.register(dispatcher, CommandManager.literal("breed"));
   }
 
 }

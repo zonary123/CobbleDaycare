@@ -27,6 +27,9 @@ public class CommandHatch {
                               LiteralArgumentBuilder<ServerCommandSource> base) {
     dispatcher.register(
       base
+        .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.hatch.base", "cobbledaycare" +
+            ".admin"),
+          4))
         .then(
           CommandManager.argument("slot", PartySlotArgumentType.Companion.partySlot())
             .executes(context -> {

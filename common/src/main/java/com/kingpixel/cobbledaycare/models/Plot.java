@@ -288,9 +288,6 @@ public class Plot {
     for (Mechanics mechanic : CobbleDaycare.mechanics) {
       if (mechanic.isActive()) mechanic.applyEgg(eggBuilder);
     }
-    // Update the Plot with the modified values from the EggBuilder
-    this.male = eggBuilder.getMale();
-    this.female = eggBuilder.getFemale();
     return egg;
   }
 

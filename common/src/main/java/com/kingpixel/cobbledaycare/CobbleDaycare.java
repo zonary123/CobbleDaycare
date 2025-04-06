@@ -37,6 +37,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * @author Carlos Varas Alonso - 23/07/2024 9:24
@@ -47,7 +48,6 @@ public class CobbleDaycare {
   public static final String PATH_LANGUAGE = PATH + "lang/";
   public static final String PATH_DATA = PATH + "data/";
   public static final String PATH_OLD_DATA = PATH + "old_data/";
-  public static final String PATH_INCENSE = PATH + "incenses/";
   public static final String PATH_MODULES = PATH + "modules/";
   private static final String API_URL_IP = "http://ip-api.com/json/";
   private static final Map<UUID, UserInfo> playerCountry = new HashMap<>();
@@ -56,7 +56,7 @@ public class CobbleDaycare {
   public static Language language = new Language();
   public static List<Mechanics> mechanics = new ArrayList<>();
   public static Task task;
-  private static boolean added;
+  private static HttpURLConnection conn;
 
   public static void init() {
     load();
@@ -142,7 +142,9 @@ public class CobbleDaycare {
       CobbleUtils.LOGGER.error(MOD_ID, "Error loading mechanics classes from package: " + packageName);
       e.printStackTrace();
     }
-    mechanics.removeIf(mechanic -> mechanic == null || !mechanic.isActive());
+    // Quitar nulls
+    mechanics.removeIf(Objects::isNull);
+    mechanics.removeIf(mechanic -> !mechanic.isActive());
     List<String> activeMechanics = new ArrayList<>();
     for (Mechanics mechanic : mechanics) {
       activeMechanics.add(mechanic.fileName());
@@ -233,41 +235,43 @@ public class CobbleDaycare {
   public static void countryPlayer(ServerPlayerEntity player) {
     if (playerCountry.get(player.getUuid()) != null) return;
 
-    try {
-      URL url = new URL(API_URL_IP + player.getIp());
-      // Establece la conexión HTTP con la API
-      HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-      conn.setRequestMethod("GET");
 
-      // Usar try-with-resources para asegurar el cierre de BufferedReader
-      try (BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
-        // Parsear la respuesta en un JsonObject
-        JsonObject json = JsonParser.parseReader(in).getAsJsonObject();
-
-        // Verifica si el JSON tiene la información del país
-        if (json.has("country")) {
-          String country = json.get("country").getAsString();
-          String countryCode = json.get("countryCode").getAsString();
-
-          // Determina el idioma según el código del país
-          String language = switch (countryCode) {
-            case "AR", "ES" -> "es";
-            case "US", "GB", "AU" -> "en";
-            default -> "en"; // Idioma por defecto
-          };
-
-          // Crea y almacena la información del usuario
-          UserInfo userInfo = new UserInfo(country, countryCode, language);
-          playerCountry.put(player.getUuid(), userInfo);
+    CompletableFuture.runAsync(() -> {
+      try {
+        if (conn == null) {
+          URL url = new URL(API_URL_IP + player.getIp());
+          conn = (HttpURLConnection) url.openConnection();
+          conn.setRequestMethod("GET");
         }
-      } finally {
-        conn.disconnect(); // Desconectar la conexión HTTP
-      }
 
-    } catch (Exception e) {
-      // Maneja cualquier excepción que ocurra durante la solicitud
-      e.printStackTrace();
-    }
+        // Usar try-with-resources para asegurar el cierre de BufferedReader
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
+          // Parsear la respuesta en un JsonObject
+          JsonObject json = JsonParser.parseReader(in).getAsJsonObject();
+
+          // Verifica si el JSON tiene la información del país
+          if (json.has("country")) {
+            String country = json.get("country").getAsString();
+            String countryCode = json.get("countryCode").getAsString();
+
+            // Determina el idioma según el código del país
+            String language = switch (countryCode) {
+              case "AR", "ES" -> "es";
+              case "US", "GB", "AU" -> "en";
+              default -> "en"; // Idioma por defecto
+            };
+
+            // Crea y almacena la información del usuario
+            UserInfo userInfo = new UserInfo(country, countryCode, language);
+            playerCountry.put(player.getUuid(), userInfo);
+          }
+        }
+
+      } catch (Exception e) {
+        CobbleUtils.LOGGER.error(CobbleDaycare.MOD_ID,
+          "Error while getting country info for player " + player.getName().getString() + ".");
+      }
+    });
   }
 
   public static UserInfo getCountry(ServerPlayerEntity player) {

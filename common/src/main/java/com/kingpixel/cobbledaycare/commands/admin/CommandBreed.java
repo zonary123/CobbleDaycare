@@ -29,28 +29,32 @@ public class CommandBreed {
   public static void register(CommandDispatcher<ServerCommandSource> dispatcher,
                               LiteralArgumentBuilder<ServerCommandSource> base) {
     dispatcher.register(
-      base.then(
-        CommandManager.argument("male", PartySlotArgumentType.Companion.partySlot())
-          .then(
-            CommandManager.argument("female", PartySlotArgumentType.Companion.partySlot())
-              .executes(context -> {
-                  var player = context.getSource().getPlayer();
-                  return breed(context, player);
-                }
-              ).then(
-                CommandManager.argument("player", EntityArgumentType.players())
-                  .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.breed.other",
-                    "cobbledaycare.admin"), 4))
-                  .executes(context -> {
-                    var players = EntityArgumentType.getPlayers(context, "player");
-                    for (ServerPlayerEntity player : players) {
-                      breed(context, player);
-                    }
-                    return 1;
-                  })
-              )
-          )
-      )
+      base
+        .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.breed.base", "cobbledaycare" +
+            ".admin"),
+          4))
+        .then(
+          CommandManager.argument("male", PartySlotArgumentType.Companion.partySlot())
+            .then(
+              CommandManager.argument("female", PartySlotArgumentType.Companion.partySlot())
+                .executes(context -> {
+                    var player = context.getSource().getPlayer();
+                    return breed(context, player);
+                  }
+                ).then(
+                  CommandManager.argument("player", EntityArgumentType.players())
+                    .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.breed.other",
+                      "cobbledaycare.admin"), 4))
+                    .executes(context -> {
+                      var players = EntityArgumentType.getPlayers(context, "player");
+                      for (ServerPlayerEntity player : players) {
+                        breed(context, player);
+                      }
+                      return 1;
+                    })
+                )
+            )
+        )
     );
   }
 
