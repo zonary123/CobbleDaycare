@@ -20,7 +20,8 @@ public class CommandTree {
   public static void register(CommandDispatcher<ServerCommandSource> dispatcher, CommandRegistryAccess registry) {
     for (String command : CobbleDaycare.config.getCommands()) {
       var base = CommandManager.literal(command)
-        .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.user", "cobbledaycare.admin"),
+        .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.user",
+            "cobbledaycare.admin"),
           4));
 
       CommandReload.register(dispatcher, base);
@@ -54,7 +55,7 @@ public class CommandTree {
 
     if (!CobbleDaycare.config.getCommandEggInfo().isEmpty()) {
       CommandEggInfo.register(dispatcher, CommandManager.literal(CobbleDaycare.config.getCommandEggInfo())
-        .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.egginfo", "cobbledaycare" +
+        .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.egginfo.base", "cobbledaycare" +
             ".admin"),
           4)));
     }

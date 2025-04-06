@@ -48,6 +48,10 @@ public class Plot {
     return pokemon.getForm().getEggGroups().contains(EggGroup.UNDISCOVERED) || CobbleDaycare.config.getBlackList().isBlackListed(pokemon);
   }
 
+  public static String plotPermission(int i) {
+    return "cobbledaycare.plot." + (i + 1);
+  }
+
   private boolean isDitto(Pokemon pokemon) {
     if (pokemon == null) return false;
     return pokemon.getForm().getEggGroups().contains(EggGroup.DITTO);
@@ -88,7 +92,6 @@ public class Plot {
   public boolean hasCooldownToOpen(ServerPlayerEntity player) {
     return canOpen > System.currentTimeMillis();
   }
-
 
   private void setTime(ServerPlayerEntity player) {
     if (hasTwoParents()) {
@@ -166,7 +169,7 @@ public class Plot {
     int limit = 1;
     for (Map.Entry<String, Integer> limitEgg : CobbleDaycare.config.getLimitEggs().entrySet()) {
       if (limit > limitEgg.getValue()) continue;
-      if (PermissionApi.hasPermission(player, limitEgg.getKey(), 4)) {
+      if (PermissionApi.hasPermission(player, List.of(limitEgg.getKey(), "cobbleutils.breeding." + limitEgg), 4)) {
         limit = limitEgg.getValue();
       }
     }

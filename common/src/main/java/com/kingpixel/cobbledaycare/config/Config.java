@@ -96,9 +96,9 @@ public class Config {
     this.cooldownToOpenMenus = 3;
     this.cooldown = 30;
     this.cooldowns = Map.of(
-      "group.vip", 15,
-      "group.legendary", 10,
-      "group.master", 5
+      "cooldown.vip", 15,
+      "cooldown.legendary", 10,
+      "cooldown.master", 5
     );
     this.ticksToWalking = 20;
     this.slotPlots = new ArrayList<>();
@@ -109,10 +109,10 @@ public class Config {
     this.raritySpawnEgg = 2048;
     this.defaultCooldownBreed = 60;
     this.cooldownsBreed = new HashMap<>();
-    this.cooldownsBreed.put("group.vip", 30);
+    this.cooldownsBreed.put("cooldown.vip", 30);
     this.defaultCooldownHatch = 60;
     this.cooldownsHatch = new HashMap<>();
-    this.cooldownsHatch.put("group.vip", 30);
+    this.cooldownsHatch.put("cooldown.vip", 30);
     this.whitelist = new ArrayList<>();
     this.dobbleDittoFilter = new FilterPokemons();
 

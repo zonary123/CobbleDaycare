@@ -1,11 +1,13 @@
 package com.kingpixel.cobbledaycare.migrate;
 
 import com.cobblemon.mod.common.pokemon.Pokemon;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.kingpixel.cobbledaycare.models.Plot;
+import com.kingpixel.cobbleutils.CobbleUtils;
+import com.mojang.serialization.JsonOps;
 import lombok.Getter;
 import lombok.Setter;
-import net.minecraft.registry.DynamicRegistryManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,17 +29,27 @@ public class OldPlot {
 
   public Plot toNewPlot() {
     Plot plot = new Plot();
-    plot.setMale(male != null ? Pokemon.Companion.loadFromJSON(DynamicRegistryManager.EMPTY, male) : null);
-    plot.setFemale(female != null ? Pokemon.Companion.loadFromJSON(DynamicRegistryManager.EMPTY, female) : null);
+    plot.setMale(male != null ? getPokemon(male) : null);
+    plot.setFemale(female != null ? getPokemon(female) : null);
     List<Pokemon> eggList = new ArrayList<>();
     for (JsonObject egg : eggs) {
-      eggList.add(Pokemon.Companion.loadFromJSON(DynamicRegistryManager.EMPTY, egg));
+      eggList.add(getPokemon(egg));
     }
     plot.setEggs(eggList);
     plot.setTimeToHatch(cooldown);
     return plot;
   }
 
+  private Pokemon getPokemon(JsonElement json) {
+    Pokemon pokemon = null;
+    try {
+      pokemon = Pokemon.getCODEC().decode(JsonOps.INSTANCE, json).getOrThrow().getFirst();
+      if (pokemon == null) CobbleUtils.LOGGER.info("Error deserializing pokemon");
+    } catch (Exception e) {
+      CobbleUtils.LOGGER.info("Error deserializing pokemon: " + e.getMessage());
+    }
+    return pokemon;
+  }
 
 }
 

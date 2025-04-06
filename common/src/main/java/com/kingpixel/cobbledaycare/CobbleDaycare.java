@@ -86,6 +86,7 @@ public class CobbleDaycare {
           fixPlayer(player);
         }
       })
+      .infinite()
       .interval(cooldown)
       .build();
   }
@@ -160,7 +161,7 @@ public class CobbleDaycare {
       server = minecraftServer;
       load();
       for (int i = 0; i < config.getSlotPlots().size(); i++) {
-        PermissionApi.hasPermission(server.getCommandSource(), "cobbledaycare.plot." + i + 1, 4);
+        PermissionApi.hasPermission(server.getCommandSource(), Plot.plotPermission(i), 4);
       }
       CustomPokemonProperty.Companion.register(BreedablePropertyType.getInstance());
     });
@@ -172,7 +173,7 @@ public class CobbleDaycare {
       int numPlots = 0;
       int size = CobbleDaycare.config.getSlotPlots().size();
       for (int i = 0; i < size; i++) {
-        if (PermissionApi.hasPermission(player, "cobbledaycare.plot." + (i + 1), 4)) {
+        if (PermissionApi.hasPermission(player, Plot.plotPermission(i), 4)) {
           numPlots = i + 1;
         }
       }

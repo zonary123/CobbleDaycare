@@ -93,7 +93,7 @@ public class PrincipalMenu {
       int numPlots = 0;
       int size = CobbleDaycare.config.getSlotPlots().size();
       for (int i = 0; i < size; i++) {
-        if (PermissionApi.hasPermission(player, "cobbledaycare.plot." + (i + 1), 4)) {
+        if (PermissionApi.hasPermission(player, Plot.plotPermission(i), 4)) {
           numPlots = i + 1;
         }
       }

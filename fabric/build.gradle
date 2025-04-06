@@ -43,6 +43,8 @@ dependencies {
 
     modImplementation("com.cobblemon:fabric:${property("cobblemon_version")}")
 
+    shadowCommon("org.reflections:reflections:0.10.2")
+
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
     shadowCommon(project(path: ":common", configuration: "transformProductionFabric")) { transitive false }
 }
@@ -52,17 +54,17 @@ processResources {
 
     filesMatching("fabric.mod.json") {
         expand Map.of(
-                        "mod_name", project.property("mod_name"),
-                        "mod_id", project.property("mod_id"),
-                        "mod_version", project.property("mod_version"),
-                        "mod_description", project.property("mod_description"),
-                        "author", project.property("author"),
-                        "repository", project.property("repository"),
-                        "license", project.property("license"),
-                        "mod_icon", project.property("mod_icon"),
-                        "environment", project.property("environment"),
-                        "supported_minecraft_versions", project.property("supported_minecraft_versions")
-                )
+                "mod_name", project.property("mod_name"),
+                "mod_id", project.property("mod_id"),
+                "mod_version", project.property("mod_version"),
+                "mod_description", project.property("mod_description"),
+                "author", project.property("author"),
+                "repository", project.property("repository"),
+                "license", project.property("license"),
+                "mod_icon", project.property("mod_icon"),
+                "environment", project.property("environment"),
+                "supported_minecraft_versions", project.property("supported_minecraft_versions")
+        )
     }
 }
 
@@ -80,8 +82,6 @@ shadowJar {
     exclude("org/hamcrest/**/*")
     exclude("com/google/**/*")
     exclude("org/slf4j/**")
-
-    
 
 
     configurations = [project.configurations.shadowCommon]
