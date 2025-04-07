@@ -129,8 +129,12 @@ public class DaycareIvs extends Mechanics {
       int random = getMaxIvsRandom() + 1;
       if (random < 0 || random > 31) random = 31;
       int iv = Utils.RANDOM.nextInt(random + 1);
+      if (CobbleDaycare.config.isShowIvs()) {
+        egg.getIvs().set(stat, iv);
+      } else {
+        egg.getIvs().set(stat, 0);
+      }
       egg.getPersistentData().putInt(stat.getShowdownId(), iv);
-      egg.getIvs().set(stat, iv);
     });
   }
 
