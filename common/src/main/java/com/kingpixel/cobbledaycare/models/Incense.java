@@ -89,6 +89,14 @@ public class Incense extends ItemModel {
         "happiny"
       )
     )));
+    incenses.add(
+      new Incense("waveincense", "Wave Incense", List.of(""), 9, List.of(
+        new PokemonIncense(
+          "surskit",
+          "masquerain"
+        )
+      ))
+    );
 
     return incenses;
   }

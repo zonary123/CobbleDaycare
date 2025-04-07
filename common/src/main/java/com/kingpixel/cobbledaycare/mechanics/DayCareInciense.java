@@ -95,7 +95,7 @@ public class DayCareInciense extends Mechanics {
   }
 
   public Pokemon applyIncense(Pokemon pokemon) {
-    if (!isActive()) return pokemon;
+    if (!isActive()) return null;
     String species;
     for (Incense incense : incenses) {
       species = incense.getChild(pokemon);

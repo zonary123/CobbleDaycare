@@ -18,47 +18,51 @@ import java.util.List;
  */
 public class CommandTree {
   public static void register(CommandDispatcher<ServerCommandSource> dispatcher, CommandRegistryAccess registry) {
-    for (String command : CobbleDaycare.config.getCommands()) {
-      var base = CommandManager.literal(command)
-        .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.user",
-            "cobbledaycare.admin"),
-          4));
+    try {
+      for (String command : CobbleDaycare.config.getCommands()) {
+        var base = CommandManager.literal(command)
+          .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.user",
+              "cobbledaycare.admin"),
+            4));
+        if (!CobbleDaycare.config.getCommandEggInfo().isEmpty()) {
+          CommandEggInfo.register(dispatcher, CommandManager.literal(CobbleDaycare.config.getCommandEggInfo()));
+        }
 
-      CommandReload.register(dispatcher, base);
-      CommandIncense.register(dispatcher, base);
-      CommandBoosterSteps.register(dispatcher, base);
-      CommandBreedable.register(dispatcher, base);
-      CommandEgg.register(dispatcher, base);
+        CommandHatch.register(dispatcher, CommandManager.literal("hatch"));
+        CommandBreed.register(dispatcher, CommandManager.literal("breed"));
+        
+        CommandReload.register(dispatcher, base);
+        CommandIncense.register(dispatcher, base);
+        CommandBoosterSteps.register(dispatcher, base);
+        CommandBreedable.register(dispatcher, base);
+        CommandEgg.register(dispatcher, base);
 
-      dispatcher.register(base
-        .executes(context -> {
-          if (context.getSource().isExecutedByPlayer()) {
-            ServerPlayerEntity player = context.getSource().getPlayer();
-            CobbleDaycare.language.getPrincipalMenu().open(player);
-          }
-          return 1;
-        }).then(
-          CommandManager.literal("other")
-            .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.admin", "cobbledaycare" +
-              ".other"), 4))
-            .then(
-              CommandManager.argument("player", EntityArgumentType.player())
-                .executes(context -> {
-                  ServerPlayerEntity player = EntityArgumentType.getPlayer(context, "player");
-                  CobbleDaycare.language.getPrincipalMenu().open(player);
-                  return 1;
-                })
-            )
-        )
-      );
+        dispatcher.register(base
+          .executes(context -> {
+            if (context.getSource().isExecutedByPlayer()) {
+              ServerPlayerEntity player = context.getSource().getPlayer();
+              CobbleDaycare.language.getPrincipalMenu().open(player);
+            }
+            return 1;
+          }).then(
+            CommandManager.literal("other")
+              .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.admin", "cobbledaycare" +
+                ".other"), 4))
+              .then(
+                CommandManager.argument("player", EntityArgumentType.player())
+                  .executes(context -> {
+                    ServerPlayerEntity player = EntityArgumentType.getPlayer(context, "player");
+                    CobbleDaycare.language.getPrincipalMenu().open(player);
+                    return 1;
+                  })
+              )
+          )
+        );
+      }
+
+    } catch (Exception e) {
+      e.printStackTrace();
     }
-
-    if (!CobbleDaycare.config.getCommandEggInfo().isEmpty()) {
-      CommandEggInfo.register(dispatcher, CommandManager.literal(CobbleDaycare.config.getCommandEggInfo()));
-    }
-
-    CommandHatch.register(dispatcher, CommandManager.literal("hatch"));
-    CommandBreed.register(dispatcher, CommandManager.literal("breed"));
   }
 
 }

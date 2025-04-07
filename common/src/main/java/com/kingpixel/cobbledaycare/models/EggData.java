@@ -33,6 +33,7 @@ public class EggData {
   private int level;
   private double steps;
   private int cycles;
+  private String gender;
   private String ability;
   private String size;
   private String form;
@@ -68,6 +69,7 @@ public class EggData {
     eggData.setCountry(nbt.getString(DayCareCountry.TAG));
     eggData.setAbility(nbt.getString(DayCareAbility.TAG));
     eggData.setForm(nbt.getString(DayCareForm.TAG));
+    eggData.setGender(nbt.getString(DayCarePokemon.TAG_GENDER));
     return eggData;
   }
 

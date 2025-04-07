@@ -98,8 +98,7 @@ public class DaycareIvs extends Mechanics {
   @Override public void createEgg(ServerPlayerEntity player, Pokemon pokemon, Pokemon egg) {
     stats.forEach(stat -> {
       int iv = pokemon.getIvs().getOrDefault(stat);
-      egg.getPersistentData().putInt(stat.getShowdownId(), iv);
-      egg.getIvs().set(stat, iv);
+      applyData(egg, stat, iv);
     });
   }
 
@@ -129,13 +128,17 @@ public class DaycareIvs extends Mechanics {
       int random = getMaxIvsRandom() + 1;
       if (random < 0 || random > 31) random = 31;
       int iv = Utils.RANDOM.nextInt(random + 1);
-      if (CobbleDaycare.config.isShowIvs()) {
-        egg.getIvs().set(stat, iv);
-      } else {
-        egg.getIvs().set(stat, 0);
-      }
-      egg.getPersistentData().putInt(stat.getShowdownId(), iv);
+      applyData(egg, stat, iv);
     });
+  }
+
+  private void applyData(Pokemon egg, Stats stat, int iv) {
+    if (CobbleDaycare.config.isShowIvs()) {
+      egg.getIvs().set(stat, iv);
+    } else {
+      egg.getIvs().set(stat, 0);
+    }
+    egg.getPersistentData().putInt(stat.getShowdownId(), iv);
   }
 
   private boolean powerItem(Pokemon pokemon, Pokemon egg, List<Stats> cloneStats) {
@@ -165,12 +168,7 @@ public class DaycareIvs extends Mechanics {
 
   private void applyIvs(Pokemon pokemon, Pokemon egg, Stats stat, List<Stats> cloneStats) {
     int iv = pokemon.getIvs().getOrDefault(stat);
-    if (CobbleDaycare.config.isShowIvs()) {
-      egg.getIvs().set(stat, iv);
-    } else {
-      egg.getIvs().set(stat, 0);
-    }
-    egg.getPersistentData().putInt(stat.getShowdownId(), iv);
+    applyData(egg, stat, iv);
     cloneStats.remove(stat);
   }
 }
