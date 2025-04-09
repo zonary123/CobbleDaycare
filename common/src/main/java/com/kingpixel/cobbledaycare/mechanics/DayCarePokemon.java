@@ -11,8 +11,10 @@ import com.kingpixel.cobbledaycare.models.EggBuilder;
 import com.kingpixel.cobbledaycare.models.PokemonRareMecanic;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.Model.PokemonChance;
+import com.kingpixel.cobbleutils.util.PokemonUtils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
 
@@ -129,6 +131,15 @@ public class DayCarePokemon extends Mechanics {
     egg.getPersistentData().putDouble(TAG_REFERENCE_STEPS, CobbleDaycare.config.getSteps(pokemon));
     egg.getPersistentData().putString(TAG_GENDER, pokemon.getGender().name());
     egg.getPersistentData().putInt(TAG_CYCLES, pokemon.getSpecies().getEggCycles());
+  }
+
+  @Override public String getEggInfo(String s, NbtCompound nbt) {
+    return s
+      .replace("%steps%", String.format("%.2f", nbt.getDouble(TAG_STEPS)))
+      .replace("%reference_steps%", String.format("%.2f", nbt.getDouble(TAG_REFERENCE_STEPS)))
+      .replace("%cycles%", String.valueOf(nbt.getInt(TAG_CYCLES)))
+      .replace("%pokemon%", nbt.getString(TAG_POKEMON))
+      .replace("%gender%", PokemonUtils.getGenderTranslate(Gender.valueOf(nbt.getString(TAG_GENDER))));
   }
 
   @Override public void validateData() {

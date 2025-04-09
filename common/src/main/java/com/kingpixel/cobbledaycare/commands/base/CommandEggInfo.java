@@ -3,7 +3,7 @@ package com.kingpixel.cobbledaycare.commands.base;
 import com.cobblemon.mod.common.command.argument.PartySlotArgumentType;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
-import com.kingpixel.cobbledaycare.models.EggData;
+import com.kingpixel.cobbledaycare.mechanics.Mechanics;
 import com.kingpixel.cobbleutils.api.PermissionApi;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
 import com.kingpixel.cobbleutils.util.TypeMessage;
@@ -31,9 +31,19 @@ public class CommandEggInfo {
             .executes(context -> {
               if (context.getSource().isExecutedByPlayer()) {
                 ServerPlayerEntity player = context.getSource().getPlayer();
-                Pokemon pokemon = PartySlotArgumentType.Companion.getPokemon(context, "slot");
-                if (pokemon.getSpecies().showdownId().equals("egg")) {
-                  EggData.from(pokemon).sendEggInfo(player);
+                Pokemon egg = PartySlotArgumentType.Companion.getPokemon(context, "slot");
+                if (egg.getSpecies().showdownId().equals("egg")) {
+                  String message = CobbleDaycare.language.getEggInfo();
+                  var nbt = egg.getPersistentData();
+                  for (Mechanics mechanic : CobbleDaycare.mechanics) {
+                    message = mechanic.getEggInfo(message, nbt);
+                  }
+                  PlayerUtils.sendMessage(
+                    player,
+                    message,
+                    CobbleDaycare.language.getPrefix(),
+                    TypeMessage.CHAT
+                  );
                 } else {
                   PlayerUtils.sendMessage(
                     player,

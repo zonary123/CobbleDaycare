@@ -1,6 +1,8 @@
 package com.kingpixel.cobbledaycare.config;
 
+import com.cobblemon.mod.common.api.pokemon.stats.Stats;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
+import com.kingpixel.cobbledaycare.mechanics.DaycareIvs;
 import com.kingpixel.cobbledaycare.ui.PlotMenu;
 import com.kingpixel.cobbledaycare.ui.PrincipalMenu;
 import com.kingpixel.cobbledaycare.ui.ProfileMenu;
@@ -20,6 +22,7 @@ import java.util.concurrent.CompletableFuture;
 public class Language {
   private String prefix;
   private String eggName;
+  private String eggInfo;
   private String messageReload;
   private String messageCooldownBreed;
   private String messageCooldownHatch;
@@ -36,6 +39,22 @@ public class Language {
 
   public Language() {
     this.prefix = "&7[&6CobbleDaycare&7] ";
+    StringBuilder eggInfoBuilder = new StringBuilder();
+    eggInfoBuilder.append("&7Pokemon: %pokemon% %form% %gender%\n")
+      .append("&7Steps: %steps%/%cycles%\n")
+      .append("&7Shiny: %shiny%\n");
+
+    for (Stats stat : DaycareIvs.stats) {
+      eggInfoBuilder.append("&7").append(stat.name()).append(": %iv_")
+        .append(stat.getShowdownId()).append("%\n");
+    }
+
+    eggInfoBuilder.append("&7Ability: %ability%\n")
+      .append("&7Nature: %nature%\n")
+      .append("&7Egg Moves: %eggmoves%\n")
+      .append("&7Shiny: %shiny%\n");
+
+    this.eggInfo = eggInfoBuilder.toString();
     this.eggName = "%steps%/%cycles% %pokemon%";
     this.messageReload = "%prefix% &aReloaded";
     this.messageCooldownBreed = "%prefix% &7Cooldown to breed %cooldown%";

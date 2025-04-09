@@ -5,6 +5,7 @@ import com.cobblemon.mod.common.pokeball.PokeBall;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.models.EggBuilder;
 import com.kingpixel.cobbleutils.CobbleUtils;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
 
@@ -13,10 +14,20 @@ import net.minecraft.util.Identifier;
  */
 public class DayCarePokeBall extends Mechanics {
   public static final String TAG = "pokeball";
+  private boolean viewPokeball;
+
+  public DayCarePokeBall() {
+    this.viewPokeball = true;
+  }
 
   @Override
   public void applyEgg(EggBuilder builder) {
     Identifier id = builder.getFemale().getCaughtBall().getName();
+    PokeBall pokeBall = PokeBalls.INSTANCE.getPokeBall(id);
+    if (pokeBall != null) {
+      if (viewPokeball)
+        builder.getEgg().setCaughtBall(pokeBall);
+    }
     builder.getEgg().getPersistentData().putString(TAG, id.getNamespace() + ":" + id.getPath());
   }
 
@@ -45,6 +56,10 @@ public class DayCarePokeBall extends Mechanics {
   @Override public void createEgg(ServerPlayerEntity player, Pokemon pokemon, Pokemon egg) {
     Identifier id = pokemon.getCaughtBall().getName();
     egg.getPersistentData().putString(TAG, id.getNamespace() + ":" + id.getPath());
+  }
+
+  @Override public String getEggInfo(String s, NbtCompound nbt) {
+    return s.replace("%pokeball%", nbt.getString(TAG));
   }
 
   @Override public void validateData() {

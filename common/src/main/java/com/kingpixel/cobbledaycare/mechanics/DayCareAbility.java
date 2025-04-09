@@ -1,5 +1,6 @@
 package com.kingpixel.cobbledaycare.mechanics;
 
+import com.cobblemon.mod.common.api.Priority;
 import com.cobblemon.mod.common.api.abilities.Abilities;
 import com.cobblemon.mod.common.api.abilities.Ability;
 import com.cobblemon.mod.common.api.abilities.AbilityTemplate;
@@ -13,6 +14,7 @@ import com.kingpixel.cobbleutils.util.PokemonUtils;
 import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 /**
@@ -86,6 +88,14 @@ public class DayCareAbility extends Mechanics {
     if (CobbleDaycare.config.isDebug()) {
       CobbleUtils.LOGGER.info("Ability: " + ability + " applied to " + pokemon.getSpecies().showdownId());
     }
+  }
+
+  @Override public String getEggInfo(String s, NbtCompound nbt) {
+    AbilityTemplate abilityTemplate = Abilities.INSTANCE.get(nbt.getString(TAG));
+    if (abilityTemplate == null) return s.replace("%ability%", "");
+    Ability ability = abilityTemplate.create(false, Priority.NORMAL);
+    return s.replace("%ability%",
+      PokemonUtils.getAbilityTranslate(ability));
   }
 
   @Override public void validateData() {

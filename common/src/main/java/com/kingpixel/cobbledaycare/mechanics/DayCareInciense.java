@@ -10,6 +10,7 @@ import com.kingpixel.cobbleutils.api.ItemsMod;
 import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.io.File;
@@ -124,5 +125,9 @@ public class DayCareInciense extends Mechanics {
   }
 
   @Override public void createEgg(ServerPlayerEntity player, Pokemon pokemon, Pokemon egg) {
+  }
+
+  @Override public String getEggInfo(String s, NbtCompound nbt) {
+    return s;
   }
 }

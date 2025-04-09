@@ -6,7 +6,9 @@ import com.cobblemon.mod.common.item.CobblemonItem;
 import com.cobblemon.mod.common.pokemon.Nature;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.models.EggBuilder;
+import com.kingpixel.cobbleutils.util.PokemonUtils;
 import com.kingpixel.cobbleutils.util.Utils;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.List;
@@ -15,7 +17,7 @@ import java.util.List;
  * @author Carlos Varas Alonso - 31/01/2025 0:57
  */
 public class DayCareNature extends Mechanics {
-  public static final String TAG_NATURE = "Nature";
+  public static final String TAG = "Nature";
   private float percentageEverstone;
 
   public DayCareNature() {
@@ -41,7 +43,7 @@ public class DayCareNature extends Mechanics {
   }
 
   @Override public void applyHatch(ServerPlayerEntity player, Pokemon egg) {
-    String s = egg.getPersistentData().getString(TAG_NATURE);
+    String s = egg.getPersistentData().getString(TAG);
     if (!s.isEmpty()) {
       Nature nature = Natures.INSTANCE.getNature(s);
       if (nature == null) nature = Natures.INSTANCE.getRandomNature();
@@ -49,11 +51,16 @@ public class DayCareNature extends Mechanics {
     } else {
       egg.setNature(Natures.INSTANCE.getRandomNature());
     }
-    egg.getPersistentData().remove(TAG_NATURE);
+    egg.getPersistentData().remove(TAG);
   }
 
   @Override public void createEgg(ServerPlayerEntity player, Pokemon pokemon, Pokemon egg) {
     applyNature(pokemon.getNature(), egg);
+  }
+
+  @Override public String getEggInfo(String s, NbtCompound nbt) {
+    Nature nature = Natures.INSTANCE.getNature(s);
+    return s.replace("%nature%", PokemonUtils.getNatureTranslate(nature));
   }
 
   @Override public void validateData() {
@@ -79,6 +86,6 @@ public class DayCareNature extends Mechanics {
 
   private void applyNature(Nature nature, Pokemon egg) {
     egg.setNature(nature);
-    egg.getPersistentData().putString(TAG_NATURE, nature.getName().getPath());
+    egg.getPersistentData().putString(TAG, nature.getName().getPath());
   }
 }

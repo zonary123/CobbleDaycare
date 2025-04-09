@@ -9,6 +9,7 @@ import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.ArrayList;
@@ -100,6 +101,14 @@ public class DaycareIvs extends Mechanics {
       int iv = pokemon.getIvs().getOrDefault(stat);
       applyData(egg, stat, iv);
     });
+  }
+
+  @Override public String getEggInfo(String s, NbtCompound nbt) {
+    for (Stats stat : stats) {
+      s = s.replace("%iv_" + stat.getShowdownId() + "%",
+        String.valueOf(nbt.getInt(stat.getShowdownId())));
+    }
+    return s;
   }
 
   @Override public void validateData() {

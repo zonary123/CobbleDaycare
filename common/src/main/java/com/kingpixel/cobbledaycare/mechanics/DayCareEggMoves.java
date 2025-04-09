@@ -11,6 +11,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.kingpixel.cobbledaycare.models.EggBuilder;
 import com.kingpixel.cobbleutils.CobbleUtils;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.ArrayList;
@@ -79,6 +80,10 @@ public class DayCareEggMoves extends Mechanics {
 
   @Override public void createEgg(ServerPlayerEntity player, Pokemon pokemon, Pokemon egg) {
 
+  }
+
+  @Override public String getEggInfo(String s, NbtCompound nbt) {
+    return s.replace("%eggmoves%", nbt.getString(TAG));
   }
 
   @Override public void validateData() {

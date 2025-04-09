@@ -1,36 +1,94 @@
 package com.kingpixel.cobbledaycare.database;
 
+import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.models.UserInformation;
+import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.Model.DataBaseConfig;
+import com.kingpixel.cobbleutils.bson.Document;
+import com.kingpixel.cobbleutils.bson.conversions.Bson;
+import com.kingpixel.cobbleutils.mongodb.client.MongoClient;
+import com.kingpixel.cobbleutils.mongodb.client.MongoClients;
+import com.kingpixel.cobbleutils.mongodb.client.MongoCollection;
+import com.kingpixel.cobbleutils.mongodb.client.MongoDatabase;
+import com.kingpixel.cobbleutils.mongodb.client.model.ReplaceOptions;
 import net.minecraft.server.network.ServerPlayerEntity;
+
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+
+import static com.kingpixel.cobbleutils.mongodb.client.model.Filters.eq;
 
 public class MongoDBClient implements DatabaseClient {
 
+  private MongoClient mongoClient;
+  private MongoDatabase database;
+  private MongoCollection<Document> collection;
+
   public MongoDBClient(DataBaseConfig config) {
+    connect(config);
   }
 
-  @Override public void connect(DataBaseConfig config) {
-
+  @Override
+  public void connect(DataBaseConfig config) {
+    mongoClient = MongoClients.create(config.getUrl());
+    database = mongoClient.getDatabase(config.getDatabase());
+    collection = database.getCollection("user_information");
   }
 
-  @Override public void disconnect() {
-
+  @Override
+  public void disconnect() {
+    if (mongoClient != null) {
+      mongoClient.close();
+    }
   }
 
-  @Override public void save() {
-
+  @Override
+  public void save() {
+    // Implementación opcional si necesitas guardar datos en lote
   }
 
-  @Override public UserInformation getUserInformation(ServerPlayerEntity player) {
-    return null;
+  @Override
+  public UserInformation getUserInformation(ServerPlayerEntity player) {
+    UUID uuid = player.getUuid();
+    UserInformation userInformation = DatabaseClientFactory.userPlots.get(uuid);
+    if (userInformation != null) return userInformation;
+    Document document = collection.find(eq("playerUUID", uuid.toString())).first();
+    if (document != null) {
+      userInformation = UserInformation.fromDocument(document);
+      return userInformation;
+    } else {
+      userInformation = new UserInformation(player);
+      updateUserInformation(player, userInformation);
+      return userInformation;
+    }
   }
 
-  @Override public UserInformation updateUserInformation(ServerPlayerEntity player, UserInformation userInformation) {
-    return null;
+  @Override
+  public void updateUserInformation(ServerPlayerEntity player, UserInformation userInformation) {
+    CompletableFuture.runAsync(() -> {
+        try {
+          if (player == null || userInformation == null) return;
+          UUID uuid = player.getUuid();
+          Bson filter = eq("playerUUID", uuid.toString());
+          Document document = userInformation.toDocument();
+          collection.replaceOne(filter, document, new ReplaceOptions().upsert(true));
+          // Actualiza el Map local
+          DatabaseClientFactory.userPlots.put(uuid, userInformation);
+        } catch (Exception e) {
+          e.printStackTrace(); // Manejo básico de errores
+        }
+      })
+      .orTimeout(5, TimeUnit.SECONDS)
+      .exceptionally(e -> {
+        CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Error updating user information: " + e);
+        return null;
+      });
   }
 
-  @Override public void removeIfNecessary(ServerPlayerEntity player) {
-    DatabaseClientFactory.userPlots.remove(player.getUuid());
+  @Override
+  public void removeIfNecessary(ServerPlayerEntity player) {
+    UUID uuid = player.getUuid();
+    DatabaseClientFactory.userPlots.remove(uuid);
   }
-
 }

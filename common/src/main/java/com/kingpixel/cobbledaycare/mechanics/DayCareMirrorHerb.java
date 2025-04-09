@@ -9,6 +9,7 @@ import com.kingpixel.cobbledaycare.models.EggBuilder;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.List;
@@ -87,6 +88,10 @@ public class DayCareMirrorHerb extends Mechanics {
 
   @Override public void createEgg(ServerPlayerEntity player, Pokemon pokemon, Pokemon egg) {
 
+  }
+
+  @Override public String getEggInfo(String s, NbtCompound nbt) {
+    return s;
   }
 
   @Override public void validateData() {

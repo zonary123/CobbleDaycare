@@ -6,6 +6,7 @@ import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.models.EggBuilder;
 import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Data;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.io.File;
@@ -36,6 +37,8 @@ public abstract class Mechanics {
   public abstract void applyHatch(ServerPlayerEntity player, Pokemon egg);
 
   public abstract void createEgg(ServerPlayerEntity player, Pokemon pokemon, Pokemon egg);
+
+  public abstract String getEggInfo(String s, NbtCompound nbt);
 
   public <T> T readFromFile(Class<T> clazz) {
     try {

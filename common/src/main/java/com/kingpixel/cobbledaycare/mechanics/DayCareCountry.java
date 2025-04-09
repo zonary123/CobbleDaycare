@@ -3,6 +3,7 @@ package com.kingpixel.cobbledaycare.mechanics;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.models.EggBuilder;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 /**
@@ -23,6 +24,10 @@ public class DayCareCountry extends Mechanics {
 
   @Override public void createEgg(ServerPlayerEntity player, Pokemon pokemon, Pokemon egg) {
 
+  }
+
+  @Override public String getEggInfo(String s, NbtCompound nbt) {
+    return s.replace("%country%", nbt.getString(TAG));
   }
 
   @Override public void validateData() {

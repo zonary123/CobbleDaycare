@@ -4,7 +4,9 @@ import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbleutils.api.PermissionApi;
+import com.kingpixel.cobbleutils.bson.Document;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
+import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -61,6 +63,15 @@ public class UserInformation {
     this.plots = new ArrayList<>();
   }
 
+  public static UserInformation fromDocument(Document document) {
+    return Utils.newWithoutSpacingGson().fromJson(document.toJson(), UserInformation.class);
+  }
+
+  public Document toDocument() {
+    String json = Utils.newWithoutSpacingGson().toJson(this);
+    return Document.parse(json);
+  }
+
   public double getActualMultiplier() {
     return Math.max(CobbleDaycare.config.getMultiplierSteps(), multiplierSteps);
   }
@@ -114,7 +125,7 @@ public class UserInformation {
         for (Pokemon egg : plot.getEggs()) {
           if (egg != null) party.add(egg);
         }
-        
+
         // Remove the excess plot
         plots.remove(i);
         update = true;
@@ -123,4 +134,6 @@ public class UserInformation {
 
     return update;
   }
+
+
 }

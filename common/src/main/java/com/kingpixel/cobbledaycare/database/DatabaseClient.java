@@ -16,7 +16,7 @@ public interface DatabaseClient {
 
   UserInformation getUserInformation(ServerPlayerEntity player);
 
-  UserInformation updateUserInformation(ServerPlayerEntity player, UserInformation userInformation);
+  void updateUserInformation(ServerPlayerEntity player, UserInformation userInformation);
 
   void removeIfNecessary(ServerPlayerEntity player);
 }

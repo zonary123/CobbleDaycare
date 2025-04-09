@@ -7,6 +7,7 @@ import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 /**
@@ -83,6 +84,10 @@ public class DayCareShiny extends Mechanics {
   @Override public void createEgg(ServerPlayerEntity player, Pokemon pokemon, Pokemon egg) {
     egg.setShiny(pokemon.getShiny());
     egg.getPersistentData().putBoolean(TAG, pokemon.getShiny());
+  }
+
+  @Override public String getEggInfo(String s, NbtCompound nbt) {
+    return s.replace("%shiny%", nbt.getBoolean(TAG) ? CobbleUtils.language.getYes() : CobbleUtils.language.getNo());
   }
 
   @Override public void validateData() {

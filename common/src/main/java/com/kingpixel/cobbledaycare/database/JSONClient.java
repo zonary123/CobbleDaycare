@@ -64,14 +64,13 @@ public class JSONClient implements DatabaseClient {
   }
 
 
-  @Override public UserInformation updateUserInformation(ServerPlayerEntity player, UserInformation userInformation) {
-    if (player == null || userInformation == null) return null;
+  @Override public void updateUserInformation(ServerPlayerEntity player, UserInformation userInformation) {
+    if (player == null || userInformation == null) return;
     DatabaseClientFactory.userPlots.put(player.getUuid(), userInformation);
-    Utils.writeFileSync(
+    Utils.writeFileAsync(
       Utils.getAbsolutePath(CobbleDaycare.PATH_DATA + player.getUuid().toString() + ".json"),
       Utils.newWithoutSpacingGson().toJson(userInformation)
     );
-    return userInformation;
   }
 
   @Override public void removeIfNecessary(ServerPlayerEntity player) {
