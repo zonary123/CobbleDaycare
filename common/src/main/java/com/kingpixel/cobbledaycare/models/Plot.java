@@ -241,7 +241,11 @@ public class Plot {
               TypeMessage.CHAT
             );
           }
-          eggs.add(egg);
+          if (PermissionApi.hasPermission(player, List.of("cobbleutils.autoclaim", "cobbleutils.admin"), 2)) {
+            Cobblemon.INSTANCE.getStorage().getParty(player).add(egg);
+          } else {
+            eggs.add(egg);
+          }
           update = true;
           setTime(player);
         }

@@ -21,23 +21,54 @@ import java.io.IOException;
 public abstract class Mechanics {
   private boolean active = true;
 
+  /*
+   * This method is used to get the instance of the class that extends Mechanics.
+   * It reads the JSON file and returns the instance.
+   */
   public Mechanics getInstance() {
     return readFromFile(this.getClass());
   }
 
-
+  /*
+   * This method is used to validate the data of the class that extends Mechanics.
+   * It checks if the data is valid and throws an exception if it is not.
+   */
   public abstract void validateData();
 
+  /*
+   * This method is used to get the file name of the class that extends Mechanics.
+   * It returns the file name without the .json extension.
+   */
   public abstract String fileName();
 
+  /*
+   * This method is used to get the name of the class that extends Mechanics.
+   * It returns the class name without the package name.
+   */
   public abstract String replace(String text);
 
+  /*
+   * This method is used to apply the egg mechanics to the egg builder.
+   * It takes an EggBuilder object as a parameter and applies the mechanics to it.
+   */
   public abstract void applyEgg(EggBuilder eggBuilder);
 
+  /*
+   * This method is used to apply the hatch mechanics to the egg.
+   * It takes a ServerPlayerEntity object and a Pokemon object as parameters and applies the mechanics to it.
+   */
   public abstract void applyHatch(ServerPlayerEntity player, Pokemon egg);
 
+  /*
+   * This method is used to create an egg for the player.
+   * It takes a ServerPlayerEntity object, a Pokemon object, and an egg Pokemon object as parameters and creates the egg.
+   */
   public abstract void createEgg(ServerPlayerEntity player, Pokemon pokemon, Pokemon egg);
 
+  /*
+   * This method is used to get the egg info.
+   * It takes a String and an NbtCompound object as parameters and returns the egg info as a String.
+   */
   public abstract String getEggInfo(String s, NbtCompound nbt);
 
   public <T> T readFromFile(Class<T> clazz) {

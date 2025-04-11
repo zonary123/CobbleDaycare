@@ -32,6 +32,7 @@ public class Language {
   private String messageBanPokemon;
   private String messageCooldownOpenMenu;
   private String messageItNotEgg;
+  private String messageBreedable;
   private PrincipalMenu principalMenu;
   private PlotMenu plotMenu;
   private SelectPokemonMenu selectPokemonMenu;
@@ -65,6 +66,7 @@ public class Language {
     this.messageBanPokemon = "%prefix% &cThis pokemon %pokemon% %form% %item% is banned in the plot %plot%";
     this.messageCooldownOpenMenu = "%prefix% &7You must wait %cooldown% to open the menu again";
     this.messageItNotEgg = "%prefix% &cThis is not an egg";
+    this.messageBreedable = "%prefix% &7This pokemon %pokemon% %form% is now breedable: %breedable%";
     this.principalMenu = new PrincipalMenu();
     this.plotMenu = new PlotMenu();
     this.selectPokemonMenu = new SelectPokemonMenu();

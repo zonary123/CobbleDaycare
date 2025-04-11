@@ -70,7 +70,7 @@ public class Config {
     this.dobbleDitto = false;
     this.spawnEggWorld = true;
     this.allowElytra = true;
-    this.commands = List.of("daycare", "pokebreed", "breed");
+    this.commands = List.of("daycare");
     this.commandEggInfo = "egginfo";
     this.globalMultiplierSteps = false;
     this.multiplierAbilityAcceleration = 1.0;

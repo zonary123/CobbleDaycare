@@ -4,6 +4,7 @@ import com.cobblemon.mod.common.api.properties.CustomPokemonProperty;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
+import com.kingpixel.cobbleutils.Model.CobbleUtilsTags;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,11 +27,14 @@ public class BreedableProperty implements CustomPokemonProperty {
   }
 
   @Override public void apply(@NotNull PokemonEntity pokemonEntity) {
-    CobbleDaycare.setBreedable(pokemonEntity.getPokemon(), this.value);
+    var pokemon = pokemonEntity.getPokemon();
+    CobbleDaycare.setBreedable(pokemon, this.value);
+    pokemon.getPersistentData().putBoolean(CobbleUtilsTags.BREEDABLE_BUILDER_TAG, !this.value);
   }
 
   @Override public void apply(@NotNull Pokemon pokemon) {
     CobbleDaycare.setBreedable(pokemon, this.value);
+    pokemon.getPersistentData().putBoolean(CobbleUtilsTags.BREEDABLE_BUILDER_TAG, !this.value);
   }
 
 

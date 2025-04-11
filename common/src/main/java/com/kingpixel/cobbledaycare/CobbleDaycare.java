@@ -12,10 +12,7 @@ import com.kingpixel.cobbledaycare.commands.CommandTree;
 import com.kingpixel.cobbledaycare.config.Config;
 import com.kingpixel.cobbledaycare.config.Language;
 import com.kingpixel.cobbledaycare.database.DatabaseClientFactory;
-import com.kingpixel.cobbledaycare.mechanics.DayCareCountry;
-import com.kingpixel.cobbledaycare.mechanics.DayCareForm;
-import com.kingpixel.cobbledaycare.mechanics.DayCarePokemon;
-import com.kingpixel.cobbledaycare.mechanics.Mechanics;
+import com.kingpixel.cobbledaycare.mechanics.*;
 import com.kingpixel.cobbledaycare.migrate.Migrate;
 import com.kingpixel.cobbledaycare.models.Plot;
 import com.kingpixel.cobbledaycare.models.UserInformation;
@@ -144,11 +141,23 @@ public class CobbleDaycare {
     }
     // Quitar nulls
     mechanics.removeIf(Objects::isNull);
-    mechanics.removeIf(mechanic -> !mechanic.isActive());
     List<String> activeMechanics = new ArrayList<>();
+    if (mechanics.size() == 2) {
+      mechanics.add(new DaycareIvs().getInstance());
+      mechanics.add(new DayCareNature().getInstance());
+      mechanics.add(new DayCareAbility().getInstance());
+      mechanics.add(new DayCareCountry().getInstance());
+      mechanics.add(new DayCareShiny().getInstance());
+      mechanics.add(new DayCareMirrorHerb().getInstance());
+      mechanics.add(new DayCarePokeBall().getInstance());
+      mechanics.add(new DayCareInciense().getInstance());
+      mechanics.add(new DayCareEggMoves().getInstance());
+    }
+    mechanics.removeIf(mechanic -> !mechanic.isActive());
     for (Mechanics mechanic : mechanics) {
       activeMechanics.add(mechanic.fileName());
     }
+
     CobbleUtils.LOGGER.info(MOD_ID, "Active mechanics:\n- " + String.join("\n- ", activeMechanics));
   }
 

@@ -81,16 +81,22 @@ public class DaycareIvs extends Mechanics {
     applyLastIvs(parents, egg, cloneStats, numIvsToTransfer);
   }
 
-  @Override public void applyHatch(ServerPlayerEntity player, Pokemon egg) {
+  @Override
+  public void applyHatch(ServerPlayerEntity player, Pokemon egg) {
     stats.forEach(stat -> {
       int iv;
-      String oldStat = oldStats.get(stat);
+      String oldStat = oldStats.get(stat).intern();
+
       if (egg.getPersistentData().contains(oldStat)) {
         iv = egg.getPersistentData().getInt(oldStat);
-      } else {
+      } else if (egg.getPersistentData().contains(stat.getShowdownId())) {
         iv = egg.getPersistentData().getInt(stat.getShowdownId());
+      } else {
+        iv = Utils.RANDOM.nextInt(32);
       }
+
       egg.getIvs().set(stat, iv);
+      
       egg.getPersistentData().remove(stat.getShowdownId());
       egg.getPersistentData().remove(oldStat);
     });

@@ -29,31 +29,36 @@ public class CommandEggInfo {
         .then(
           CommandManager.argument("slot", PartySlotArgumentType.Companion.partySlot())
             .executes(context -> {
-              if (context.getSource().isExecutedByPlayer()) {
-                ServerPlayerEntity player = context.getSource().getPlayer();
-                Pokemon egg = PartySlotArgumentType.Companion.getPokemon(context, "slot");
-                if (egg.getSpecies().showdownId().equals("egg")) {
-                  String message = CobbleDaycare.language.getEggInfo();
-                  var nbt = egg.getPersistentData();
-                  for (Mechanics mechanic : CobbleDaycare.mechanics) {
-                    message = mechanic.getEggInfo(message, nbt);
+              try {
+                if (context.getSource().isExecutedByPlayer()) {
+                  ServerPlayerEntity player = context.getSource().getPlayer();
+                  Pokemon egg = PartySlotArgumentType.Companion.getPokemon(context, "slot");
+                  if (egg.getSpecies().showdownId().equals("egg")) {
+                    String message = CobbleDaycare.language.getEggInfo();
+                    var nbt = egg.getPersistentData();
+                    for (Mechanics mechanic : CobbleDaycare.mechanics) {
+                      message = mechanic.getEggInfo(message, nbt);
+                    }
+                    PlayerUtils.sendMessage(
+                      player,
+                      message,
+                      CobbleDaycare.language.getPrefix(),
+                      TypeMessage.CHAT
+                    );
+                  } else {
+                    PlayerUtils.sendMessage(
+                      player,
+                      CobbleDaycare.language.getMessageItNotEgg(),
+                      CobbleDaycare.language.getPrefix(),
+                      TypeMessage.CHAT
+                    );
                   }
-                  PlayerUtils.sendMessage(
-                    player,
-                    message,
-                    CobbleDaycare.language.getPrefix(),
-                    TypeMessage.CHAT
-                  );
-                } else {
-                  PlayerUtils.sendMessage(
-                    player,
-                    CobbleDaycare.language.getMessageItNotEgg(),
-                    CobbleDaycare.language.getPrefix(),
-                    TypeMessage.CHAT
-                  );
                 }
+                return 1;
+              } catch (Exception e) {
+                e.printStackTrace();
+                return 0;
               }
-              return 1;
             })
         )
     );

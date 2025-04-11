@@ -5,7 +5,9 @@ import com.cobblemon.mod.common.api.pokemon.Natures;
 import com.cobblemon.mod.common.item.CobblemonItem;
 import com.cobblemon.mod.common.pokemon.Nature;
 import com.cobblemon.mod.common.pokemon.Pokemon;
+import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.models.EggBuilder;
+import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.PokemonUtils;
 import com.kingpixel.cobbleutils.util.Utils;
 import net.minecraft.nbt.NbtCompound;
@@ -46,7 +48,10 @@ public class DayCareNature extends Mechanics {
     String s = egg.getPersistentData().getString(TAG);
     if (!s.isEmpty()) {
       Nature nature = Natures.INSTANCE.getNature(s);
-      if (nature == null) nature = Natures.INSTANCE.getRandomNature();
+      if (nature == null) {
+        CobbleUtils.LOGGER.error(CobbleDaycare.MOD_ID, "Invalid nature: " + s);
+        nature = Natures.INSTANCE.getRandomNature();
+      }
       egg.setNature(nature);
     } else {
       egg.setNature(Natures.INSTANCE.getRandomNature());
@@ -59,7 +64,7 @@ public class DayCareNature extends Mechanics {
   }
 
   @Override public String getEggInfo(String s, NbtCompound nbt) {
-    Nature nature = Natures.INSTANCE.getNature(s);
+    Nature nature = Natures.INSTANCE.getNature(nbt.getString(TAG));
     return s.replace("%nature%", PokemonUtils.getNatureTranslate(nature));
   }
 
