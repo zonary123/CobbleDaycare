@@ -45,9 +45,6 @@ public class DayCarePokeBall extends Mechanics {
           egg.setCaughtBall(pokeBall);
         }
       } catch (Exception ignored) {
-        if (CobbleUtils.config.isDebug()) {
-          CobbleUtils.LOGGER.error("Error to get PokeBall: " + ball);
-        }
       }
     }
     egg.getPersistentData().remove(TAG);

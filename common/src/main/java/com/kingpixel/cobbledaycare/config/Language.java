@@ -50,7 +50,7 @@ public class Language {
         .append(stat.getShowdownId()).append("%\n");
     }
 
-    eggInfoBuilder.append("&7Ability: %ability%\n")
+    eggInfoBuilder.append("&7Ability is HA: %ability%\n")
       .append("&7Nature: %nature%\n")
       .append("&7Egg Moves: %eggmoves%\n")
       .append("&7Shiny: %shiny%\n");

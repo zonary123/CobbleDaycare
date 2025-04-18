@@ -1,7 +1,6 @@
 package com.kingpixel.cobbledaycare.mechanics;
 
 import com.cobblemon.mod.common.pokemon.Pokemon;
-import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.models.EggBuilder;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.Utils;
@@ -48,10 +47,6 @@ public class DayCareShiny extends Mechanics {
     Pokemon egg = builder.getEgg();
     float shinyrate = getPercentageShiny();
     float multiplier = getMultiplierShiny();
-
-    if (CobbleDaycare.config.isDebug()) {
-      CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "DayCareShiny -> applyEgg -> shinyrate: " + shinyrate);
-    }
 
     if (multiplier > 0 && isParentsShiny()) {
       if (male.getShiny()) shinyrate /= multiplier;

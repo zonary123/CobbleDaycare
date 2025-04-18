@@ -28,6 +28,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Author: Carlos Varas Alonso - 11/03/2025 5:56
@@ -96,6 +97,7 @@ public class SelectPokemonMenu {
 
         UIManager.openUIForcefully(player, page);
       })
+      .orTimeout(5, TimeUnit.SECONDS)
       .exceptionally(e -> {
         CobbleUtils.LOGGER.error(CobbleDaycare.MOD_ID, "Error opening SelectPokemonMenu -> " + e);
         return null;

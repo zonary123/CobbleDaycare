@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 public class UserInformation {
   private UUID playerUUID;
   private String playerName;
+  private String country;
   private boolean notifyCreateEgg;
   private boolean notifyLimitEggs;
   private boolean notifyBanPokemon;

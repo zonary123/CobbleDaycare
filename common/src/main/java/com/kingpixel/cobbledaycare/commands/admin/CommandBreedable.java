@@ -25,36 +25,40 @@ import java.util.List;
  */
 public class CommandBreedable {
   public static void register(CommandDispatcher<ServerCommandSource> dispatcher, LiteralArgumentBuilder<ServerCommandSource> base) {
-    dispatcher.register(
-      CommandManager.literal("breedable")
-        .requires(
-          source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.admin",
-            "cobbledaycare.breedable.self", "cobbledaycare.breedable.other"), 2))
-        .then(
-          CommandManager.argument("slot", PartySlotArgumentType.Companion.partySlot())
-            .executes(context -> {
-              if (!context.getSource().isExecutedByPlayer()) return 0;
-              var player = context.getSource().getPlayer();
-              if (player == null) return 0;
-              apply(null, List.of(player), false, context);
-              return 1;
-            })
-            .then(
-              CommandManager.argument("player", EntityArgumentType.players())
-                .requires(
-                  source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.admin", "cobbledaycare.breedable.other"), 2))
-                .then(
-                  CommandManager.argument("breedable", BoolArgumentType.bool())
-                    .executes(context -> {
-                      var player = context.getSource().getPlayer();
-                      var players = EntityArgumentType.getPlayers(context, "player");
-                      boolean breedable = BoolArgumentType.getBool(context, "breedable");
-                      apply(player, players, breedable, context);
-                      return 1;
-                    })
-                )
-            )
-        )
+    var literalArgumentBuilder = CommandManager.literal("breedable")
+      .requires(
+        source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.admin",
+          "cobbledaycare.breedable.self", "cobbledaycare.breedable.other"), 2))
+      .then(
+        CommandManager.argument("slot", PartySlotArgumentType.Companion.partySlot())
+          .executes(context -> {
+            if (!context.getSource().isExecutedByPlayer()) return 0;
+            var player = context.getSource().getPlayer();
+            if (player == null) return 0;
+            apply(null, List.of(player), false, context);
+            return 1;
+          })
+          .then(
+            CommandManager.argument("player", EntityArgumentType.players())
+              .requires(
+                source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.admin", "cobbledaycare.breedable.other"), 2))
+              .then(
+                CommandManager.argument("breedable", BoolArgumentType.bool())
+                  .executes(context -> {
+                    var player = context.getSource().getPlayer();
+                    var players = EntityArgumentType.getPlayers(context, "player");
+                    boolean breedable = BoolArgumentType.getBool(context, "breedable");
+                    apply(player, players, breedable, context);
+                    return 1;
+                  })
+              )
+          )
+      );
+    dispatcher.register(literalArgumentBuilder);
+    dispatcher.register(base
+      .then(
+        literalArgumentBuilder
+      )
     );
   }
 

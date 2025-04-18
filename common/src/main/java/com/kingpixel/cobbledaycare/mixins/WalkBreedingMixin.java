@@ -39,6 +39,7 @@ public abstract class WalkBreedingMixin {
     tp = true;
   }
 
+
   @Inject(method = "onPlayerMove", at = @At("HEAD"))
   public void breeding$onPlayerMove(PlayerMoveC2SPacket packet, CallbackInfo ci) {
     try {

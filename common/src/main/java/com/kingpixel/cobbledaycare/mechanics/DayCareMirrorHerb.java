@@ -4,7 +4,6 @@ import com.cobblemon.mod.common.api.moves.Move;
 import com.cobblemon.mod.common.api.moves.MoveTemplate;
 import com.cobblemon.mod.common.api.moves.Moves;
 import com.cobblemon.mod.common.pokemon.Pokemon;
-import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.models.EggBuilder;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import lombok.Data;
@@ -26,32 +25,16 @@ public class DayCareMirrorHerb extends Mechanics {
   }
 
   private static void mirrorHerb(Pokemon target, Pokemon source) {
-    if (CobbleDaycare.config.isDebug()) {
-      CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Mirror Herb: " + target.getSpecies().showdownId());
-    }
     List<Move> targetMoves = target.getMoveSet().getMoves();
     int size = targetMoves.size();
-    if (CobbleDaycare.config.isDebug()) {
-      CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Target Moves: " + size);
-    }
     if (size < 4) {
       List<String> sourceMoves = source.getMoveSet().getMoves().stream().map(Move::getName).toList();
       List<String> eggMoves = target.getForm().getMoves().getEggMoves().stream().map(MoveTemplate::getName).toList();
-      if (CobbleDaycare.config.isDebug()) {
-        CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Source Moves: " + sourceMoves);
-        CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Egg Moves: " + eggMoves);
-      }
       for (String move : sourceMoves) {
         if (size >= 4) break;
         if (eggMoves.contains(move)) {
-          if (CobbleDaycare.config.isDebug()) {
-            CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Mirror Herb Move: " + move);
-          }
           MoveTemplate moveTemplate = Moves.INSTANCE.getByName(move);
           if (moveTemplate == null) {
-            if (CobbleDaycare.config.isDebug()) {
-              CobbleUtils.LOGGER.error(CobbleDaycare.MOD_ID, "Move not found: " + move);
-            }
             continue;
           }
           if (target.getMoveSet().add(moveTemplate.create())) {

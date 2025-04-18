@@ -9,7 +9,6 @@ import com.cobblemon.mod.common.pokemon.Species;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.models.EggBuilder;
 import com.kingpixel.cobbledaycare.models.PokemonRareMecanic;
-import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.Model.PokemonChance;
 import com.kingpixel.cobbleutils.util.PokemonUtils;
 import lombok.Data;
@@ -68,15 +67,14 @@ public class DayCarePokemon extends Mechanics {
     Pokemon male = builder.getMale();
     Pokemon female = builder.getFemale();
     Pokemon egg = builder.getEgg();
+    egg.setCurrentHealth(0);
+    egg.setHealTimer(Integer.MAX_VALUE);
     Pokemon firstEvolution;
     boolean maleIsDitto = male.getForm().getEggGroups().contains(EggGroup.DITTO);
     boolean femaleIsDitto = female.getForm().getEggGroups().contains(EggGroup.DITTO);
     boolean dobbleDitto = maleIsDitto && femaleIsDitto;
 
     if (dobbleDitto) {
-      if (CobbleDaycare.config.isDebug()) {
-        CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Dobble Ditto");
-      }
       firstEvolution = CobbleDaycare.config.getDobbleDittoFilter().generateRandomPokemon(CobbleDaycare.MOD_ID, "egg");
     } else {
       if (femaleIsDitto) {
@@ -108,6 +106,7 @@ public class DayCarePokemon extends Mechanics {
   @Override public void applyHatch(ServerPlayerEntity player, Pokemon egg) {
     String pokemon = egg.getPersistentData().getString(TAG_POKEMON);
     if (pokemon.isEmpty()) pokemon = egg.getPersistentData().getString(TAG_OLD_POKEMON);
+    if (pokemon.isEmpty()) pokemon = "rattata";
     PokemonProperties.Companion.parse(pokemon).apply(egg);
     String genderString = egg.getPersistentData().getString(TAG_GENDER);
     try {

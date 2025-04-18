@@ -179,17 +179,9 @@ public class Plot {
   public boolean checkEgg(ServerPlayerEntity player, UserInformation userInformation) {
     try {
       boolean update = false;
-      if (!hasTwoParents()) {
-        if (CobbleDaycare.config.isDebug()) {
-          CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Plot.checkEgg: !hasTwoParents");
-        }
-        return false;
-      }
+      if (!hasTwoParents()) return false;
       int sizeEggs = eggs.size();
       if (sizeEggs >= limitEggs(player)) {
-        if (CobbleDaycare.config.isDebug()) {
-          CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Plot.checkEgg: limitEggs < sizeEggs");
-        }
         if (userInformation.isNotifyLimitEggs()) {
           PlayerUtils.sendMessage(
             player,
@@ -201,22 +193,9 @@ public class Plot {
         }
         return false;
       }
-      if (hasBannedPokemons(player, userInformation)) {
-        if (CobbleDaycare.config.isDebug()) {
-          CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Plot.checkEgg: hasBannedPokemons");
-        }
-        return true;
-      }
-      if (notCorrectCooldown(player)) {
-        if (CobbleDaycare.config.isDebug()) {
-          CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Plot.checkEgg: notCorrectCooldown");
-        }
-        return true;
-      }
+      if (hasBannedPokemons(player, userInformation)) return true;
+      if (notCorrectCooldown(player)) return true;
       if (!hasCooldown(player)) {
-        if (CobbleDaycare.config.isDebug()) {
-          CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Plot.checkEgg: !hasCooldown");
-        }
         Pokemon egg = createEgg(player);
         if (!egg.getSpecies().showdownId().equals("egg")) {
           PlayerUtils.sendMessage(
@@ -226,9 +205,6 @@ public class Plot {
             TypeMessage.CHAT
           );
         } else {
-          if (CobbleDaycare.config.isDebug()) {
-            CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Egg created: " + egg.showdownId());
-          }
           if (userInformation.isNotifyCreateEgg()) {
             List<Pokemon> pokemons = new ArrayList<>();
             pokemons.add(male);
@@ -316,8 +292,8 @@ public class Plot {
     if (userInformation.isNotifyBanPokemon()) {
       PlayerUtils.sendMessage(
         player,
-        CobbleDaycare.language.getMessageBanPokemon()
-          .replace("%pokemon%", pokemon.getSpecies().showdownId()),
+        PokemonUtils.replace(CobbleDaycare.language.getMessageBanPokemon(), pokemon)
+          .replace("%plot%", userInformation.getPlots().indexOf(this) + ""),
         CobbleDaycare.language.getPrefix(),
         TypeMessage.CHAT
       );

@@ -43,8 +43,6 @@ dependencies {
 
     modImplementation("com.cobblemon:fabric:${property("cobblemon_version")}")
 
-    shadowCommon("org.reflections:reflections:0.10.2")
-
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
     shadowCommon(project(path: ":common", configuration: "transformProductionFabric")) { transitive false }
 }

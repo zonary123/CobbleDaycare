@@ -12,8 +12,13 @@ import com.kingpixel.cobbledaycare.mechanics.Mechanics;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import net.minecraft.block.Blocks;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.particle.BlockStateParticleEffect;
+import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 
 /**
@@ -47,8 +52,26 @@ public class EggData {
     if (steps <= 0) {
       steps = egg.getPersistentData().getDouble(DayCarePokemon.TAG_REFERENCE_STEPS);
       cycles--;
+      if (cycles % 3 == 0 && cycles > 0) {
+        player.playSoundToPlayer(SoundEvents.ENTITY_TURTLE_EGG_CRACK, SoundCategory.PLAYERS, 1.0F, 1.0F);
+      }
     }
     if (cycles <= 0) {
+      player.playSoundToPlayer(SoundEvents.ENTITY_TURTLE_EGG_HATCH, SoundCategory.PLAYERS, 1.0F, 1.0F);
+      BlockStateParticleEffect particleEffect = new BlockStateParticleEffect(ParticleTypes.BLOCK, Blocks.TURTLE_EGG.getDefaultState());
+      player.getServerWorld().spawnParticles(
+        player,
+        particleEffect,
+        true,
+        player.getX(),
+        player.getY() + 0.5,
+        player.getZ(),
+        20,
+        0.5,
+        0.5,
+        0.5,
+        0.1
+      );
       hatch(player, egg);
       return;
     } else {

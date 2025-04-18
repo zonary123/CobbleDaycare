@@ -5,7 +5,6 @@ import com.cobblemon.mod.common.item.CobblemonItem;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.models.EggBuilder;
-import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -64,9 +63,6 @@ public class DaycareIvs extends Mechanics {
     List<Pokemon> parents = builder.getParents();
     Pokemon egg = builder.getEgg();
     List<Stats> cloneStats = new ArrayList<>(stats);
-    if (CobbleDaycare.config.isDebug()) {
-      CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "DaycareIvs -> applyEgg -> parents: " + cloneStats);
-    }
     int numIvsToTransfer = getDefaultIvsTransfer();
 
     if (hasDestinyKnot(parents) && Utils.RANDOM.nextFloat() * 100 < getPercentageDestinyKnot()) {
@@ -96,7 +92,7 @@ public class DaycareIvs extends Mechanics {
       }
 
       egg.getIvs().set(stat, iv);
-      
+
       egg.getPersistentData().remove(stat.getShowdownId());
       egg.getPersistentData().remove(oldStat);
     });

@@ -8,7 +8,6 @@ import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.models.EggBuilder;
 import com.kingpixel.cobbledaycare.models.EggForm;
-import com.kingpixel.cobbleutils.CobbleUtils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import net.minecraft.nbt.NbtCompound;
@@ -116,9 +115,6 @@ public class DayCareForm extends Mechanics {
             || blacklistFeatures.contains(value)
             || blacklistForm.contains(name)
             || blacklistForm.contains(value)) continue;
-          if (CobbleDaycare.config.isDebug()) {
-            CobbleUtils.LOGGER.info("Feature -> Name: " + name + " Value: " + value);
-          }
           form.append(" ").append(name).append("=").append(value);
         }
       }
@@ -126,10 +122,6 @@ public class DayCareForm extends Mechanics {
 
     if (blacklistForm.contains(form.toString()))
       form = new StringBuilder();
-
-    if (CobbleDaycare.config.isDebug()) {
-      CobbleUtils.LOGGER.info("Form: " + form);
-    }
 
     applyForm(egg, form.toString(), firstEvolution);
   }

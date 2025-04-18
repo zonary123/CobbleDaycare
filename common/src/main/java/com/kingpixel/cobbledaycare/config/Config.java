@@ -35,9 +35,9 @@ public class Config {
   private boolean canUseNativeGUI;
   private boolean showIvs;
   private boolean spawnEggWorld;
+  private int raritySpawnEgg;
   private boolean dobbleDitto;
   private boolean allowElytra;
-  private int raritySpawnEgg;
   private long ticksToWalking;
   private boolean globalMultiplierSteps;
   private float multiplierSteps;
