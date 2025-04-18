@@ -68,12 +68,11 @@ public class DayCareAbility extends Mechanics {
   }
 
   @Override public void createEgg(ServerPlayerEntity player, Pokemon pokemon, Pokemon egg) {
-    String ability = PokemonUtils.getAH(pokemon).getName();
-    egg.getPersistentData().putString(TAG, ability);
+    boolean isHA = PokemonUtils.isAH(pokemon);
+    egg.getPersistentData().putBoolean(TAG, isHA);
   }
 
   @Override public String getEggInfo(String s, NbtCompound nbt) {
-
     return s.replace("%ability%",
       nbt.getBoolean(TAG) ? CobbleUtils.language.getYes() : CobbleUtils.language.getNo());
   }
