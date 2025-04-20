@@ -67,6 +67,7 @@ public class CobbleDaycare {
   public static void load() {
     CobbleUtils.info(MOD_ID, "1.0.0", "https://github.com/zonary123/CobbleDaycare");
     files();
+    DatabaseClientFactory.userPlots.clear();
     DatabaseClientFactory.createDatabaseClient(config.getDataBase());
     tasks();
     Migrate.migrate();
@@ -74,18 +75,27 @@ public class CobbleDaycare {
 
   private static void tasks() {
     if (task != null) task.setExpired();
-    long cooldown = 60 * 20;
+    long cooldown = 20L * 30;
     task = Task.builder()
       .execute(() -> {
-        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
-          boolean update = false;
-          UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
-          for (Plot plot : userInformation.getPlots()) {
-            if (plot.checkEgg(player, userInformation) && !update) update = true;
-          }
-          DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
-          fixPlayer(player);
-        }
+        CompletableFuture.runAsync(() -> {
+            for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
+              if (player == null) continue;
+              boolean update = false;
+              UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
+              for (Plot plot : userInformation.getPlots()) {
+                if (plot.checkEgg(player, userInformation) && !update) update = true;
+              }
+              if (update)
+                DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
+              fixPlayer(player);
+            }
+          })
+          .orTimeout(5, TimeUnit.SECONDS)
+          .exceptionally(e -> {
+            CobbleUtils.LOGGER.error(MOD_ID, "Error Task Daycare.");
+            return null;
+          });
       })
       .infinite()
       .interval(cooldown)

@@ -22,7 +22,9 @@ public class DatabaseClientFactory {
     switch (database.getType()) {
       case MONGODB -> INSTANCE = new MongoDBClient(database);
       case JSON -> INSTANCE = new JSONClient(database);
-      default -> INSTANCE = new JSONClient(database);
+      default -> {
+        throw new IllegalArgumentException("Unsupported database type: " + database.getType());
+      }
     }
     INSTANCE.connect(database);
     return INSTANCE;

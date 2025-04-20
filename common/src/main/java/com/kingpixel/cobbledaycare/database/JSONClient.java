@@ -11,7 +11,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Improved by GitHub Copilot - 07/08/2024 9:41
  */
-public class JSONClient implements DatabaseClient {
+public class JSONClient extends DatabaseClient {
 
   public JSONClient(DataBaseConfig config) {
   }
@@ -71,9 +71,5 @@ public class JSONClient implements DatabaseClient {
       Utils.getAbsolutePath(CobbleDaycare.PATH_DATA + player.getUuid().toString() + ".json"),
       Utils.newWithoutSpacingGson().toJson(userInformation)
     );
-  }
-
-  @Override public void removeIfNecessary(ServerPlayerEntity player) {
-    DatabaseClientFactory.userPlots.remove(player.getUuid());
   }
 }

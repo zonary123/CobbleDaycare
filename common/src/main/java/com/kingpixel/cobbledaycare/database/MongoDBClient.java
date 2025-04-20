@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.kingpixel.cobbleutils.mongodb.client.model.Filters.eq;
 
-public class MongoDBClient implements DatabaseClient {
+public class MongoDBClient extends DatabaseClient {
 
   private MongoClient mongoClient;
   private MongoDatabase database;
@@ -45,7 +45,7 @@ public class MongoDBClient implements DatabaseClient {
 
   @Override
   public void save() {
-    // Implementación opcional si necesitas guardar datos en lote
+
   }
 
   @Override
@@ -56,6 +56,10 @@ public class MongoDBClient implements DatabaseClient {
     Document document = collection.find(eq("playerUUID", uuid.toString())).first();
     if (document != null) {
       userInformation = UserInformation.fromDocument(document);
+      if (CobbleDaycare.config.isDebug()) {
+        CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "User information loaded from MongoDB: " + userInformation);
+      }
+      DatabaseClientFactory.userPlots.put(uuid, userInformation);
       return userInformation;
     } else {
       userInformation = new UserInformation(player);
@@ -68,7 +72,9 @@ public class MongoDBClient implements DatabaseClient {
   public void updateUserInformation(ServerPlayerEntity player, UserInformation userInformation) {
     CompletableFuture.runAsync(() -> {
         try {
-          if (player == null || userInformation == null) return;
+          if (player == null || userInformation == null) {
+            return;
+          }
           UUID uuid = player.getUuid();
           Bson filter = eq("playerUUID", uuid.toString());
           Document document = userInformation.toDocument();
@@ -86,9 +92,4 @@ public class MongoDBClient implements DatabaseClient {
       });
   }
 
-  @Override
-  public void removeIfNecessary(ServerPlayerEntity player) {
-    UUID uuid = player.getUuid();
-    DatabaseClientFactory.userPlots.remove(uuid);
-  }
 }
