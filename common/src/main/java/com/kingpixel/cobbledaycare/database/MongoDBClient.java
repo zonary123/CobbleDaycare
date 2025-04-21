@@ -79,8 +79,6 @@ public class MongoDBClient extends DatabaseClient {
           Bson filter = eq("playerUUID", uuid.toString());
           Document document = userInformation.toDocument();
           collection.replaceOne(filter, document, new ReplaceOptions().upsert(true));
-          // Actualiza el Map local
-          DatabaseClientFactory.userPlots.put(uuid, userInformation);
         } catch (Exception e) {
           e.printStackTrace(); // Manejo básico de errores
         }
