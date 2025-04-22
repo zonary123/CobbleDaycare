@@ -203,6 +203,7 @@ public class CobbleDaycare {
       return Unit.INSTANCE;
     });
 
+
     CobblemonEvents.POKEMON_ENTITY_SPAWN.subscribe(Priority.LOWEST, evt -> {
       if (!config.isSpawnEggWorld()) return Unit.INSTANCE;
       var pokemonEntity = evt.getEntity();
@@ -221,6 +222,7 @@ public class CobbleDaycare {
       }
       return Unit.INSTANCE;
     });
+    
   }
 
   private static void fixPlayer(ServerPlayerEntity player) {

@@ -19,7 +19,6 @@ import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -65,7 +64,7 @@ public class CommandBreed {
       PlayerUtils.sendMessage(
         player,
         CobbleDaycare.language.getMessageCooldownBreed()
-          .replace("%cooldown%", PlayerUtils.getCooldown(new Date(userInfo.getCooldownBreed()))),
+          .replace("%cooldown%", PlayerUtils.getCooldown(userInfo.getCooldownBreed())),
         CobbleDaycare.language.getPrefix(),
         TypeMessage.CHAT
       );

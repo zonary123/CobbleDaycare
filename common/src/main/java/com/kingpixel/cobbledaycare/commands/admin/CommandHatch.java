@@ -16,7 +16,6 @@ import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -58,7 +57,7 @@ public class CommandHatch {
       PlayerUtils.sendMessage(
         player,
         CobbleDaycare.language.getMessageCooldownHatch()
-          .replace("%cooldown%", PlayerUtils.getCooldown(new Date(userInfo.getCooldownHatch()))),
+          .replace("%cooldown%", PlayerUtils.getCooldown(userInfo.getCooldownHatch())),
         CobbleDaycare.language.getPrefix(),
         TypeMessage.CHAT
       );

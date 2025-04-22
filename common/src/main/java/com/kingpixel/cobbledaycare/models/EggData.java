@@ -3,12 +3,14 @@ package com.kingpixel.cobbledaycare.models;
 
 import com.cobblemon.mod.common.api.events.CobblemonEvents;
 import com.cobblemon.mod.common.api.pokemon.PokemonProperties;
+import com.cobblemon.mod.common.api.pokemon.PokemonPropertyExtractor;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.events.HatchEggEvent;
 import com.kingpixel.cobbledaycare.mechanics.DayCareForm;
 import com.kingpixel.cobbledaycare.mechanics.DayCarePokemon;
 import com.kingpixel.cobbledaycare.mechanics.Mechanics;
+import com.kingpixel.cobbleutils.CobbleUtils;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -97,7 +99,11 @@ public class EggData {
     egg.setNickname(null);
     egg.heal();
     HatchEggEvent.HATCH_EGG_EVENT.emit(player, egg);
-    PokemonProperties pokemonProperties = PokemonProperties.Companion.parse(pokemon + " " + form);
+    PokemonProperties pokemonProperties = egg.createPokemonProperties(PokemonPropertyExtractor.ALL);
+    Pokemon pokemon = pokemonProperties.create();
+    if (pokemon.equals(egg) || pokemon.getSpecies() == egg.getSpecies()) {
+      CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Pokemon is the same as egg");
+    }
     CobblemonEvents.HATCH_EGG_POST.emit(new com.cobblemon.mod.common.api.events.pokemon.HatchEggEvent.Post(pokemonProperties, player));
   }
 

@@ -23,7 +23,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -128,7 +127,7 @@ public class PrincipalMenu {
           for (Mechanics mechanic : CobbleDaycare.mechanics) {
             s = mechanic.replace(s);
           }
-          s = s.replace("%cooldown%", PlayerUtils.getCooldown(new Date(cooldown)));
+          s = s.replace("%cooldown%", PlayerUtils.getCooldown(cooldown));
           return s;
         });
 
@@ -171,7 +170,7 @@ public class PrincipalMenu {
   private List<String> replacePlotLore(Plot plot, ServerPlayerEntity player) {
     List<String> newLore = new ArrayList<>(lore);
 
-    String cooldown = PlayerUtils.getCooldown(new Date(plot.getTimeToHatch()));
+    String cooldown = PlayerUtils.getCooldown(plot.getTimeToHatch());
     Pokemon male = plot.getMale();
     Pokemon female = plot.getFemale();
     List<Pokemon> parents = new ArrayList<>();

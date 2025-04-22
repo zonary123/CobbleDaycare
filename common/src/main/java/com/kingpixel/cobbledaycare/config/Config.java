@@ -75,10 +75,10 @@ public class Config {
     this.globalMultiplierSteps = false;
     this.multiplierAbilityAcceleration = 1.0;
     this.dataBase.setDatabase("cobbledaycare");
-    this.defaultSteps = 256D;
+    this.defaultSteps = 128D;
     this.steps = new HashMap<>();
     for (@NotNull EggGroup value : EggGroup.values()) {
-      this.steps.put(value, 256D);
+      this.steps.put(value, defaultSteps);
     }
     this.blackList = new PokemonBlackList();
     this.blackList.getPokemons().add("egg");
@@ -133,7 +133,7 @@ public class Config {
     PlayerUtils.sendMessage(
       player,
       CobbleDaycare.language.getMessageCooldownOpenMenu()
-        .replace("%cooldown%", PlayerUtils.getCooldown(new Date(cooldown))),
+        .replace("%cooldown%", PlayerUtils.getCooldown(cooldown)),
       CobbleDaycare.language.getPrefix(),
       TypeMessage.CHAT
     );

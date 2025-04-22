@@ -7,6 +7,7 @@ import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.database.DatabaseClientFactory;
 import com.kingpixel.cobbledaycare.models.EggData;
 import com.kingpixel.cobbledaycare.models.UserInformation;
+import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
 import com.kingpixel.cobbleutils.util.TypeMessage;
 import net.minecraft.entity.Entity;
@@ -21,8 +22,6 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import java.util.Date;
 
 @Mixin(ServerPlayNetworkHandler.class)
 public abstract class WalkBreedingMixin {
@@ -46,6 +45,7 @@ public abstract class WalkBreedingMixin {
       long newTime = System.currentTimeMillis();
 
       if (oldTime < newTime) {
+        long start = System.currentTimeMillis();
         boolean isInPose = CobbleDaycare.config.isAllowElytra() || !player.isInPose(EntityPose.FALL_FLYING);
         boolean isInvulnerable = !player.isInvulnerable();
         boolean isFly = player.getAbilities().flying;
@@ -88,6 +88,10 @@ public abstract class WalkBreedingMixin {
         }
 
         oldTime = System.currentTimeMillis() + (CobbleDaycare.config.getTicksToWalking() * 50);
+        long end = System.currentTimeMillis();
+        if (CobbleDaycare.config.isDebug()) {
+          CobbleUtils.LOGGER.info("Time: " + (end - start) + "ms");
+        }
       }
     } catch (Exception e) {
       e.printStackTrace();
@@ -101,7 +105,7 @@ public abstract class WalkBreedingMixin {
     if (activeMultiplier || haveMultiplier) {
       long ticks = userInformation.getTimeMultiplierSteps();
       long cooldown = ticks * 50; // Convert ticks to milliseconds
-      String s = PlayerUtils.getCooldown(new Date(System.currentTimeMillis() + cooldown));
+      String s = PlayerUtils.getCooldown(System.currentTimeMillis() + cooldown);
       PlayerUtils.sendMessage(
         player,
         CobbleDaycare.language.getMessageActiveStepsMultiplier()
