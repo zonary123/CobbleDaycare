@@ -61,7 +61,13 @@ public class Plot {
     if (pokemon == null) return false;
     CobbleDaycare.fixBreedable(pokemon);
     if (isNotBreedable(pokemon)) return false;
-    Pokemon other = getEmptyParent();
+    Pokemon other;
+    if (hasTwoParents()) {
+      other = gender == SelectGender.MALE ? female : male;
+    } else {
+      other = getEmptyParent();
+    }
+
     boolean otherIsDitto = isDitto(other);
     boolean pokemonIsDitto = isDitto(pokemon);
     if (pokemonIsDitto && otherIsDitto) return CobbleDaycare.config.isDobbleDitto();
@@ -82,6 +88,7 @@ public class Plot {
         return pokemonIsDitto;
       }
     }
+    if (pokemon.getGender().equals(Gender.GENDERLESS)) return false;
     for (EggGroup eggGroup : pokemon.getForm().getEggGroups()) {
       if (other.getForm().getEggGroups().contains(eggGroup) || pokemon.getForm().getEggGroups().contains(EggGroup.DITTO))
         return true;
@@ -179,7 +186,7 @@ public class Plot {
   public boolean checkEgg(ServerPlayerEntity player, UserInformation userInformation) {
     try {
       boolean update = false;
-      if (!hasTwoParents()) return false;
+      if (!hasTwoParents()) return update;
       int sizeEggs = eggs.size();
       if (sizeEggs >= limitEggs(player)) {
         if (userInformation.isNotifyLimitEggs()) {
@@ -191,10 +198,34 @@ public class Plot {
             TypeMessage.CHAT
           );
         }
-        return false;
+        return update;
       }
       if (hasBannedPokemons(player, userInformation)) return true;
       if (notCorrectCooldown(player)) return true;
+      if (!canBreed(female, SelectGender.FEMALE)) {
+        PlayerUtils.sendMessage(
+          player,
+          PokemonUtils.replace(CobbleDaycare.language.getMessageRemovedFemale(), female)
+            .replace("%plot%", userInformation.getPlots().indexOf(this) + ""),
+          CobbleDaycare.language.getPrefix(),
+          TypeMessage.CHAT
+        );
+        Cobblemon.INSTANCE.getStorage().getParty(player).add(female);
+        female = null;
+        return true;
+      }
+      if (!canBreed(male, SelectGender.MALE)) {
+        PlayerUtils.sendMessage(
+          player,
+          PokemonUtils.replace(CobbleDaycare.language.getMessageRemovedMale(), male)
+            .replace("%plot%", userInformation.getPlots().indexOf(this) + ""),
+          CobbleDaycare.language.getPrefix(),
+          TypeMessage.CHAT
+        );
+        Cobblemon.INSTANCE.getStorage().getParty(player).add(male);
+        male = null;
+        return true;
+      }
       if (!hasCooldown(player)) {
         Pokemon egg = createEgg(player);
         if (!egg.getSpecies().showdownId().equals("egg")) {

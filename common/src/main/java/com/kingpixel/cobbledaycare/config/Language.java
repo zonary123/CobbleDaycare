@@ -33,12 +33,16 @@ public class Language {
   private String messageCooldownOpenMenu;
   private String messageItNotEgg;
   private String messageBreedable;
+  private String messageRemovedFemale;
+  private String messageRemovedMale;
   private PrincipalMenu principalMenu;
   private PlotMenu plotMenu;
   private SelectPokemonMenu selectPokemonMenu;
   private ProfileMenu profileMenu;
 
   public Language() {
+    this.messageRemovedFemale = "%prefix% &7Removed the female pokemon in the plot %plot%";
+    this.messageRemovedMale = "%prefix% &7Removed the male pokemon in the plot %plot%";
     this.prefix = "&7[&6CobbleDaycare&7] ";
     StringBuilder eggInfoBuilder = new StringBuilder();
     eggInfoBuilder.append("&7Pokemon: %pokemon% %form% %gender%\n")

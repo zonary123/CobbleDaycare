@@ -49,16 +49,26 @@ public class DayCareAbility extends Mechanics {
     boolean femaleHA = PokemonUtils.isAH(female);
     boolean maleIsDitto = isDitto(male);
     boolean femaleIsDitto = isDitto(female);
-    boolean dittoTransmitHA = this.dittoTransmitHA && ((maleIsDitto && maleHA) || (femaleIsDitto && femaleHA));
-    boolean hasAh = maleHA || femaleHA;
-    boolean getAh = Utils.RANDOM.nextDouble(100) <= percentageTransmitHA;
-    boolean notDitto = isDitto(male) || isDitto(female);
+
+    boolean hasHA = maleHA || femaleHA;
+    boolean getHA = Utils.RANDOM.nextDouble(100) <= percentageTransmitHA;
     boolean giveHA = false;
-    if (getAh && hasAh) {
-      if (dittoTransmitHA || !notDitto) giveHA = true;
+
+    if (getHA && hasHA) {
+      if (maleIsDitto ^ femaleIsDitto) {
+        boolean dittoHA = maleIsDitto ? maleHA : femaleHA;
+        boolean nonDittoHA = maleIsDitto ? femaleHA : maleHA;
+        giveHA = this.dittoTransmitHA ? dittoHA : nonDittoHA;
+      } else if (male.getSpecies().showdownId().equals(female.getSpecies().showdownId())) {
+        giveHA = true;
+      } else {
+        giveHA = femaleHA;
+      }
     }
+
     builder.getEgg().getPersistentData().putBoolean(TAG, giveHA);
   }
+
 
   @Override
   public void applyHatch(ServerPlayerEntity player, Pokemon egg) {
