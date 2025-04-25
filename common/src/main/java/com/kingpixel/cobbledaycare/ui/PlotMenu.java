@@ -48,7 +48,6 @@ public class PlotMenu {
   }
 
   public void open(ServerPlayerEntity player, Plot plot, UserInformation userInformation) {
-
     CompletableFuture.runAsync(() -> {
         ChestTemplate template = ChestTemplate.builder(rows)
           .build();

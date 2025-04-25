@@ -23,6 +23,9 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+
 /**
  * @author Carlos Varas Alonso - 23/07/2024 23:01
  */
@@ -93,18 +96,25 @@ public class EggData {
   }
 
   public void hatch(ServerPlayerEntity player, Pokemon egg) {
-    for (Mechanics mechanic : CobbleDaycare.mechanics) {
-      mechanic.applyHatch(player, egg);
-    }
-    egg.setNickname(null);
-    egg.heal();
-    HatchEggEvent.HATCH_EGG_EVENT.emit(player, egg);
-    PokemonProperties pokemonProperties = egg.createPokemonProperties(PokemonPropertyExtractor.ALL);
-    Pokemon pokemon = pokemonProperties.create();
-    if (pokemon.equals(egg) || pokemon.getSpecies() == egg.getSpecies()) {
-      CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Pokemon is the same as egg");
-    }
-    CobblemonEvents.HATCH_EGG_POST.emit(new com.cobblemon.mod.common.api.events.pokemon.HatchEggEvent.Post(pokemonProperties, player));
+    CompletableFuture.runAsync(() -> {
+        for (Mechanics mechanic : CobbleDaycare.mechanics) {
+          mechanic.applyHatch(player, egg);
+        }
+        egg.setNickname(null);
+        egg.heal();
+        HatchEggEvent.HATCH_EGG_EVENT.emit(player, egg);
+        PokemonProperties pokemonProperties = egg.createPokemonProperties(PokemonPropertyExtractor.ALL);
+        Pokemon pokemon = pokemonProperties.create();
+        if (pokemon.equals(egg) || pokemon.getSpecies() == egg.getSpecies()) {
+          CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Pokemon is the same as egg");
+        }
+        CobblemonEvents.HATCH_EGG_POST.emit(new com.cobblemon.mod.common.api.events.pokemon.HatchEggEvent.Post(pokemonProperties, player));
+      })
+      .orTimeout(5, TimeUnit.SECONDS)
+      .exceptionally(e -> {
+        CobbleUtils.LOGGER.error(CobbleDaycare.MOD_ID, "Error hatching egg");
+        return null;
+      });
   }
 
 }

@@ -155,6 +155,7 @@ public class CobbleDaycare {
 
     PlayerEvent.PLAYER_JOIN.register(player -> {
       CompletableFuture.runAsync(() -> {
+          long start = System.currentTimeMillis();
           UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
           if (userInformation.getCountry() == null) {
             countryPlayer(player);
@@ -177,6 +178,9 @@ public class CobbleDaycare {
             if (plot.checkEgg(player, userInformation) && !update) update = true;
           }
           if (update) DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
+          long end = System.currentTimeMillis();
+          if (config.isDebug())
+            CobbleUtils.LOGGER.info(MOD_ID, "Time to load player " + player.getName().getString() + ": " + (end - start) + "ms");
         })
         .orTimeout(5, TimeUnit.SECONDS)
         .exceptionally(e -> {
@@ -222,7 +226,7 @@ public class CobbleDaycare {
       }
       return Unit.INSTANCE;
     });
-    
+
   }
 
   private static void fixPlayer(ServerPlayerEntity player) {

@@ -1,8 +1,12 @@
 package com.kingpixel.cobbledaycare.mechanics;
 
+import com.cobblemon.mod.common.api.Priority;
+import com.cobblemon.mod.common.api.abilities.Ability;
+import com.cobblemon.mod.common.api.abilities.PotentialAbility;
 import com.cobblemon.mod.common.api.pokemon.PokemonProperties;
 import com.cobblemon.mod.common.api.pokemon.egg.EggGroup;
 import com.cobblemon.mod.common.pokemon.Pokemon;
+import com.cobblemon.mod.common.pokemon.abilities.HiddenAbilityType;
 import com.kingpixel.cobbledaycare.models.EggBuilder;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.PokemonUtils;
@@ -59,12 +63,28 @@ public class DayCareAbility extends Mechanics {
   @Override
   public void applyHatch(ServerPlayerEntity player, Pokemon egg) {
     boolean isHA = egg.getPersistentData().getBoolean(TAG);
-    if (isHA) {
-      PokemonProperties.Companion.parse("hiddenability=yes").apply(egg);
-    } else {
-      PokemonProperties.Companion.parse("hiddenability=no").apply(egg);
+    Ability ability;
+    if (isHA)
+      ability = getHa(egg);
+    else
+      ability = PokemonUtils.getRandomAbility(egg);
+
+    String s = "";
+    if (ability != null) {
+      s = "ability=" + ability.getName();
     }
+    PokemonProperties.Companion.parse(s).apply(egg);
     egg.getPersistentData().remove(TAG);
+  }
+
+  private Ability getHa(Pokemon pokemon) {
+    if (pokemon == null) return null;
+    for (PotentialAbility ability : pokemon.getForm().getAbilities()) {
+      if (ability.getType() instanceof HiddenAbilityType) {
+        return ability.getTemplate().create(false, Priority.NORMAL);
+      }
+    }
+    return null;
   }
 
   @Override public void createEgg(ServerPlayerEntity player, Pokemon pokemon, Pokemon egg) {

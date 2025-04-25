@@ -62,7 +62,7 @@ public class Config {
 
   public Config() {
     this.debug = false;
-    this.fixIlegalAbilities = false;
+    this.fixIlegalAbilities = true;
     this.canUseNativeGUI = false;
     this.lang = "en";
     this.dataBase = new DataBaseConfig();
