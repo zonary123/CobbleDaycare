@@ -31,7 +31,7 @@ public class DayCarePokeBall extends Mechanics {
     builder.getEgg().getPersistentData().putString(TAG, id.getNamespace() + ":" + id.getPath());
   }
 
-  @Override public String replace(String text) {
+  @Override public String replace(String text, ServerPlayerEntity player) {
     return text
       .replace("%pokeball%", isActive() ? CobbleUtils.language.getYes() : CobbleUtils.language.getNo());
   }

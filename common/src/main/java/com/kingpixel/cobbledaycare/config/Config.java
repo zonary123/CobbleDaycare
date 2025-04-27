@@ -41,6 +41,7 @@ public class Config {
   private long ticksToWalking;
   private boolean globalMultiplierSteps;
   private float multiplierSteps;
+  private Map<String, Float> multiplierStepsPermission;
   private double defaultSteps;
   private Map<EggGroup, Double> steps;
   private int cooldown;
@@ -92,6 +93,8 @@ public class Config {
       "steamengine");
     this.reduceEggStepsVehicle = 2f;
     this.multiplierSteps = 1.0f;
+    this.multiplierStepsPermission = new HashMap<>();
+    this.multiplierStepsPermission.put("multipliersteps.vip", 2.0f);
     this.permittedVehicles = List.of("minecraft:boat", "minecraft:horse", "cobblemon:pokemon");
     this.cooldownToOpenMenus = 3;
     this.cooldown = 30;
@@ -120,13 +123,11 @@ public class Config {
 
   public void check() {
     if (ticksToWalking < 20) ticksToWalking = 20;
-
   }
 
   public boolean hasOpenCooldown(ServerPlayerEntity player) {
-    Long cooldown = cooldownsOpenMenus.get(player.getUuid());
-    boolean b = cooldown != null && cooldown > System.currentTimeMillis();
-    if (!b) {
+    long cooldown = cooldownsOpenMenus.getOrDefault(player.getUuid(), 0L);
+    if (cooldown <= System.currentTimeMillis()) {
       cooldownsOpenMenus.put(player.getUuid(), System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(cooldownToOpenMenus));
       return false;
     }

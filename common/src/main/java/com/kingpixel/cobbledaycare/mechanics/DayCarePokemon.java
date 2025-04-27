@@ -148,7 +148,7 @@ public class DayCarePokemon extends Mechanics {
     return "pokemon";
   }
 
-  @Override public String replace(String text) {
+  @Override public String replace(String text, ServerPlayerEntity player) {
     return text;
   }
 

@@ -48,6 +48,7 @@ public class PrincipalMenu {
     this.info = new ItemModel(5, "minecraft:book", "<#82d448>ɪɴꜰᴏʀᴍᴀᴛɪᴏɴ", List.of(
       "<#82d448>--- ᴀʙɪʟɪᴛʏ ---",
       "&7Transmit Ah: &6%ability% %activeAbility%",
+      "&7Ditto Transmit: %activeDitto%",
       "<#82d448>---- ɪᴠꜱ ----",
       "&7Max Ivs Random: &6%maxivs%",
       "&7Destiny Knot: &6%destinyknot%",
@@ -125,7 +126,7 @@ public class PrincipalMenu {
           , player));
         loreInfo.replaceAll(s -> {
           for (Mechanics mechanic : CobbleDaycare.mechanics) {
-            s = mechanic.replace(s);
+            s = mechanic.replace(s, player);
           }
           s = s.replace("%cooldown%", PlayerUtils.getCooldown(cooldown));
           return s;
@@ -163,6 +164,7 @@ public class PrincipalMenu {
       .orTimeout(5, TimeUnit.SECONDS)
       .exceptionally(e -> {
         CobbleUtils.LOGGER.error(CobbleDaycare.MOD_ID, "Error opening PrincipalMenu -> " + e);
+
         return null;
       });
   }

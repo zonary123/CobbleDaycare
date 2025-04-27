@@ -16,7 +16,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import java.util.List;
 
 /**
- * @author Carlos Varas Alonso - 11/03/2025 9:09
+ * Refactorizado por claridad y reducción de duplicación.
  */
 @EqualsAndHashCode(callSuper = true) @Data
 public class DayCareForm extends Mechanics {
@@ -33,97 +33,115 @@ public class DayCareForm extends Mechanics {
       new EggForm("hisuian", List.of("overqwil", "sneasler"))
     );
     this.blacklistForm = List.of("halloween");
-    this.blacklistFeatures = List.of(
-      "netherite_coating"
-    );
+    this.blacklistFeatures = List.of("netherite_coating");
   }
-
 
   @Override
   public void applyEgg(EggBuilder builder) {
-    StringBuilder form = new StringBuilder();
     Pokemon female = builder.getFemale();
     Pokemon egg = builder.getEgg();
     Pokemon firstEvolution = builder.getFirstEvolution();
-    switch (female.getSpecies().showdownId()) {
-      case "perrserker":
-      case "sirfetchd":
-      case "mrrime":
-      case "cursola":
-      case "obstagoon":
-      case "runerigus":
-        form.append("galarian ");
-        break;
-      case "clodsire":
-        form.append("paldean");
-        break;
-      case "overqwil":
-      case "sneasler":
-        form.append("hisuian");
-        break;
-    }
 
-
-    String configForm = null;
-
-    for (EggForm eggForm : eggForms) {
-      if (eggForm.getPokemons().contains(female.showdownId())) {
-        configForm = eggForm.getForm();
-        break;
-      }
-    }
-
-
+    String configForm = getConfigForm(female);
     if (configForm != null) {
-      if (getBlacklistForm().contains(configForm)) configForm = "";
+      if (blacklistForm.contains(configForm)) configForm = "";
       applyForm(egg, configForm, firstEvolution);
       return;
     }
 
-    List<String> aspects = female.getForm().getAspects();
+    StringBuilder form = new StringBuilder(getRegionalForm(female));
+    form.append(processAspects(female));
+    form.append(processFeatures(female));
 
-    if (aspects.isEmpty()) {
+    if (isBlacklisted(form.toString())) {
       form = new StringBuilder();
-    } else {
-      form.append(aspects.getFirst());
     }
 
+    applyForm(egg, form.toString(), firstEvolution);
+  }
 
+  @Override
+  public void createEgg(ServerPlayerEntity player, Pokemon female, Pokemon egg) {
+    Pokemon firstEvolution = female;
+
+    String configForm = getConfigForm(female);
+    if (configForm != null) {
+      if (blacklistForm.contains(configForm)) configForm = "";
+      applyForm(egg, configForm, firstEvolution);
+      return;
+
+    }
+
+    StringBuilder form = new StringBuilder(getRegionalForm(female));
+    form.append(processAspects(female));
+    form.append(processFeatures(female));
+
+    if (isBlacklisted(form.toString())) {
+      form = new StringBuilder();
+    }
+
+    applyForm(egg, form.toString(), firstEvolution);
+  }
+
+  private String getConfigForm(Pokemon female) {
+    for (EggForm eggForm : eggForms) {
+      if (eggForm.getPokemons().contains(female.showdownId())) {
+        return eggForm.getForm();
+      }
+    }
+    return null;
+  }
+
+  private String getRegionalForm(Pokemon female) {
+    return switch (female.getSpecies().showdownId()) {
+      case "perrserker", "sirfetchd", "mrrime", "cursola", "obstagoon", "runerigus" -> "galarian ";
+      case "clodsire" -> "paldean";
+      case "overqwil", "sneasler" -> "hisuian";
+      default -> "";
+    };
+  }
+
+  private String processAspects(Pokemon female) {
+    List<String> aspects = female.getForm().getAspects();
+    StringBuilder form = new StringBuilder(aspects.isEmpty() ? "" : aspects.get(0));
     form = new StringBuilder(form.toString().replace("-", "_"));
 
     int lastUnderscoreIndex = form.lastIndexOf("_");
-
     if (lastUnderscoreIndex != -1) {
       form = new StringBuilder(form.substring(0, lastUnderscoreIndex) + "=" + form.substring(lastUnderscoreIndex + 1));
     }
 
-
-    // Form Regional
     for (String label : female.getForm().getLabels()) {
       if (label.contains("regional") || label.contains("gen8a")) {
         form.append(" ").append("region_bias=").append(female.getForm().formOnlyShowdownId());
       }
     }
+    return form.toString();
+  }
 
+  private String processFeatures(Pokemon female) {
+    StringBuilder form = new StringBuilder();
     for (SpeciesFeatureProvider<?> speciesFeatureProvider : SpeciesFeatures.INSTANCE.getFeaturesFor(female.getSpecies())) {
       if (speciesFeatureProvider instanceof ChoiceSpeciesFeatureProvider choice) {
         var choiceForm = choice.get(female);
         if (choiceForm != null) {
           String name = choiceForm.getName();
           String value = choiceForm.getValue();
-          if (blacklistFeatures.contains(name)
-            || blacklistFeatures.contains(value)
-            || blacklistForm.contains(name)
-            || blacklistForm.contains(value)) continue;
+          if (isBlacklisted(name, value)) continue;
           form.append(" ").append(name).append("=").append(value);
         }
       }
     }
+    return form.toString();
+  }
 
-    if (blacklistForm.contains(form.toString()))
-      form = new StringBuilder();
-
-    applyForm(egg, form.toString(), firstEvolution);
+  private boolean isBlacklisted(String... values) {
+    for (String value : values) {
+      if (blacklistFeatures.contains(value) || blacklistForm.contains(value)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void applyForm(Pokemon egg, String form, Pokemon firstEvolution) {
@@ -139,22 +157,22 @@ public class DayCareForm extends Mechanics {
     CobbleDaycare.fixBreedable(egg);
   }
 
-  @Override public void createEgg(ServerPlayerEntity player, Pokemon pokemon, Pokemon egg) {
-
-  }
-
-  @Override public String getEggInfo(String s, NbtCompound nbt) {
+  @Override
+  public String getEggInfo(String s, NbtCompound nbt) {
     return s.replace("%form%", nbt.getString(TAG));
   }
 
-  @Override public void validateData() {
+  @Override
+  public void validateData() {
   }
 
-  @Override public String fileName() {
+  @Override
+  public String fileName() {
     return "form";
   }
 
-  @Override public String replace(String text) {
+  @Override
+  public String replace(String text, ServerPlayerEntity player) {
     return text;
   }
 }

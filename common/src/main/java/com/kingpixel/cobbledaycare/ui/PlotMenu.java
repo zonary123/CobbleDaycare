@@ -114,7 +114,7 @@ public class PlotMenu {
       })
       .orTimeout(5, TimeUnit.SECONDS)
       .exceptionally(throwable -> {
-        CobbleUtils.LOGGER.error(CobbleDaycare.MOD_ID, "Error opening plot menu");
+        CobbleUtils.LOGGER.error(CobbleDaycare.MOD_ID, "Error opening plot menu -> " + throwable);
         return null;
       });
 

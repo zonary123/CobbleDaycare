@@ -3,11 +3,14 @@ package com.kingpixel.cobbledaycare.mechanics;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.models.EggBuilder;
 import com.kingpixel.cobbleutils.CobbleUtils;
+import com.kingpixel.cobbleutils.api.PermissionApi;
 import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
+
+import java.util.Map;
 
 /**
  * @author Carlos Varas Alonso - 31/01/2025 0:25
@@ -18,6 +21,7 @@ public class DayCareShiny extends Mechanics {
   private boolean masuda;
   private boolean parentsShiny;
   private float percentageShiny;
+  private Map<String, Float> percentagesShiny;
   private float multiplierShiny;
   private float multiplierMasuda;
 
@@ -25,13 +29,27 @@ public class DayCareShiny extends Mechanics {
     this.masuda = true;
     this.parentsShiny = true;
     this.percentageShiny = 8192;
+    this.percentagesShiny = Map.of(
+      "cobbledaycare.shinyboost.vip", percentageShiny
+    );
     this.multiplierShiny = 1.5f;
     this.multiplierMasuda = 1.5f;
   }
 
-  @Override public String replace(String text) {
+  private float getShinyRate(ServerPlayerEntity player) {
+    if (player == null) return percentageShiny;
+    float shinyRate = percentageShiny;
+    for (Map.Entry<String, Float> entry : percentagesShiny.entrySet()) {
+      if (PermissionApi.hasPermission(player, entry.getKey(), 2)) {
+        if (shinyRate > entry.getValue()) shinyRate = entry.getValue();
+      }
+    }
+    return shinyRate;
+  }
+
+  @Override public String replace(String text, ServerPlayerEntity player) {
     return text
-      .replace("%shinyrate%", String.format("%.2f", percentageShiny))
+      .replace("%shinyrate%", String.format("%.2f", getShinyRate(player)))
       .replace("%multiplierShiny%", String.format("%.2f", multiplierShiny))
       .replace("%multiplierMasuda%", String.format("%.2f", multiplierMasuda))
       .replace("%multipliershiny%", String.format("%.2f", multiplierShiny))
@@ -45,7 +63,7 @@ public class DayCareShiny extends Mechanics {
     Pokemon male = builder.getMale();
     Pokemon female = builder.getFemale();
     Pokemon egg = builder.getEgg();
-    float shinyrate = getPercentageShiny();
+    float shinyrate = getShinyRate(builder.getPlayer());
     float multiplier = getMultiplierShiny();
 
     if (multiplier > 0 && isParentsShiny()) {
@@ -82,7 +100,7 @@ public class DayCareShiny extends Mechanics {
   }
 
   @Override public String getEggInfo(String s, NbtCompound nbt) {
-    return s.replace("%shiny%", nbt.getBoolean(TAG) ? CobbleUtils.language.getYes() : CobbleUtils.language.getNo());
+    return s.replace("%shiny%", nbt.getBoolean(TAG) ? CobbleUtils.language.getSymbolshiny() : "");
   }
 
   @Override public void validateData() {

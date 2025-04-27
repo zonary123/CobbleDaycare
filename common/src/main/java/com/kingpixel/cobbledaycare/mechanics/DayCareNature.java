@@ -75,7 +75,7 @@ public class DayCareNature extends Mechanics {
     return "nature";
   }
 
-  @Override public String replace(String text) {
+  @Override public String replace(String text, ServerPlayerEntity player) {
     return text
       .replace("%everstone%", String.format("%.2f", percentageEverstone));
   }

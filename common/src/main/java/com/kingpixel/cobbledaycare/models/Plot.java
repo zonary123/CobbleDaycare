@@ -7,8 +7,8 @@ import com.cobblemon.mod.common.pokemon.Gender;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.database.DatabaseClientFactory;
+import com.kingpixel.cobbledaycare.mechanics.DayCarePokemon;
 import com.kingpixel.cobbledaycare.mechanics.Mechanics;
-import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.Model.CobbleUtilsTags;
 import com.kingpixel.cobbleutils.api.PermissionApi;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
@@ -61,12 +61,8 @@ public class Plot {
     if (pokemon == null) return false;
     CobbleDaycare.fixBreedable(pokemon);
     if (isNotBreedable(pokemon)) return false;
-    Pokemon other;
-    if (hasTwoParents()) {
-      other = gender == SelectGender.MALE ? female : male;
-    } else {
-      other = getEmptyParent();
-    }
+    if (CobbleDaycare.config.getBlackList().isBlackListed(pokemon)) return false;
+    Pokemon other = gender == SelectGender.MALE ? female : male;
 
     boolean otherIsDitto = isDitto(other);
     boolean pokemonIsDitto = isDitto(pokemon);
@@ -88,7 +84,8 @@ public class Plot {
         return pokemonIsDitto;
       }
     }
-    if (pokemon.getGender().equals(Gender.GENDERLESS)) return false;
+    if (pokemon.getGender().equals(Gender.GENDERLESS) && !pokemon.getForm().getEggGroups().contains(EggGroup.DITTO))
+      return false;
     for (EggGroup eggGroup : pokemon.getForm().getEggGroups()) {
       if (other.getForm().getEggGroups().contains(eggGroup) || pokemon.getForm().getEggGroups().contains(EggGroup.DITTO))
         return true;
@@ -186,46 +183,48 @@ public class Plot {
   public boolean checkEgg(ServerPlayerEntity player, UserInformation userInformation) {
     try {
       boolean update = false;
+
       if (!hasTwoParents()) return update;
+      int index = userInformation.getPlots().indexOf(this) + 1;
       int sizeEggs = eggs.size();
       if (sizeEggs >= limitEggs(player)) {
         if (userInformation.isNotifyLimitEggs()) {
           PlayerUtils.sendMessage(
             player,
             CobbleDaycare.language.getMessageLimitEggs()
-              .replace("%plot%", userInformation.getPlots().indexOf(this) + ""),
+              .replace("%plot%", index + ""),
             CobbleDaycare.language.getPrefix(),
             TypeMessage.CHAT
           );
         }
         return update;
       }
-      if (hasBannedPokemons(player, userInformation)) return true;
-      if (notCorrectCooldown(player)) return true;
-      if (!canBreed(female, SelectGender.FEMALE)) {
+      boolean femaleCanBreed = canBreed(female, SelectGender.FEMALE);
+      boolean maleCanBreed = canBreed(male, SelectGender.MALE);
+      if (!femaleCanBreed) {
         PlayerUtils.sendMessage(
           player,
           PokemonUtils.replace(CobbleDaycare.language.getMessageRemovedFemale(), female)
-            .replace("%plot%", userInformation.getPlots().indexOf(this) + ""),
+            .replace("%plot%", index + ""),
           CobbleDaycare.language.getPrefix(),
           TypeMessage.CHAT
         );
         Cobblemon.INSTANCE.getStorage().getParty(player).add(female);
         female = null;
-        return true;
       }
-      if (!canBreed(male, SelectGender.MALE)) {
+      if (!maleCanBreed) {
         PlayerUtils.sendMessage(
           player,
           PokemonUtils.replace(CobbleDaycare.language.getMessageRemovedMale(), male)
-            .replace("%plot%", userInformation.getPlots().indexOf(this) + ""),
+            .replace("%plot%", index + ""),
           CobbleDaycare.language.getPrefix(),
           TypeMessage.CHAT
         );
         Cobblemon.INSTANCE.getStorage().getParty(player).add(male);
         male = null;
-        return true;
       }
+      if (!maleCanBreed || !femaleCanBreed) return true;
+      fixCooldown(player);
       if (!hasCooldown(player)) {
         Pokemon egg = createEgg(player);
         if (!egg.getSpecies().showdownId().equals("egg")) {
@@ -243,7 +242,9 @@ public class Plot {
             pokemons.add(egg);
             PlayerUtils.sendMessage(
               player,
-              PokemonUtils.replace(CobbleDaycare.language.getMessageEggCreated(), pokemons),
+              PokemonUtils.replace(CobbleDaycare.language.getMessageEggCreated()
+                .replace("%pokemon3%", egg.getPersistentData().getString(DayCarePokemon.TAG_POKEMON)), pokemons)
+              ,
               CobbleDaycare.language.getPrefix(),
               TypeMessage.CHAT
             );
@@ -264,25 +265,15 @@ public class Plot {
     }
   }
 
-  private boolean notCorrectCooldown(ServerPlayerEntity player) {
+  private void fixCooldown(ServerPlayerEntity player) {
     long correctCooldown = PlayerUtils.getCooldown(CobbleDaycare.config.getCooldowns(), CobbleDaycare.config.getCooldown(), player);
     long correctTimeToHatch = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(correctCooldown);
-
     if (timeToHatch > correctTimeToHatch) {
       timeToHatch = correctTimeToHatch;
-      if (CobbleDaycare.config.isDebug()) {
-        CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Plot.notCorrectCooldown");
-      }
-      return true;
     }
-
-    return false;
   }
 
   public Pokemon createEgg(ServerPlayerEntity player) {
-    if (CobbleDaycare.config.isDebug()) {
-      CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Plot.createEgg");
-    }
     Pokemon egg = PokemonProperties.Companion.parse("egg").create();
     Pokemon firstEvolution = female;
     List<Pokemon> parents = new ArrayList<>();
@@ -302,34 +293,6 @@ public class Plot {
     return egg;
   }
 
-  private boolean hasBannedPokemons(ServerPlayerEntity player, UserInformation userInformation) {
-    boolean maleBanned = false;
-    boolean femaleBanned = false;
-    if (male != null) maleBanned = CobbleDaycare.config.getBlackList().isBlackListed(male);
-    if (maleBanned) {
-      sendBanNotification(player, male, userInformation);
-      male = null;
-    }
-    if (female != null) femaleBanned = CobbleDaycare.config.getBlackList().isBlackListed(female);
-    if (femaleBanned) {
-      sendBanNotification(player, female, userInformation);
-      female = null;
-    }
-    return maleBanned || femaleBanned;
-  }
-
-  private void sendBanNotification(ServerPlayerEntity player, Pokemon pokemon, UserInformation userInformation) {
-    Cobblemon.INSTANCE.getStorage().getParty(player).add(pokemon);
-    if (userInformation.isNotifyBanPokemon()) {
-      PlayerUtils.sendMessage(
-        player,
-        PokemonUtils.replace(CobbleDaycare.language.getMessageBanPokemon(), pokemon)
-          .replace("%plot%", userInformation.getPlots().indexOf(this) + ""),
-        CobbleDaycare.language.getPrefix(),
-        TypeMessage.CHAT
-      );
-    }
-  }
 
   public void addPokemon(ServerPlayerEntity player, Pokemon pokemon, SelectGender gender, UserInformation userInformation) {
     if (gender == SelectGender.FEMALE) {

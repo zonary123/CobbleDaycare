@@ -30,6 +30,23 @@ public class DayCareEggMoves extends Mechanics {
     return s;
   }
 
+  private static List<String> extractMoveNamesFromJson(String json) {
+    if (json == null || json.isEmpty()) return new ArrayList<>();
+    List<String> moveNames = new ArrayList<>();
+
+    try {
+      JsonObject jsonObject = JsonParser.parseString(json).getAsJsonObject();
+      JsonArray jsonArray = jsonObject.getAsJsonArray("moves");
+      for (JsonElement element : jsonArray) {
+        moveNames.add(element.getAsString());
+      }
+    } catch (Exception e) {
+      CobbleUtils.LOGGER.error("Error parsing move names from JSON: " + e.getMessage());
+    }
+
+    return moveNames;
+  }
+
   @Override
   public void applyEgg(EggBuilder builder) {
     List<String> moves = new ArrayList<>(getMoves(builder.getMale()));
@@ -55,45 +72,50 @@ public class DayCareEggMoves extends Mechanics {
 
   @Override
   public void applyHatch(ServerPlayerEntity player, Pokemon egg) {
-    String moves = egg.getPersistentData().getString(TAG);
-    if (moves != null && !moves.isEmpty()) {
-      try {
-        // Parsear el JSON string como un JsonObject
-        JsonObject jsonObject = JsonParser.parseString(moves).getAsJsonObject();
+    String json = egg.getPersistentData().getString(TAG);
+    var moves = extractMoveNamesFromJson(json);
 
-        // Obtener el JsonArray bajo la clave "moves"
-        JsonArray jsonArray = jsonObject.getAsJsonArray("moves");
-        for (JsonElement element : jsonArray) {
-          MoveTemplate moveTemplate = Moves.INSTANCE.getByName(element.getAsString());
-          if (moveTemplate == null) continue;
-          Move move = moveTemplate.create();
-          JsonObject moveJson = move.saveToJSON(new JsonObject());
-          BenchedMove benchedMove = BenchedMove.Companion.loadFromJSON(moveJson);
-          egg.getBenchedMoves().add(benchedMove);
-        }
-      } catch (Exception e) {
-        CobbleUtils.LOGGER.error("Error to process JSON ARRAY: " + e.getMessage());
-      }
+    for (String s : moves) {
+      MoveTemplate moveTemplate = Moves.INSTANCE.getByName(s);
+      if (moveTemplate == null) continue;
+      Move move = moveTemplate.create();
+      JsonObject moveJson = move.saveToJSON(new JsonObject());
+      BenchedMove benchedMove = BenchedMove.Companion.loadFromJSON(moveJson);
+      egg.getBenchedMoves().add(benchedMove);
     }
+
     egg.getPersistentData().remove(TAG);
   }
 
-  @Override public void createEgg(ServerPlayerEntity player, Pokemon pokemon, Pokemon egg) {
-
+  @Override
+  public void createEgg(ServerPlayerEntity player, Pokemon pokemon, Pokemon egg) {
   }
 
-  @Override public String getEggInfo(String s, NbtCompound nbt) {
-    return s.replace("%eggmoves%", nbt.getString(TAG));
+  @Override
+  public String getEggInfo(String s, NbtCompound nbt) {
+    List<String> moveNames = extractMoveNamesFromJson(nbt.getString(TAG));
+    StringBuilder movesString = new StringBuilder();
+    for (String moveName : moveNames) {
+      movesString.append("<lang:cobblemon.move.").append(moveName).append(">").append(", ");
+    }
+    if (!movesString.isEmpty()) {
+      movesString.setLength(movesString.length() - 2); // Remove the last comma and space
+      movesString.append(".");
+    }
+    return s.replace("%eggmoves%", movesString.isEmpty() ? CobbleUtils.language.getNone() : movesString.toString());
   }
 
-  @Override public void validateData() {
+  @Override
+  public void validateData() {
   }
 
-  @Override public String fileName() {
+  @Override
+  public String fileName() {
     return "egg_moves";
   }
 
-  @Override public String replace(String text) {
+  @Override
+  public String replace(String text, ServerPlayerEntity player) {
     return text
       .replace("%eggmoves%", isActive() ? CobbleUtils.language.getYes() : CobbleUtils.language.getNo());
   }

@@ -10,6 +10,7 @@ import com.kingpixel.cobbledaycare.models.SelectGender;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.api.PermissionApi;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
+import com.kingpixel.cobbleutils.util.PokemonUtils;
 import com.kingpixel.cobbleutils.util.TypeMessage;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -77,6 +78,7 @@ public class CommandBreed {
     Pokemon female = PartySlotArgumentType.Companion.getPokemon(context, "female");
     boolean femaleCanBreed = plot.canBreed(female, SelectGender.FEMALE);
     plot.setFemale(female);
+
     if (CobbleDaycare.config.isDebug()) {
       CobbleUtils.LOGGER.info("maleCanBreed: " + maleCanBreed);
       CobbleUtils.LOGGER.info("femaleCanBreed: " + femaleCanBreed);
@@ -85,6 +87,13 @@ public class CommandBreed {
       Cobblemon.INSTANCE.getStorage().getParty(player).add(plot.createEgg(player));
       userInfo.setCooldownBreed(player);
       DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInfo);
+    } else {
+      PlayerUtils.sendMessage(
+        player,
+        PokemonUtils.replace(CobbleDaycare.language.getMessageCannotBreed(), List.of(male, female)),
+        CobbleDaycare.language.getPrefix(),
+        TypeMessage.CHAT
+      );
     }
     return 1;
   }

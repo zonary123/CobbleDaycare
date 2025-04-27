@@ -14,7 +14,7 @@ dependencies {
     modImplementation "dev.architectury:architectury:${project.architectury_version}"
 
 
-    modImplementation("com.cobblemon:mod:${property("cobblemon_version")}")
+    modImplementation("com.cobblemon:fabric:${property("cobblemon_version")}")
     // alL fabric dependencies:
     modImplementation("ca.landonjw.gooeylibs:fabric-api-repack:${property("gooeylibs_version")}")
 

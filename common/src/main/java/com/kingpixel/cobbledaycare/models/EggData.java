@@ -52,15 +52,30 @@ public class EggData {
 
 
   public void steps(ServerPlayerEntity player, Pokemon egg, double deltaMovement, UserInformation userInformation) {
-    steps -= deltaMovement * userInformation.getActualMultiplier();
+    double totalSteps = deltaMovement * userInformation.getActualMultiplier(player);
     egg.setCurrentHealth(0);
-    if (steps <= 0) {
-      steps = egg.getPersistentData().getDouble(DayCarePokemon.TAG_REFERENCE_STEPS);
-      cycles--;
-      if (cycles % 3 == 0 && cycles > 0) {
-        player.playSoundToPlayer(SoundEvents.ENTITY_TURTLE_EGG_CRACK, SoundCategory.PLAYERS, 1.0F, 1.0F);
+
+    while (totalSteps > 0 && cycles > 0) {
+      double stepsPerCycle = egg.getPersistentData().getDouble(DayCarePokemon.TAG_REFERENCE_STEPS);
+
+      if (steps <= 0) {
+        steps = stepsPerCycle;
+      }
+
+      if (totalSteps >= steps) {
+        totalSteps -= steps;
+        steps = 0;
+        cycles--;
+
+        if (cycles % 3 == 0 && cycles > 0) {
+          player.playSoundToPlayer(SoundEvents.ENTITY_TURTLE_EGG_CRACK, SoundCategory.PLAYERS, 1.0F, 1.0F);
+        }
+      } else {
+        steps -= totalSteps;
+        totalSteps = 0;
       }
     }
+
     if (cycles <= 0) {
       player.playSoundToPlayer(SoundEvents.ENTITY_TURTLE_EGG_HATCH, SoundCategory.PLAYERS, 1.0F, 1.0F);
       BlockStateParticleEffect particleEffect = new BlockStateParticleEffect(ParticleTypes.BLOCK, Blocks.TURTLE_EGG.getDefaultState());
@@ -83,8 +98,10 @@ public class EggData {
       egg.getPersistentData().putDouble(DayCarePokemon.TAG_STEPS, steps);
       egg.getPersistentData().putInt(DayCarePokemon.TAG_CYCLES, cycles);
     }
+
     updateName(egg);
   }
+
 
   private void updateName(Pokemon egg) {
     egg.setNickname(Text.literal(
@@ -104,15 +121,12 @@ public class EggData {
         egg.heal();
         HatchEggEvent.HATCH_EGG_EVENT.emit(player, egg);
         PokemonProperties pokemonProperties = egg.createPokemonProperties(PokemonPropertyExtractor.ALL);
-        Pokemon pokemon = pokemonProperties.create();
-        if (pokemon.equals(egg) || pokemon.getSpecies() == egg.getSpecies()) {
-          CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Pokemon is the same as egg");
-        }
         CobblemonEvents.HATCH_EGG_POST.emit(new com.cobblemon.mod.common.api.events.pokemon.HatchEggEvent.Post(pokemonProperties, player));
       })
       .orTimeout(5, TimeUnit.SECONDS)
       .exceptionally(e -> {
         CobbleUtils.LOGGER.error(CobbleDaycare.MOD_ID, "Error hatching egg");
+        e.printStackTrace();
         return null;
       });
   }

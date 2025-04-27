@@ -79,21 +79,23 @@ public class CobbleDaycare {
     task = Task.builder()
       .execute(() -> {
         CompletableFuture.runAsync(() -> {
+            long start = System.currentTimeMillis();
             for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
               if (player == null) continue;
               boolean update = false;
               UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
-              for (Plot plot : userInformation.getPlots()) {
-                if (plot.checkEgg(player, userInformation) && !update) update = true;
-              }
-              if (update)
-                DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
+              update = userInformation.fix(player);
+              if (update) DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
               fixPlayer(player);
             }
+            long end = System.currentTimeMillis();
+            if (config.isDebug())
+              CobbleUtils.LOGGER.info(MOD_ID, "Time to update players: " + (end - start) + "ms");
           })
-          .orTimeout(5, TimeUnit.SECONDS)
+          .orTimeout(30, TimeUnit.SECONDS)
           .exceptionally(e -> {
             CobbleUtils.LOGGER.error(MOD_ID, "Error Task Daycare.");
+            e.printStackTrace();
             return null;
           });
       })
@@ -174,9 +176,7 @@ public class CobbleDaycare {
           }
           if (numPlots == 0) numPlots = 1;
           boolean update = userInformation.check(numPlots, player);
-          for (Plot plot : userInformation.getPlots()) {
-            if (plot.checkEgg(player, userInformation) && !update) update = true;
-          }
+          if (userInformation.fix(player)) update = true;
           if (update) DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
           long end = System.currentTimeMillis();
           if (config.isDebug())

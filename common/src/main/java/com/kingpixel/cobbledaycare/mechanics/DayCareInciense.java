@@ -112,7 +112,7 @@ public class DayCareInciense extends Mechanics {
     return "incense";
   }
 
-  @Override public String replace(String text) {
+  @Override public String replace(String text, ServerPlayerEntity player) {
     return text
       .replace("%incense%", isActive() ? CobbleUtils.language.getYes() : CobbleUtils.language.getNo());
   }

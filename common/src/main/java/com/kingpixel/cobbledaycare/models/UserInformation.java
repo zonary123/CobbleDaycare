@@ -15,6 +15,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -29,9 +30,10 @@ public class UserInformation {
   private UUID playerUUID;
   private String playerName;
   private String country;
-  private boolean notifyCreateEgg;
-  private boolean notifyLimitEggs;
-  private boolean notifyBanPokemon;
+  private boolean notifyCreateEgg = true;
+  private boolean notifyLimitEggs = true;
+  private boolean notifyBanPokemon = true;
+  private boolean actionBar = true;
   private float multiplierSteps;
   private long timeMultiplierSteps;
   private long cooldownHatch;
@@ -41,9 +43,6 @@ public class UserInformation {
   public UserInformation() {
     this.playerUUID = null;
     this.playerName = null;
-    this.notifyLimitEggs = true;
-    this.notifyCreateEgg = true;
-    this.notifyBanPokemon = true;
     this.multiplierSteps = 1.0f;
     this.timeMultiplierSteps = 0;
     this.cooldownHatch = 0;
@@ -54,9 +53,6 @@ public class UserInformation {
   public UserInformation(ServerPlayerEntity player) {
     this.playerUUID = player.getUuid();
     this.playerName = player.getGameProfile().getName();
-    this.notifyLimitEggs = true;
-    this.notifyCreateEgg = true;
-    this.notifyBanPokemon = true;
     this.multiplierSteps = 1.0f;
     this.timeMultiplierSteps = 0;
     this.cooldownHatch = 0;
@@ -73,8 +69,13 @@ public class UserInformation {
     return Document.parse(json);
   }
 
-  public double getActualMultiplier() {
-    return Math.max(CobbleDaycare.config.getMultiplierSteps(), multiplierSteps);
+  public float getActualMultiplier(ServerPlayerEntity player) {
+    float steps = CobbleDaycare.config.getMultiplierSteps();
+    for (Map.Entry<String, Float> entry : CobbleDaycare.config.getMultiplierStepsPermission().entrySet()) {
+      if (PermissionApi.hasPermission(player, entry.getKey(), 2))
+        if (steps <= entry.getValue()) steps = entry.getValue();
+    }
+    return Math.max(steps, multiplierSteps);
   }
 
   public boolean hasCooldownHatch(ServerPlayerEntity player) {
@@ -137,4 +138,19 @@ public class UserInformation {
   }
 
 
+  public boolean fix(ServerPlayerEntity player) {
+    boolean update = false;
+    for (Plot plot : plots) {
+      var iterator = plot.getEggs().iterator();
+      while (iterator.hasNext()) {
+        Pokemon egg = iterator.next();
+        if (egg == null) {
+          iterator.remove();
+          update = true;
+        }
+      }
+      if (plot.checkEgg(player, this)) update = true;
+    }
+    return update;
+  }
 }

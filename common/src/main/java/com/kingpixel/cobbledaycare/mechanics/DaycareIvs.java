@@ -33,6 +33,7 @@ public class DaycareIvs extends Mechanics {
     Stats.SPECIAL_DEFENCE, "SpecialDefense",
     Stats.SPEED, "Speed"
   );
+  private static Map<CobblemonItem, Stats> bracelets;
 
   private int defaultIvsTransfer;
   private int destinyKnotIvsTransfer;
@@ -48,7 +49,7 @@ public class DaycareIvs extends Mechanics {
     this.percentageDestinyKnot = 100f;
   }
 
-  @Override public String replace(String text) {
+  @Override public String replace(String text, ServerPlayerEntity player) {
     return text
       .replace("%destinyknot%", String.format("%.2f", percentageDestinyKnot))
       .replace("%poweritem%", String.format("%.2f", percentagePowerItem))
@@ -136,8 +137,7 @@ public class DaycareIvs extends Mechanics {
       applyIvs(parent, egg, stat, stats);
     }
     stats.forEach(stat -> {
-      int random = getMaxIvsRandom() + 1;
-      if (random < 0 || random > 31) random = 31;
+      int random = Math.min(Math.max(getMaxIvsRandom(), 0), 31);
       int iv = Utils.RANDOM.nextInt(random + 1);
       applyData(egg, stat, iv);
     });
@@ -153,24 +153,20 @@ public class DaycareIvs extends Mechanics {
   }
 
   private boolean powerItem(Pokemon pokemon, Pokemon egg, List<Stats> cloneStats) {
+    if (bracelets == null) {
+      bracelets = Map.of(
+        POWER_WEIGHT, Stats.HP,
+        POWER_BRACER, Stats.ATTACK,
+        POWER_BELT, Stats.DEFENCE,
+        POWER_ANKLET, Stats.SPEED,
+        POWER_LENS, Stats.SPECIAL_ATTACK,
+        POWER_BAND, Stats.SPECIAL_DEFENCE
+      );
+    }
     if (pokemon.heldItem().getItem() instanceof CobblemonItem item) {
-      if (item == POWER_WEIGHT) {
-        applyIvs(pokemon, egg, Stats.HP, cloneStats);
-        return true;
-      } else if (item == POWER_BRACER) {
-        applyIvs(pokemon, egg, Stats.ATTACK, cloneStats);
-        return true;
-      } else if (item == POWER_BELT) {
-        applyIvs(pokemon, egg, Stats.DEFENCE, cloneStats);
-        return true;
-      } else if (item == POWER_ANKLET) {
-        applyIvs(pokemon, egg, Stats.SPEED, cloneStats);
-        return true;
-      } else if (item == POWER_LENS) {
-        applyIvs(pokemon, egg, Stats.SPECIAL_ATTACK, cloneStats);
-        return true;
-      } else if (item == POWER_BAND) {
-        applyIvs(pokemon, egg, Stats.SPECIAL_DEFENCE, cloneStats);
+      Stats stat = bracelets.get(item);
+      if (stat != null) {
+        applyIvs(pokemon, egg, stat, cloneStats);
         return true;
       }
     }

@@ -46,7 +46,7 @@ public class DayCareMirrorHerb extends Mechanics {
     }
   }
 
-  @Override public String replace(String text) {
+  @Override public String replace(String text, ServerPlayerEntity player) {
     String s = isActive() ? CobbleUtils.language.getYes() : CobbleUtils.language.getNo();
     return text
       .replace("%mirrorHerb%", s)

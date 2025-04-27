@@ -7,7 +7,6 @@ import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.database.DatabaseClientFactory;
 import com.kingpixel.cobbledaycare.models.EggData;
 import com.kingpixel.cobbledaycare.models.UserInformation;
-import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
 import com.kingpixel.cobbleutils.util.TypeMessage;
 import net.minecraft.entity.Entity;
@@ -45,7 +44,6 @@ public abstract class WalkBreedingMixin {
       long newTime = System.currentTimeMillis();
 
       if (oldTime < newTime) {
-        long start = System.currentTimeMillis();
         boolean isInPose = CobbleDaycare.config.isAllowElytra() || !player.isInPose(EntityPose.FALL_FLYING);
         boolean isInvulnerable = !player.isInvulnerable();
         boolean isFly = player.getAbilities().flying;
@@ -82,16 +80,12 @@ public abstract class WalkBreedingMixin {
               DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
             }
           }
-          cobbleDaycare$sendMessageMultiplierSteps(player, userInformation);
+          if (userInformation.isActionBar()) cobbleDaycare$sendMessageMultiplierSteps(player, userInformation);
         } else {
           tp = true;
         }
 
         oldTime = System.currentTimeMillis() + (CobbleDaycare.config.getTicksToWalking() * 50);
-        long end = System.currentTimeMillis();
-        if (CobbleDaycare.config.isDebug()) {
-          CobbleUtils.LOGGER.info("Time: " + (end - start) + "ms");
-        }
       }
     } catch (Exception e) {
       e.printStackTrace();
@@ -101,7 +95,8 @@ public abstract class WalkBreedingMixin {
   @Unique
   private void cobbleDaycare$sendMessageMultiplierSteps(ServerPlayerEntity player, UserInformation userInformation) {
     boolean activeMultiplier = CobbleDaycare.config.isGlobalMultiplierSteps();
-    boolean haveMultiplier = userInformation.getActualMultiplier() > CobbleDaycare.config.getMultiplierSteps();
+    float actualSteps = userInformation.getActualMultiplier(player);
+    boolean haveMultiplier = actualSteps > CobbleDaycare.config.getMultiplierSteps();
     if (activeMultiplier || haveMultiplier) {
       long ticks = userInformation.getTimeMultiplierSteps();
       long cooldown = ticks * 50; // Convert ticks to milliseconds
@@ -109,7 +104,7 @@ public abstract class WalkBreedingMixin {
       PlayerUtils.sendMessage(
         player,
         CobbleDaycare.language.getMessageActiveStepsMultiplier()
-          .replace("%multiplier%", String.format("%.2f", userInformation.getActualMultiplier()))
+          .replace("%multiplier%", String.format("%.2f", actualSteps))
           .replace("%cooldown%", s)
           .replace("%time%", s),
         CobbleDaycare.language.getPrefix(),

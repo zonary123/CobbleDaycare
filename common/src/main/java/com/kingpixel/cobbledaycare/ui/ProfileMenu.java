@@ -27,12 +27,16 @@ public class ProfileMenu {
   private ItemModel notifyCreateEgg;
   private ItemModel notifyLimitEggs;
   private ItemModel notifyBanPokemon;
+  private ItemModel notifyActionBar;
   private List<PanelsConfig> panels;
 
   public ProfileMenu() {
     this.rows = 3;
     this.title = "&6Profile Menu";
     this.close = new ItemModel(22, "minecraft:barrier", "&cClose", List.of(""), 1);
+    this.notifyActionBar = new ItemModel(4, "minecraft:book", "&6Notify Action Bar",
+      List.of("&7Notify Action Bar: %active%")
+      , 1);
     this.notifyCreateEgg = new ItemModel(11, "minecraft:book", "&6Notify Create Egg",
       List.of("&7Notify Create Egg: %active%")
       , 1);
@@ -53,7 +57,14 @@ public class ProfileMenu {
 
     PanelsConfig.applyConfig(template, panels);
 
-    template.set(notifyCreateEgg.getSlot(), notifyCreateEgg.getButton(1, null, replaceLore(notifyCreateEgg.getLore(),
+    notifyActionBar.applyTemplate(template, notifyActionBar.getButton(1, null, replaceLore(notifyActionBar.getLore(),
+      userInformation.isActionBar()), action -> {
+      userInformation.setActionBar(!userInformation.isActionBar());
+      DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
+      open(player, userInformation);
+    }));
+
+    notifyCreateEgg.applyTemplate(template, notifyCreateEgg.getButton(1, null, replaceLore(notifyCreateEgg.getLore(),
         userInformation.isNotifyCreateEgg()),
       action -> {
         userInformation.setNotifyCreateEgg(!userInformation.isNotifyCreateEgg());
@@ -61,19 +72,21 @@ public class ProfileMenu {
         open(player, userInformation);
       }));
 
-    template.set(notifyLimitEggs.getSlot(), notifyLimitEggs.getButton(1, null, replaceLore(notifyLimitEggs.getLore(),
+    notifyLimitEggs.applyTemplate(template, notifyLimitEggs.getButton(1, null, replaceLore(notifyLimitEggs.getLore(),
       userInformation.isNotifyLimitEggs()), action -> {
       userInformation.setNotifyLimitEggs(!userInformation.isNotifyLimitEggs());
       DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
       open(player, userInformation);
     }));
 
-    template.set(notifyBanPokemon.getSlot(), notifyBanPokemon.getButton(1, null, replaceLore(notifyBanPokemon.getLore(),
-      userInformation.isNotifyBanPokemon()), action -> {
-      userInformation.setNotifyBanPokemon(!userInformation.isNotifyBanPokemon());
-      DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
-      open(player, userInformation);
-    }));
+
+    notifyBanPokemon.applyTemplate(template, notifyBanPokemon.getButton(1, null,
+      replaceLore(notifyBanPokemon.getLore(),
+        userInformation.isNotifyBanPokemon()), action -> {
+        userInformation.setNotifyBanPokemon(!userInformation.isNotifyBanPokemon());
+        DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
+        open(player, userInformation);
+      }));
 
     template.set(close.getSlot(), close.getButton(action -> {
       CobbleDaycare.language.getPrincipalMenu().open(player);

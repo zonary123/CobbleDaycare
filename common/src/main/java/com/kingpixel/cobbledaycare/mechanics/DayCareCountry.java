@@ -37,7 +37,7 @@ public class DayCareCountry extends Mechanics {
     return "country";
   }
 
-  @Override public String replace(String text) {
+  @Override public String replace(String text, ServerPlayerEntity player) {
     return text;
   }
 }

@@ -45,7 +45,7 @@ public abstract class Mechanics {
    * This method is used to get the name of the class that extends Mechanics.
    * It returns the class name without the package name.
    */
-  public abstract String replace(String text);
+  public abstract String replace(String text, ServerPlayerEntity player);
 
   /*
    * This method is used to apply the egg mechanics to the egg builder.
