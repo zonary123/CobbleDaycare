@@ -3,7 +3,6 @@ package com.kingpixel.cobbledaycare.config;
 import com.cobblemon.mod.common.api.pokemon.egg.EggGroup;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
-import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.Model.DataBaseConfig;
 import com.kingpixel.cobbleutils.Model.FilterPokemons;
 import com.kingpixel.cobbleutils.Model.PokemonBlackList;
@@ -158,23 +157,17 @@ public class Config {
       CobbleDaycare.PATH, "config.json", call -> {
         CobbleDaycare.config = Utils.newGson().fromJson(call, Config.class);
         CobbleDaycare.config.check();
-        CompletableFuture<Boolean> futureWrite = Utils.writeFileAsync(
+        Utils.writeFileAsync(
           CobbleDaycare.PATH, "config.json", Utils.newGson().toJson(CobbleDaycare.config)
         );
-        if (!futureWrite.join()) {
-          CobbleUtils.LOGGER.error("Error creating config file");
-        }
       }
     );
 
     if (!futureRead.join()) {
       CobbleDaycare.config = this;
-      CompletableFuture<Boolean> futureWrite = Utils.writeFileAsync(
+      Utils.writeFileAsync(
         CobbleDaycare.PATH, "config.json", Utils.newGson().toJson(CobbleDaycare.config)
       );
-      if (!futureWrite.join()) {
-        CobbleUtils.LOGGER.error("Error creating config file");
-      }
     }
   }
 }

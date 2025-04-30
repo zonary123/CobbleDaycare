@@ -8,6 +8,7 @@ import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.models.EggBuilder;
 import com.kingpixel.cobbledaycare.models.EggForm;
+import com.kingpixel.cobbledaycare.models.HatchBuilder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import net.minecraft.nbt.NbtCompound;
@@ -150,11 +151,12 @@ public class DayCareForm extends Mechanics {
   }
 
   @Override
-  public void applyHatch(ServerPlayerEntity player, Pokemon egg) {
+  public void applyHatch(HatchBuilder builder) {
+    Pokemon egg = builder.getEgg();
     String form = egg.getPersistentData().getString(TAG);
-    PokemonProperties.Companion.parse(form).apply(egg);
+    PokemonProperties.Companion.parse(form).apply(builder.getPokemon());
+    CobbleDaycare.fixBreedable(builder.getPokemon());
     egg.getPersistentData().remove(TAG);
-    CobbleDaycare.fixBreedable(egg);
   }
 
   @Override

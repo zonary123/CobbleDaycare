@@ -7,6 +7,7 @@ import com.cobblemon.mod.common.pokemon.Nature;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.models.EggBuilder;
+import com.kingpixel.cobbledaycare.models.HatchBuilder;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.PokemonUtils;
 import com.kingpixel.cobbleutils.util.Utils;
@@ -44,7 +45,9 @@ public class DayCareNature extends Mechanics {
     }
   }
 
-  @Override public void applyHatch(ServerPlayerEntity player, Pokemon egg) {
+  @Override public void applyHatch(HatchBuilder builder) {
+    Pokemon egg = builder.getEgg();
+    Pokemon pokemon = builder.getPokemon();
     String s = egg.getPersistentData().getString(TAG);
     if (!s.isEmpty()) {
       Nature nature = Natures.INSTANCE.getNature(s);
@@ -52,9 +55,9 @@ public class DayCareNature extends Mechanics {
         CobbleUtils.LOGGER.error(CobbleDaycare.MOD_ID, "Invalid nature: " + s);
         nature = Natures.INSTANCE.getRandomNature();
       }
-      egg.setNature(nature);
+      pokemon.setNature(nature);
     } else {
-      egg.setNature(Natures.INSTANCE.getRandomNature());
+      pokemon.setNature(Natures.INSTANCE.getRandomNature());
     }
     egg.getPersistentData().remove(TAG);
   }

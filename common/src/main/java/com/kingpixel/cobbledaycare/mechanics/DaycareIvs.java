@@ -5,6 +5,7 @@ import com.cobblemon.mod.common.item.CobblemonItem;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.models.EggBuilder;
+import com.kingpixel.cobbledaycare.models.HatchBuilder;
 import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -79,7 +80,9 @@ public class DaycareIvs extends Mechanics {
   }
 
   @Override
-  public void applyHatch(ServerPlayerEntity player, Pokemon egg) {
+  public void applyHatch(HatchBuilder builder) {
+    Pokemon egg = builder.getEgg();
+    Pokemon pokemon = builder.getPokemon();
     stats.forEach(stat -> {
       int iv;
       String oldStat = oldStats.get(stat).intern();
@@ -92,7 +95,7 @@ public class DaycareIvs extends Mechanics {
         iv = Utils.RANDOM.nextInt(32);
       }
 
-      egg.getIvs().set(stat, iv);
+      pokemon.getIvs().set(stat, iv);
 
       egg.getPersistentData().remove(stat.getShowdownId());
       egg.getPersistentData().remove(oldStat);

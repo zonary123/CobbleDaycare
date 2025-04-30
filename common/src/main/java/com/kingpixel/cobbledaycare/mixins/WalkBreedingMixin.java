@@ -7,6 +7,7 @@ import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.database.DatabaseClientFactory;
 import com.kingpixel.cobbledaycare.models.EggData;
 import com.kingpixel.cobbledaycare.models.UserInformation;
+import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
 import com.kingpixel.cobbleutils.util.TypeMessage;
 import net.minecraft.entity.Entity;
@@ -25,135 +26,187 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ServerPlayNetworkHandler.class)
 public abstract class WalkBreedingMixin {
 
+  @Unique private static final long TICKS_TO_MILLISECONDS = 50;
+  @Unique private static final int MAX_TELEPORT = 3;
   @Shadow public ServerPlayerEntity player;
-  @Unique private Entity entity;
-  @Unique private double oldX;
-  @Unique private double oldZ;
-  @Unique private boolean tp;
-  @Unique private long oldTime;
+  @Unique private double cobbleDaycare$previousX = 0;
+  @Unique private double cobbleDaycare$previousZ = 0;
+  @Unique private int cobbleDaycare$teleport = 0;
+  @Unique private long cobbleDaycare$lastUpdateTime = 0;
 
   @Inject(method = "onTeleportConfirm", at = @At("HEAD"))
-  public void breeding$handlePendingTeleport(TeleportConfirmC2SPacket packet, CallbackInfo ci) {
-    tp = true;
+  public void onTeleportConfirm(TeleportConfirmC2SPacket packet, CallbackInfo ci) {
+    cobbleDaycare$logDebug("TeleportConfirm: " + packet.getTeleportId());
+    cobbleDaycare$teleport = MAX_TELEPORT;
   }
 
+  @Inject(method = "requestTeleport(DDDFF)V", at = @At("HEAD"))
+  public void requestTeleport(double x, double y, double z, float yaw, float pitch, CallbackInfo ci) {
+    cobbleDaycare$logDebug("requestTeleport: " + x + ", " + y + ", " + z);
+    cobbleDaycare$teleport = MAX_TELEPORT;
+  }
+
+  @Inject(method = "requestTeleport(DDDFFLjava/util/Set;)V", at = @At("HEAD"))
+  public void requestTeleportWithSet(double x, double y, double z, float yaw, float pitch, java.util.Set<?> set, CallbackInfo ci) {
+    cobbleDaycare$logDebug("requestTeleport with Set: " + x + ", " + y + ", " + z);
+    cobbleDaycare$teleport = MAX_TELEPORT;
+  }
 
   @Inject(method = "onPlayerMove", at = @At("HEAD"))
-  public void breeding$onPlayerMove(PlayerMoveC2SPacket packet, CallbackInfo ci) {
+  public void onPlayerMove(PlayerMoveC2SPacket packet, CallbackInfo ci) {
     try {
-      long newTime = System.currentTimeMillis();
+      long currentTime = System.currentTimeMillis();
 
-      if (oldTime < newTime) {
-        boolean isInPose = CobbleDaycare.config.isAllowElytra() || !player.isInPose(EntityPose.FALL_FLYING);
-        boolean isInvulnerable = !player.isInvulnerable();
-        boolean isFly = player.getAbilities().flying;
-        boolean permittedVehicles = cobbleUtils$permittedVehicles(player);
-        boolean result =
-          isInPose && !isFly && isInvulnerable && permittedVehicles && (!player.isTouchingWater() || player.isInPose(EntityPose.SWIMMING));
-        if (result) {
+      if (currentTime > cobbleDaycare$lastUpdateTime) {
+        if (cobbleDaycare$isPlayerEligibleForStepUpdate()) {
           var party = Cobblemon.INSTANCE.getStorage().getParty(player);
+          Entity entity = cobbleDaycare$getEffectiveEntity();
 
-          entity = player.getVehicle() != null ? player.getVehicle() : player;
           if (entity == null) return;
 
-          double deltaMovement = cobbleUtils$getDeltaMovement(packet, party, entity);
-
-          oldX = entity.getX();
-          oldZ = entity.getZ();
-          if (deltaMovement <= 0 || tp) {
-            tp = false;
+          if (cobbleDaycare$previousX == 0 && cobbleDaycare$previousZ == 0) {
+            cobbleDaycare$teleport = MAX_TELEPORT;
+            cobbleDaycare$previousX = entity.getX();
+            cobbleDaycare$previousZ = entity.getZ();
+          }
+          double deltaMovement = cobbleDaycare$calculateDeltaMovement(packet, party, entity);
+          if (deltaMovement <= 0 || cobbleDaycare$teleport > 0) {
+            if (cobbleDaycare$teleport > 0) cobbleDaycare$teleport--;
+            cobbleDaycare$previousX = entity.getX();
+            cobbleDaycare$previousZ = entity.getZ();
+            cobbleDaycare$lastUpdateTime = currentTime + (CobbleDaycare.config.getTicksToWalking() * TICKS_TO_MILLISECONDS);
             return;
           }
-          UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
-          for (Pokemon pokemon : party) {
-            if (pokemon != null && pokemon.showdownId().equals("egg")) {
-              cobbleUtils$updateEggSteps(pokemon, deltaMovement, userInformation);
-            }
-          }
-          long timeMultiplierSteps = userInformation.getTimeMultiplierSteps();
-          if (timeMultiplierSteps > 0) {
-            timeMultiplierSteps -= CobbleDaycare.config.getTicksToWalking();
-            userInformation.setTimeMultiplierSteps(timeMultiplierSteps);
-            if (timeMultiplierSteps <= 0) {
-              userInformation.setMultiplierSteps(CobbleDaycare.config.getMultiplierSteps());
-              userInformation.setTimeMultiplierSteps(0);
-              DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
-            }
-          }
-          if (userInformation.isActionBar()) cobbleDaycare$sendMessageMultiplierSteps(player, userInformation);
-        } else {
-          tp = true;
-        }
 
-        oldTime = System.currentTimeMillis() + (CobbleDaycare.config.getTicksToWalking() * 50);
+          cobbleDaycare$updateEggSteps(party, deltaMovement);
+          cobbleDaycare$updateUserInformation();
+
+          cobbleDaycare$lastUpdateTime = currentTime + (CobbleDaycare.config.getTicksToWalking() * TICKS_TO_MILLISECONDS);
+        }
       }
     } catch (Exception e) {
-      e.printStackTrace();
+      Cobblemon.LOGGER.error("Error processing player movement: ", e);
     }
   }
 
-  @Unique
-  private void cobbleDaycare$sendMessageMultiplierSteps(ServerPlayerEntity player, UserInformation userInformation) {
-    boolean activeMultiplier = CobbleDaycare.config.isGlobalMultiplierSteps();
-    float actualSteps = userInformation.getActualMultiplier(player);
-    boolean haveMultiplier = actualSteps > CobbleDaycare.config.getMultiplierSteps();
-    if (activeMultiplier || haveMultiplier) {
-      long ticks = userInformation.getTimeMultiplierSteps();
-      long cooldown = ticks * 50; // Convert ticks to milliseconds
-      String s = PlayerUtils.getCooldown(System.currentTimeMillis() + cooldown);
-      PlayerUtils.sendMessage(
-        player,
-        CobbleDaycare.language.getMessageActiveStepsMultiplier()
-          .replace("%multiplier%", String.format("%.2f", actualSteps))
-          .replace("%cooldown%", s)
-          .replace("%time%", s),
-        CobbleDaycare.language.getPrefix(),
-        TypeMessage.ACTIONBAR
-      );
-    }
+  @Unique private boolean cobbleDaycare$isPlayerEligibleForStepUpdate() {
+    return (CobbleDaycare.config.isAllowElytra() || !player.isInPose(EntityPose.FALL_FLYING))
+      && !player.getAbilities().flying
+      && !player.isInvulnerable()
+      && cobbleDaycare$isVehiclePermitted()
+      && (!player.isTouchingWater() || player.isInPose(EntityPose.SWIMMING));
   }
 
-  @Unique private boolean cobbleUtils$permittedVehicles(ServerPlayerEntity player) {
-    String id = player.getVehicle() == null ? "" : player.getVehicle().getSavedEntityId();
-    if (id == null) id = "";
-    return CobbleDaycare.config.getPermittedVehicles().contains(id) || id.isEmpty();
+  @Unique private Entity cobbleDaycare$getEffectiveEntity() {
+    return player.getVehicle() != null ? player.getVehicle() : player;
   }
 
   @Unique
-  private double cobbleUtils$getDeltaMovement(PlayerMoveC2SPacket packet, PlayerPartyStore party, Entity entity) {
+  private double cobbleDaycare$calculateDeltaMovement(PlayerMoveC2SPacket packet, PlayerPartyStore party, Entity entity) {
     double newX = entity instanceof ServerPlayerEntity ? packet.getX(entity.getX()) : entity.getX();
     double newZ = entity instanceof ServerPlayerEntity ? packet.getZ(entity.getZ()) : entity.getZ();
-    //double newX = MathHelper.clamp(valueX, -3.0E7D, 3.0E7D);
-    //double newZ = MathHelper.clamp(valueZ, -3.0E7D, 3.0E7D);
 
     if (Double.isNaN(newX) || Double.isNaN(newZ)) return 0;
 
-    double deltaX = newX - oldX;
-    double deltaZ = newZ - oldZ;
+    double deltaX = newX - cobbleDaycare$previousX;
+    double deltaZ = newZ - cobbleDaycare$previousZ;
+
+    cobbleDaycare$previousX = newX;
+    cobbleDaycare$previousZ = newZ;
 
     if (Double.isNaN(deltaX) || Double.isNaN(deltaZ)) return 0;
-
 
     double deltaMovement = Math.hypot(deltaX, deltaZ);
 
     if (!(entity instanceof ServerPlayerEntity)) {
       deltaMovement /= CobbleDaycare.config.getReduceEggStepsVehicle();
     }
-    return cobbleUtils$hasStepAcceleratingPokemon(party) ? deltaMovement * CobbleDaycare.config.getMultiplierAbilityAcceleration() : deltaMovement / 2;
+
+    return cobbleDaycare$hasStepAcceleratingPokemon(party)
+      ? deltaMovement * CobbleDaycare.config.getMultiplierAbilityAcceleration()
+      : deltaMovement / 2;
   }
 
-  @Unique
-  private boolean cobbleUtils$hasStepAcceleratingPokemon(PlayerPartyStore party) {
+  @Unique private boolean cobbleDaycare$hasStepAcceleratingPokemon(PlayerPartyStore party) {
     for (Pokemon pokemon : party) {
-      if (CobbleDaycare.config.getAbilityAcceleration().contains(pokemon.getAbility().getName())) return true;
+      if (pokemon != null) {
+        String abilityName = pokemon.getAbility().getName();
+        if (CobbleDaycare.config.getAbilityAcceleration().contains(abilityName)) return true;
+      }
     }
     return false;
   }
 
-  @Unique
-  private void cobbleUtils$updateEggSteps(Pokemon egg, double deltaMovement, UserInformation userInformation) {
-    egg.setCurrentHealth(0);
-    EggData eggData = EggData.from(egg);
-    eggData.steps(player, egg, deltaMovement, userInformation);
+  @Unique private void cobbleDaycare$updateEggSteps(PlayerPartyStore party, double deltaMovement) {
+    UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
+
+    for (Pokemon pokemon : party) {
+      if (pokemon != null && "egg".equals(pokemon.showdownId())) {
+        EggData eggData = EggData.from(pokemon);
+        if (eggData != null) {
+          eggData.steps(player, pokemon, deltaMovement, userInformation);
+        }
+      }
+    }
+  }
+
+  @Unique private void cobbleDaycare$updateUserInformation() {
+    UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
+    long timeMultiplierSteps = userInformation.getTimeMultiplierSteps();
+
+    if (timeMultiplierSteps > 0) {
+      timeMultiplierSteps -= CobbleDaycare.config.getTicksToWalking();
+      userInformation.setTimeMultiplierSteps(timeMultiplierSteps);
+
+      if (timeMultiplierSteps <= 0) {
+        userInformation.setMultiplierSteps(CobbleDaycare.config.getMultiplierSteps());
+        userInformation.setTimeMultiplierSteps(0);
+        DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
+      }
+    }
+
+    if (userInformation.isActionBar()) {
+      cobbleDaycare$sendMessageMultiplierSteps(userInformation);
+    }
+  }
+
+  @Unique private void cobbleDaycare$sendMessageMultiplierSteps(UserInformation userInformation) {
+    boolean activeMultiplier = CobbleDaycare.config.isGlobalMultiplierSteps();
+    float actualSteps = userInformation.getActualMultiplier(player);
+    boolean hasMultiplier = actualSteps > CobbleDaycare.config.getMultiplierSteps();
+
+    if (activeMultiplier || hasMultiplier) {
+      long cooldown = userInformation.getTimeMultiplierSteps() * TICKS_TO_MILLISECONDS;
+      String cooldownMessage = PlayerUtils.getCooldown(System.currentTimeMillis() + cooldown);
+
+      PlayerUtils.sendMessage(
+        player,
+        CobbleDaycare.language.getMessageActiveStepsMultiplier()
+          .replace("%multiplier%", String.format("%.2f", actualSteps))
+          .replace("%cooldown%", cooldownMessage)
+          .replace("%time%", cooldownMessage),
+        CobbleDaycare.language.getPrefix(),
+        TypeMessage.ACTIONBAR
+      );
+    }
+  }
+
+  @Unique private boolean cobbleDaycare$isVehiclePermitted() {
+    String vehicleId = player.getVehicle() == null ? "" : player.getVehicle().getSavedEntityId();
+    return CobbleDaycare.config.getPermittedVehicles().contains(vehicleId) || vehicleId.isEmpty();
+  }
+
+  @Unique private void cobbleDaycare$logDebug(String message) {
+    if (CobbleDaycare.config.isDebug()) {
+      CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, message);
+    }
+  }
+
+  public int getTeleport() {
+    return cobbleDaycare$teleport;
+  }
+
+  public void setTeleport(int teleport) {
+    this.cobbleDaycare$teleport = teleport;
   }
 }

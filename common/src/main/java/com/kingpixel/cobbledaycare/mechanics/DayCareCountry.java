@@ -3,6 +3,7 @@ package com.kingpixel.cobbledaycare.mechanics;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.database.DatabaseClientFactory;
 import com.kingpixel.cobbledaycare.models.EggBuilder;
+import com.kingpixel.cobbledaycare.models.HatchBuilder;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
 
@@ -19,7 +20,7 @@ public class DayCareCountry extends Mechanics {
     builder.getEgg().getPersistentData().putString(TAG, country);
   }
 
-  @Override public void applyHatch(ServerPlayerEntity player, Pokemon egg) {
+  @Override public void applyHatch(HatchBuilder builder) {
   }
 
   @Override public void createEgg(ServerPlayerEntity player, Pokemon pokemon, Pokemon egg) {

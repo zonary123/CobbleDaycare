@@ -13,6 +13,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 public class HatchBuilder {
   private ServerPlayerEntity player;
   private Pokemon egg;
+  private Pokemon pokemon;
 
 
 }

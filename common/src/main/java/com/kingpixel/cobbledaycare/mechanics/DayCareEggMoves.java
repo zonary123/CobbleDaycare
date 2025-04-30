@@ -10,6 +10,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.kingpixel.cobbledaycare.models.EggBuilder;
+import com.kingpixel.cobbledaycare.models.HatchBuilder;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -71,7 +72,9 @@ public class DayCareEggMoves extends Mechanics {
   }
 
   @Override
-  public void applyHatch(ServerPlayerEntity player, Pokemon egg) {
+  public void applyHatch(HatchBuilder builder) {
+    Pokemon egg = builder.getEgg();
+    Pokemon pokemon = builder.getPokemon();
     String json = egg.getPersistentData().getString(TAG);
     var moves = extractMoveNamesFromJson(json);
 
@@ -81,7 +84,7 @@ public class DayCareEggMoves extends Mechanics {
       Move move = moveTemplate.create();
       JsonObject moveJson = move.saveToJSON(new JsonObject());
       BenchedMove benchedMove = BenchedMove.Companion.loadFromJSON(moveJson);
-      egg.getBenchedMoves().add(benchedMove);
+      pokemon.getBenchedMoves().add(benchedMove);
     }
 
     egg.getPersistentData().remove(TAG);

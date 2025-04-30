@@ -4,6 +4,7 @@ import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.google.gson.Gson;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.models.EggBuilder;
+import com.kingpixel.cobbledaycare.models.HatchBuilder;
 import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Data;
 import net.minecraft.nbt.NbtCompound;
@@ -57,7 +58,7 @@ public abstract class Mechanics {
    * This method is used to apply the hatch mechanics to the egg.
    * It takes a ServerPlayerEntity object and a Pokemon object as parameters and applies the mechanics to it.
    */
-  public abstract void applyHatch(ServerPlayerEntity player, Pokemon egg);
+  public abstract void applyHatch(HatchBuilder builder);
 
   /*
    * This method is used to create an egg for the player.

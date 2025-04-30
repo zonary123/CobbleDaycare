@@ -4,6 +4,7 @@ import com.cobblemon.mod.common.api.pokeball.PokeBalls;
 import com.cobblemon.mod.common.pokeball.PokeBall;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.models.EggBuilder;
+import com.kingpixel.cobbledaycare.models.HatchBuilder;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -36,13 +37,15 @@ public class DayCarePokeBall extends Mechanics {
       .replace("%pokeball%", isActive() ? CobbleUtils.language.getYes() : CobbleUtils.language.getNo());
   }
 
-  @Override public void applyHatch(ServerPlayerEntity player, Pokemon egg) {
+  @Override public void applyHatch(HatchBuilder builder) {
+    Pokemon egg = builder.getEgg();
+    Pokemon pokemon = builder.getPokemon();
     String ball = egg.getPersistentData().getString(TAG);
     if (!ball.isEmpty()) {
       try {
         PokeBall pokeBall = PokeBalls.INSTANCE.getPokeBall(Identifier.of(ball));
         if (pokeBall != null) {
-          egg.setCaughtBall(pokeBall);
+          pokemon.setCaughtBall(pokeBall);
         }
       } catch (Exception ignored) {
       }

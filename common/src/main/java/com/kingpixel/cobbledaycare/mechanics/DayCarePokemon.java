@@ -8,6 +8,7 @@ import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.cobblemon.mod.common.pokemon.Species;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.models.EggBuilder;
+import com.kingpixel.cobbledaycare.models.HatchBuilder;
 import com.kingpixel.cobbledaycare.models.PokemonRareMecanic;
 import com.kingpixel.cobbleutils.Model.PokemonChance;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
@@ -105,7 +106,9 @@ public class DayCarePokemon extends Mechanics {
     egg.getPersistentData().putInt(TAG_CYCLES, firstEvolution.getSpecies().getEggCycles());
   }
 
-  @Override public void applyHatch(ServerPlayerEntity player, Pokemon egg) {
+  @Override public void applyHatch(HatchBuilder builder) {
+    Pokemon egg = builder.getEgg();
+    ServerPlayerEntity player = builder.getPlayer();
     String pokemon = egg.getPersistentData().getString(TAG_POKEMON);
     if (pokemon.isEmpty()) pokemon = egg.getPersistentData().getString(TAG_OLD_POKEMON);
     if (pokemon.isEmpty()) {
@@ -117,11 +120,11 @@ public class DayCarePokemon extends Mechanics {
       );
       pokemon = "rattata";
     }
-    PokemonProperties.Companion.parse(pokemon).apply(egg);
+    builder.setPokemon(PokemonProperties.Companion.parse(pokemon).create());
     String genderString = egg.getPersistentData().getString(TAG_GENDER);
     try {
       if (!genderString.isEmpty()) {
-        egg.setGender(Gender.valueOf(genderString));
+        builder.getPokemon().setGender(Gender.valueOf(genderString));
       }
     } catch (IllegalArgumentException ignored) {
     }

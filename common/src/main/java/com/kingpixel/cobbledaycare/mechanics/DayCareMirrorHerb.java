@@ -5,6 +5,7 @@ import com.cobblemon.mod.common.api.moves.MoveTemplate;
 import com.cobblemon.mod.common.api.moves.Moves;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.models.EggBuilder;
+import com.kingpixel.cobbledaycare.models.HatchBuilder;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -65,7 +66,7 @@ public class DayCareMirrorHerb extends Mechanics {
   }
 
   @Override
-  public void applyHatch(ServerPlayerEntity player, Pokemon egg) {
+  public void applyHatch(HatchBuilder builder) {
 
   }
 

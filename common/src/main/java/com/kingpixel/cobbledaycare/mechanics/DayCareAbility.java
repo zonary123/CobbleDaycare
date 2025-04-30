@@ -10,6 +10,7 @@ import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.cobblemon.mod.common.pokemon.abilities.HiddenAbilityType;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.models.EggBuilder;
+import com.kingpixel.cobbledaycare.models.HatchBuilder;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.PokemonUtils;
 import com.kingpixel.cobbleutils.util.Utils;
@@ -81,6 +82,9 @@ public class DayCareAbility extends Mechanics {
         } else if (male.getSpecies().equals(female.getSpecies())) {
           if (CobbleDaycare.config.isDebug()) CobbleUtils.LOGGER.info("Same Species");
           giveHA = true;
+        } else if (femaleHA) {
+          if (CobbleDaycare.config.isDebug()) CobbleUtils.LOGGER.info("Female HA");
+          giveHA = true;
         }
       }
     }
@@ -107,18 +111,20 @@ public class DayCareAbility extends Mechanics {
 
 
   @Override
-  public void applyHatch(ServerPlayerEntity player, Pokemon egg) {
+  public void applyHatch(HatchBuilder builder) {
+    Pokemon egg = builder.getEgg();
+    Pokemon pokemon = builder.getPokemon();
     String s = egg.getPersistentData().getString(TAG);
     boolean isHA = egg.getPersistentData().getBoolean(TAG_HA);
 
     if (s.isEmpty()) {
       if (isHA) {
-        s = getHa(egg).getName();
+        s = getHa(pokemon).getName();
       } else {
-        s = PokemonUtils.getRandomAbility(egg).getName();
+        s = PokemonUtils.getRandomAbility(pokemon).getName();
       }
     }
-    PokemonProperties.Companion.parse("ability=" + s).apply(egg);
+    PokemonProperties.Companion.parse("ability=" + s).apply(pokemon);
     egg.getPersistentData().remove(TAG);
     egg.getPersistentData().remove(TAG_HA);
   }
@@ -140,9 +146,11 @@ public class DayCareAbility extends Mechanics {
   }
 
   @Override public String getEggInfo(String s, NbtCompound nbt) {
+    String ha = nbt.getBoolean(TAG_HA) ? CobbleUtils.language.getHA() : "";
     return s
       .replace("%ability%", "<lang:cobblemon.ability." + nbt.getString(TAG) + ">")
-      .replace("%ha%", nbt.getBoolean(TAG_HA) ? CobbleUtils.language.getAH() : "");
+      .replace("%ha%", ha)
+      .replace("%ah%", ha);
   }
 
   @Override public void validateData() {

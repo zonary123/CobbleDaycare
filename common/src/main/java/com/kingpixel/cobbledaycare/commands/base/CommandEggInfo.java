@@ -4,6 +4,7 @@ import com.cobblemon.mod.common.command.argument.PartySlotArgumentType;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.mechanics.Mechanics;
+import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.api.PermissionApi;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
 import com.kingpixel.cobbleutils.util.TypeMessage;
@@ -29,36 +30,39 @@ public class CommandEggInfo {
         .then(
           CommandManager.argument("slot", PartySlotArgumentType.Companion.partySlot())
             .executes(context -> {
-              try {
-                if (context.getSource().isExecutedByPlayer()) {
-                  ServerPlayerEntity player = context.getSource().getPlayer();
-                  Pokemon egg = PartySlotArgumentType.Companion.getPokemon(context, "slot");
-                  if (egg.getSpecies().showdownId().equals("egg")) {
-                    String message = CobbleDaycare.language.getEggInfo();
-                    var nbt = egg.getPersistentData();
-                    for (Mechanics mechanic : CobbleDaycare.mechanics) {
+
+              if (context.getSource().isExecutedByPlayer()) {
+                ServerPlayerEntity player = context.getSource().getPlayer();
+                Pokemon egg = PartySlotArgumentType.Companion.getPokemon(context, "slot");
+                if (egg.getSpecies().showdownId().equals("egg")) {
+                  String message = CobbleDaycare.language.getEggInfo();
+                  var nbt = egg.getPersistentData();
+                  for (Mechanics mechanic : CobbleDaycare.mechanics) {
+                    try {
                       message = mechanic.getEggInfo(message, nbt);
+                    } catch (Exception e) {
+                      CobbleUtils.LOGGER.error(CobbleDaycare.MOD_ID,
+                        "Error in egg info: " + mechanic.getClass().getSimpleName());
+                      e.printStackTrace();
                     }
-                    PlayerUtils.sendMessage(
-                      player,
-                      message,
-                      CobbleDaycare.language.getPrefix(),
-                      TypeMessage.CHAT
-                    );
-                  } else {
-                    PlayerUtils.sendMessage(
-                      player,
-                      CobbleDaycare.language.getMessageItNotEgg(),
-                      CobbleDaycare.language.getPrefix(),
-                      TypeMessage.CHAT
-                    );
                   }
+                  PlayerUtils.sendMessage(
+                    player,
+                    message,
+                    CobbleDaycare.language.getPrefix(),
+                    TypeMessage.CHAT
+                  );
+                } else {
+                  PlayerUtils.sendMessage(
+                    player,
+                    CobbleDaycare.language.getMessageItNotEgg(),
+                    CobbleDaycare.language.getPrefix(),
+                    TypeMessage.CHAT
+                  );
                 }
-                return 1;
-              } catch (Exception e) {
-                e.printStackTrace();
-                return 0;
               }
+              return 1;
+
             })
         )
     );

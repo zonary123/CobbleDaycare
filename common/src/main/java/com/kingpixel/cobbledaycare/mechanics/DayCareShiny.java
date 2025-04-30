@@ -2,6 +2,7 @@ package com.kingpixel.cobbledaycare.mechanics;
 
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.models.EggBuilder;
+import com.kingpixel.cobbledaycare.models.HatchBuilder;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.api.PermissionApi;
 import com.kingpixel.cobbleutils.util.Utils;
@@ -88,9 +89,11 @@ public class DayCareShiny extends Mechanics {
     egg.getPersistentData().putBoolean(TAG, egg.getShiny());
   }
 
-  @Override public void applyHatch(ServerPlayerEntity player, Pokemon egg) {
+  @Override public void applyHatch(HatchBuilder builder) {
+    Pokemon egg = builder.getEgg();
+    Pokemon pokemon = builder.getPokemon();
     boolean shiny = egg.getPersistentData().getBoolean(TAG);
-    egg.setShiny(shiny);
+    pokemon.setShiny(shiny);
     egg.getPersistentData().remove(TAG);
   }
 
