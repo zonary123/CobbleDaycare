@@ -116,7 +116,7 @@ allprojects {
         def path = buildDir.absolutePath
 
         // Verifica si el nombre del proyecto es "build", si es así, omite la copia
-        if (!path.contains("CobbleUtils\\build") && !path.contains("common")) {
+        if (!path.contains("CobbleDaycare\\build") && !path.contains("common")) {
             println("Copying jar to actual_versions -> ${rootProject.projectDir}\\actual_versions")
             println("Jar file -> ${path}\\libs\\${archivesBaseName}-${tag}.jar")
 

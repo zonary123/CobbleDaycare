@@ -102,7 +102,7 @@ public class DayCareAbility extends Mechanics {
       ability = PokemonUtils.getRandomAbility(builder.getFirstEvolution());
 
     builder.getEgg().getPersistentData().putString(TAG, ability.getName());
-    builder.getEgg().getPersistentData().putBoolean(TAG_HA, hasHA);
+    builder.getEgg().getPersistentData().putBoolean(TAG_HA, result);
   }
 
 

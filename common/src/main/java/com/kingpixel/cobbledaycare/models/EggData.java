@@ -115,7 +115,11 @@ public class EggData {
   public void hatch(ServerPlayerEntity player, Pokemon egg) {
     CompletableFuture.runAsync(() -> {
         for (Mechanics mechanic : CobbleDaycare.mechanics) {
-          mechanic.applyHatch(player, egg);
+          try {
+            mechanic.applyHatch(player, egg);
+          } catch (Exception e) {
+            e.printStackTrace();
+          }
         }
         egg.setNickname(null);
         egg.heal();

@@ -75,22 +75,19 @@ public class CobbleDaycare {
 
   private static void tasks() {
     if (task != null) task.setExpired();
-    long cooldown = 20L * 30;
+    long cooldown = 20L * 60;
     task = Task.builder()
       .execute(() -> {
+        var players = server.getPlayerManager().getPlayerList();
         CompletableFuture.runAsync(() -> {
-            long start = System.currentTimeMillis();
-            for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
+            for (ServerPlayerEntity player : players) {
               if (player == null) continue;
-              boolean update = false;
+              boolean update;
               UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
               update = userInformation.fix(player);
               if (update) DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
               fixPlayer(player);
             }
-            long end = System.currentTimeMillis();
-            if (config.isDebug())
-              CobbleUtils.LOGGER.info(MOD_ID, "Time to update players: " + (end - start) + "ms");
           })
           .orTimeout(30, TimeUnit.SECONDS)
           .exceptionally(e -> {
@@ -98,6 +95,7 @@ public class CobbleDaycare {
             e.printStackTrace();
             return null;
           });
+
       })
       .infinite()
       .interval(cooldown)

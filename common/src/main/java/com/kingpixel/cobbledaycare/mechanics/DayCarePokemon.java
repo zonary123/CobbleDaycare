@@ -10,7 +10,9 @@ import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.models.EggBuilder;
 import com.kingpixel.cobbledaycare.models.PokemonRareMecanic;
 import com.kingpixel.cobbleutils.Model.PokemonChance;
+import com.kingpixel.cobbleutils.util.PlayerUtils;
 import com.kingpixel.cobbleutils.util.PokemonUtils;
+import com.kingpixel.cobbleutils.util.TypeMessage;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import net.minecraft.nbt.NbtCompound;
@@ -106,7 +108,15 @@ public class DayCarePokemon extends Mechanics {
   @Override public void applyHatch(ServerPlayerEntity player, Pokemon egg) {
     String pokemon = egg.getPersistentData().getString(TAG_POKEMON);
     if (pokemon.isEmpty()) pokemon = egg.getPersistentData().getString(TAG_OLD_POKEMON);
-    if (pokemon.isEmpty()) pokemon = "rattata";
+    if (pokemon.isEmpty()) {
+      PlayerUtils.sendMessage(
+        player,
+        "Error: Pokemon not found in egg",
+        CobbleDaycare.language.getPrefix(),
+        TypeMessage.CHAT
+      );
+      pokemon = "rattata";
+    }
     PokemonProperties.Companion.parse(pokemon).apply(egg);
     String genderString = egg.getPersistentData().getString(TAG_GENDER);
     try {
@@ -115,7 +125,6 @@ public class DayCarePokemon extends Mechanics {
       }
     } catch (IllegalArgumentException ignored) {
     }
-    egg.heal();
     egg.getPersistentData().remove(TAG_POKEMON);
     egg.getPersistentData().remove(TAG_OLD_POKEMON);
     egg.getPersistentData().remove(TAG_STEPS);
