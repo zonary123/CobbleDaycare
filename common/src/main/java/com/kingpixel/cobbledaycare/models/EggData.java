@@ -12,6 +12,8 @@ import com.kingpixel.cobbledaycare.mechanics.DayCareForm;
 import com.kingpixel.cobbledaycare.mechanics.DayCarePokemon;
 import com.kingpixel.cobbledaycare.mechanics.Mechanics;
 import com.kingpixel.cobbleutils.CobbleUtils;
+import com.kingpixel.cobbleutils.util.PlayerUtils;
+import com.kingpixel.cobbleutils.util.TypeMessage;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -23,9 +25,6 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
-
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Carlos Varas Alonso - 23/07/2024 23:01
@@ -114,36 +113,37 @@ public class EggData {
   }
 
   public void hatch(ServerPlayerEntity player, Pokemon egg) {
-    CompletableFuture.runAsync(() -> {
-        HatchBuilder builder = HatchBuilder.builder()
-          .egg(egg)
-          .player(player)
-          .pokemon(null)
-          .build();
-        for (Mechanics mechanic : CobbleDaycare.mechanics) {
-          try {
-            mechanic.applyHatch(builder);
-          } catch (Exception e) {
-            e.printStackTrace();
-          }
+    try {
+      HatchBuilder builder = HatchBuilder.builder()
+        .egg(egg)
+        .player(player)
+        .pokemon(null)
+        .build();
+      for (Mechanics mechanic : CobbleDaycare.mechanics) {
+        try {
+          mechanic.applyHatch(builder);
+        } catch (Exception e) {
+          CobbleUtils.LOGGER.info("Error applying hatch mechanic: " + mechanic.fileName() + " - " + e.getClass().getName());
+          e.printStackTrace();
         }
-        var party = Cobblemon.INSTANCE.getStorage().getParty(player);
-        var pc = Cobblemon.INSTANCE.getStorage().getPC(player);
-        if (!party.remove(builder.getEgg())) {
-          pc.remove(builder.getEgg());
-        }
-        party.add(builder.getPokemon());
-        HatchEggEvent.HATCH_EGG_EVENT.emit(builder.getPlayer(), builder
-          .getPokemon());
-        PokemonProperties pokemonProperties = builder.getPokemon().createPokemonProperties(PokemonPropertyExtractor.ALL);
-        CobblemonEvents.HATCH_EGG_POST.emit(new com.cobblemon.mod.common.api.events.pokemon.HatchEggEvent.Post(pokemonProperties, player));
-      })
-      .orTimeout(5, TimeUnit.SECONDS)
-      .exceptionally(e -> {
-        CobbleUtils.LOGGER.error(CobbleDaycare.MOD_ID, "Error hatching egg");
-        e.printStackTrace();
-        return null;
-      });
+      }
+      var party = Cobblemon.INSTANCE.getStorage().getParty(player);
+      party.remove(egg);
+      party.add(builder.getPokemon());
+      HatchEggEvent.HATCH_EGG_EVENT.emit(builder.getPlayer(), builder.getPokemon());
+      PokemonProperties pokemonProperties = builder.getPokemon().createPokemonProperties(PokemonPropertyExtractor.ALL);
+      CobblemonEvents.HATCH_EGG_POST.emit(new com.cobblemon.mod.common.api.events.pokemon.HatchEggEvent.Post(pokemonProperties, player));
+    } catch (Exception e) {
+      CobbleUtils.LOGGER.error("Error hatching egg");
+      e.printStackTrace();
+      Cobblemon.INSTANCE.getStorage().getParty(player).remove(egg);
+      PlayerUtils.sendMessage(
+        player,
+        "Error hatching egg corrupted data or invalid egg talk to the admins for help",
+        CobbleDaycare.language.getPrefix(),
+        TypeMessage.CHAT
+      );
+    }
   }
 
 }

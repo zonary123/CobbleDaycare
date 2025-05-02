@@ -21,6 +21,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -275,6 +276,7 @@ public class Plot {
 
   public Pokemon createEgg(ServerPlayerEntity player) {
     Pokemon egg = PokemonProperties.Companion.parse("egg").create();
+    egg.setUuid(UUID.randomUUID());
     Pokemon firstEvolution = female;
     List<Pokemon> parents = new ArrayList<>();
     parents.add(this.male);

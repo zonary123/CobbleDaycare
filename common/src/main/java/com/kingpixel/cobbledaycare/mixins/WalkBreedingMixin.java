@@ -54,10 +54,10 @@ public abstract class WalkBreedingMixin {
 
   @Inject(method = "onPlayerMove", at = @At("HEAD"))
   public void onPlayerMove(PlayerMoveC2SPacket packet, CallbackInfo ci) {
-    try {
-      long currentTime = System.currentTimeMillis();
+    long currentTime = System.currentTimeMillis();
 
-      if (currentTime > cobbleDaycare$lastUpdateTime) {
+    if (currentTime > cobbleDaycare$lastUpdateTime) {
+      try {
         if (cobbleDaycare$isPlayerEligibleForStepUpdate()) {
           var party = Cobblemon.INSTANCE.getStorage().getParty(player);
           Entity entity = cobbleDaycare$getEffectiveEntity();
@@ -83,10 +83,12 @@ public abstract class WalkBreedingMixin {
 
           cobbleDaycare$lastUpdateTime = currentTime + (CobbleDaycare.config.getTicksToWalking() * TICKS_TO_MILLISECONDS);
         }
+      } catch (Exception e) {
+        e.printStackTrace();
+        cobbleDaycare$lastUpdateTime = currentTime + (CobbleDaycare.config.getTicksToWalking() * TICKS_TO_MILLISECONDS);
       }
-    } catch (Exception e) {
-      Cobblemon.LOGGER.error("Error processing player movement: ", e);
     }
+
   }
 
   @Unique private boolean cobbleDaycare$isPlayerEligibleForStepUpdate() {
@@ -191,8 +193,10 @@ public abstract class WalkBreedingMixin {
     }
   }
 
-  @Unique private boolean cobbleDaycare$isVehiclePermitted() {
+  @Unique
+  private boolean cobbleDaycare$isVehiclePermitted() {
     String vehicleId = player.getVehicle() == null ? "" : player.getVehicle().getSavedEntityId();
+    if (vehicleId == null) vehicleId = "";
     return CobbleDaycare.config.getPermittedVehicles().contains(vehicleId) || vehicleId.isEmpty();
   }
 
