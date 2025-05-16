@@ -128,11 +128,13 @@ public class EggData {
         }
       }
       var party = Cobblemon.INSTANCE.getStorage().getParty(player);
-      party.remove(egg);
-      party.add(builder.getPokemon());
-      HatchEggEvent.HATCH_EGG_EVENT.emit(builder.getPlayer(), builder.getPokemon());
-      PokemonProperties pokemonProperties = builder.getPokemon().createPokemonProperties(PokemonPropertyExtractor.ALL);
-      CobblemonEvents.HATCH_EGG_POST.emit(new com.cobblemon.mod.common.api.events.pokemon.HatchEggEvent.Post(pokemonProperties, player));
+      if (builder.getPokemon() != null && builder.getEgg() != null) {
+        party.remove(egg);
+        party.add(builder.getPokemon());
+        HatchEggEvent.HATCH_EGG_EVENT.emit(builder.getPlayer(), builder.getPokemon());
+        PokemonProperties pokemonProperties = builder.getPokemon().createPokemonProperties(PokemonPropertyExtractor.ALL);
+        CobblemonEvents.HATCH_EGG_POST.emit(new com.cobblemon.mod.common.api.events.pokemon.HatchEggEvent.Post(pokemonProperties, player));
+      }
     } catch (Exception e) {
       CobbleUtils.LOGGER.error("Error hatching egg");
       e.printStackTrace();
