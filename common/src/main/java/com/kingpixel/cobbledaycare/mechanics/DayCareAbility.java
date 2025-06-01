@@ -146,7 +146,7 @@ public class DayCareAbility extends Mechanics {
   }
 
   @Override public String getEggInfo(String s, NbtCompound nbt) {
-    String ha = nbt.getBoolean(TAG_HA) ? CobbleUtils.language.getHA() : "";
+    String ha = nbt.getBoolean(TAG_HA) ? CobbleUtils.language.getAH() : "";
     return s
       .replace("%ability%", "<lang:cobblemon.ability." + nbt.getString(TAG) + ">")
       .replace("%ha%", ha)
