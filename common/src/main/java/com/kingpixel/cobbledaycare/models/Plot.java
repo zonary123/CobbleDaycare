@@ -98,7 +98,7 @@ public class Plot {
     return canOpen > System.currentTimeMillis();
   }
 
-  private void setTime(ServerPlayerEntity player) {
+  public void setTime(ServerPlayerEntity player) {
     if (hasTwoParents()) {
       long cooldown = PlayerUtils.getCooldown(CobbleDaycare.config.getCooldowns(), CobbleDaycare.config.getCooldown()
         , player);
