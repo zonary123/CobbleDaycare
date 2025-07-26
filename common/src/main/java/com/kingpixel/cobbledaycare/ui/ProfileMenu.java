@@ -88,7 +88,7 @@ public class ProfileMenu {
         open(player, userInformation);
       }));
 
-    template.set(close.getSlot(), close.getButton(action -> {
+    close.applyTemplate(template, close.getButton(action -> {
       CobbleDaycare.language.getPrincipalMenu().open(player);
     }));
 

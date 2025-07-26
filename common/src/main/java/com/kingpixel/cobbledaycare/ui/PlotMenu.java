@@ -71,18 +71,18 @@ public class PlotMenu {
             }
           })
           .build();
-        template.set(male.getSlot(), maleButton);
+        male.applyTemplate(template, maleButton);
 
         ItemStack displayEgg = plot.getEggs().isEmpty() ? egg.getItemStack() : PokemonItem.from(plot.getEggs().getFirst());
         GooeyButton eggButton = egg.getButton(1, null, null, action -> {
           if (plot.giveEggs(player)) {
-            if (plot.limitEggs(player) == plot.getEggs().size()) plot.setTime(player);
+            if (plot.limitEggs(player) >= plot.getEggs().size()) plot.setTime(player);
             DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
             CobbleDaycare.language.getPrincipalMenu().open(player);
           }
         });
         eggButton.setDisplay(displayEgg);
-        template.set(egg.getSlot(), eggButton);
+        egg.applyTemplate(template, eggButton);
 
         GooeyButton femaleButton = GooeyButton
           .builder()
@@ -100,7 +100,7 @@ public class PlotMenu {
             }
           })
           .build();
-        template.set(female.getSlot(), femaleButton);
+        female.applyTemplate(template, femaleButton);
 
         template.set(close.getSlot(), close.getButton(action -> {
           CobbleDaycare.language.getPrincipalMenu().open(player);

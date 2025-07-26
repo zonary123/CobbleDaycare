@@ -8,6 +8,7 @@ import com.kingpixel.cobbleutils.CobbleUtils;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
@@ -23,6 +24,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(PokemonEntity.class)
 public abstract class PreventDamage {
 
+  @Inject(method = "offerHeldItem", at = @At("HEAD"), cancellable = true)
+  private void offerHeldItem(PlayerEntity player, ItemStack itemStack, CallbackInfoReturnable<Boolean> cir) {
+    try {
+      PokemonEntity pokemonEntity = (PokemonEntity) (Object) this;
+      if (pokemonEntity == null) return;
+      var pokemon = pokemonEntity.getPokemon();
+      if (pokemon == null) return;
+      if (cobbleDaycare$isEgg(pokemon)) {
+        cir.setReturnValue(false);
+      }
+    } catch (Exception ignored) {
+    }
+  }
 
   @Inject(method = "damage", at = @At("HEAD"), cancellable = true)
   private void damage(DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir) {

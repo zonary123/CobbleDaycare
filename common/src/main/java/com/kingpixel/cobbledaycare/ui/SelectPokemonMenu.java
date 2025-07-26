@@ -67,30 +67,22 @@ public class SelectPokemonMenu {
 
         LinkedPage.Builder builder = LinkedPage.builder().title(AdventureTranslator.toNative(title));
 
-        template.set(close.getSlot(), close.getButton(action -> {
+        close.applyTemplate(template, close.getButton(action -> {
           CobbleDaycare.language.getPlotMenu().open(player, plot, userInformation);
         }));
 
         if (position > 0) {
-          GooeyButton previousButton = GooeyButton.builder()
-            .display(previous.getItemStack())
-            .onClick(action -> {
-              if (CobbleDaycare.config.hasOpenCooldown(action.getPlayer())) return;
-              open(player, plot, userInformation, gender, position - POKEMONS_PER_PAGE);
-            })
-            .build();
-          template.set(previous.getSlot(), previousButton);
+          previous.applyTemplate(template, previous.getButton(action -> {
+            if (CobbleDaycare.config.hasOpenCooldown(action.getPlayer())) return;
+            open(player, plot, userInformation, gender, position - POKEMONS_PER_PAGE);
+          }));
         }
 
         if (buttons.size() == POKEMONS_PER_PAGE) {
-          GooeyButton nextButton = GooeyButton.builder()
-            .display(next.getItemStack())
-            .onClick(action -> {
-              if (CobbleDaycare.config.hasOpenCooldown(action.getPlayer())) return;
-              open(player, plot, userInformation, gender, position + POKEMONS_PER_PAGE);
-            })
-            .build();
-          template.set(next.getSlot(), nextButton);
+          next.applyTemplate(template, next.getButton(action -> {
+            if (CobbleDaycare.config.hasOpenCooldown(action.getPlayer())) return;
+            open(player, plot, userInformation, gender, position + POKEMONS_PER_PAGE);
+          }));
         }
 
         GooeyPage page = PaginationHelper.createPagesFromPlaceholders(template, buttons, builder);

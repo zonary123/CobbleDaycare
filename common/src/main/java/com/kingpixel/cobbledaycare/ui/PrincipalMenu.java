@@ -132,13 +132,13 @@ public class PrincipalMenu {
           return s;
         });
 
-        template.set(info.getSlot(), info.getButton(1, null, loreInfo, action -> {
-
+        info.applyTemplate(template, info.getButton(1, null, loreInfo, action -> {
         }));
 
-        template.set(close.getSlot(), close.getButton(action -> {
+        close.applyTemplate(template, close.getButton(action -> {
           UIManager.closeUI(player);
         }));
+
 
         GooeyButton profileButton = profileOptions.getButton(action -> {
           CobbleDaycare.language.getProfileMenu().open(player, userInformation);
@@ -152,7 +152,7 @@ public class PrincipalMenu {
           profileButton.setDisplay(headItem);
         }
 
-        template.set(profileOptions.getSlot(), profileButton);
+        profileOptions.applyTemplate(template, profileButton);
 
         GooeyPage page = GooeyPage.builder()
           .template(template)
