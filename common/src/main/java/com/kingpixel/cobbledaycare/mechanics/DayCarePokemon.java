@@ -70,8 +70,6 @@ public class DayCarePokemon extends Mechanics {
     Pokemon male = builder.getMale();
     Pokemon female = builder.getFemale();
     Pokemon egg = builder.getEgg();
-    egg.setCurrentHealth(0);
-    egg.setHealTimer(Integer.MAX_VALUE);
     Pokemon firstEvolution;
     boolean maleIsDitto = male.getForm().getEggGroups().contains(EggGroup.DITTO);
     boolean femaleIsDitto = female.getForm().getEggGroups().contains(EggGroup.DITTO);

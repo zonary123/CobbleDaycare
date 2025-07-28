@@ -141,15 +141,7 @@ public class CobbleDaycare {
 
   private static void events() {
     files();
-
-    CobblemonEvents.POKEMON_HEALED.subscribe(Priority.HIGHEST, evt -> {
-      var pokemon = evt.getPokemon();
-      if (pokemon.getSpecies().showdownId().equals("egg")) {
-        evt.cancel();
-      }
-      return Unit.INSTANCE;
-    });
-
+    
     CobblemonEvents.BATTLE_STARTED_PRE.subscribe(Priority.HIGHEST, evt -> {
       var actors = evt.getBattle().getActors();
       for (BattleActor actor : actors) {

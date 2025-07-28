@@ -53,7 +53,6 @@ public class EggData {
 
   public void steps(ServerPlayerEntity player, Pokemon egg, double deltaMovement, UserInformation userInformation) {
     double totalSteps = deltaMovement * userInformation.getActualMultiplier(player);
-    egg.setCurrentHealth(0);
 
     while (totalSteps > 0 && cycles > 0) {
       double stepsPerCycle = egg.getPersistentData().getDouble(DayCarePokemon.TAG_REFERENCE_STEPS);
