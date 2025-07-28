@@ -154,57 +154,70 @@ public class CobbleDaycare {
     });
 
     PlayerEvent.PLAYER_JOIN.register(player -> {
-      //CompletableFuture.runAsync(() -> {
       long start = System.currentTimeMillis();
-      UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
-      if (userInformation.getCountry() == null) {
-        countryPlayer(player);
-        var countryInfo = getCountry(player);
-        if (countryInfo != null) {
-          userInformation.setCountry(countryInfo.country());
-        }
-      }
-      fixPlayer(player);
-      int numPlots = 0;
-      int size = CobbleDaycare.config.getSlotPlots().size();
-      for (int i = 0; i < size; i++) {
-        if (PermissionApi.hasPermission(player, Plot.plotPermission(i), 4)) {
-          numPlots = i + 1;
-        }
-      }
-      if (numPlots == 0) numPlots = 1;
-      boolean update = userInformation.check(numPlots, player);
-      if (userInformation.fix(player)) update = true;
-      if (update) DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
-      long end = System.currentTimeMillis();
-      if (config.isDebug())
-        CobbleUtils.LOGGER.info(MOD_ID, "Time to load player " + player.getName().getString() + ": " + (end - start) + "ms");
-        /*})
+      CompletableFuture.runAsync(() -> {
+          try {
+            UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
+
+            if (userInformation.getCountry() == null) {
+              UserInfo info = playerCountry.computeIfAbsent(player.getUuid(), uuid -> fetchCountryInfo(player));
+              if (info != null) userInformation.setCountry(info.country());
+            }
+
+            fixPlayer(player);
+
+            int numPlots = 1;
+            int size = CobbleDaycare.config.getSlotPlots().size();
+            for (int i = 0; i < size; i++) {
+              if (PermissionApi.hasPermission(player, Plot.plotPermission(i), 4)) {
+                numPlots = i + 1;
+              }
+            }
+
+            boolean update = userInformation.check(numPlots, player);
+            if (userInformation.fix(player)) update = true;
+
+            if (update) {
+              DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
+            }
+
+            long end = System.currentTimeMillis();
+            if (config.isDebug()) {
+              CobbleUtils.LOGGER.info(MOD_ID, "Time to load player " + player.getName().getString() + ": " + (end - start) + "ms");
+            }
+
+          } catch (Exception e) {
+            CobbleUtils.LOGGER.error(MOD_ID, "Error loading player " + player.getName().getString());
+          }
+        })
         .orTimeout(5, TimeUnit.SECONDS)
-        .exceptionally(e -> {
-          CobbleUtils.LOGGER.error(MOD_ID, "Error Event Player Join Daycare " + player.getName().getString() + ".");
+        .exceptionallyAsync(e -> {
+          CobbleUtils.LOGGER.error(MOD_ID, "Error on player join: " + player.getName().getString());
+          e.printStackTrace();
           return null;
-        });*/
+        });
     });
 
     PlayerEvent.PLAYER_QUIT.register(player -> {
-      var userinfo = DatabaseClientFactory.INSTANCE.getUserInformation(player);
-      if (userinfo.getCountry() == null) {
-        var countryInfo = getCountry(player);
-        if (countryInfo != null) {
-          userinfo.setCountry(countryInfo.country());
+      CompletableFuture.runAsync(() -> {
+        try {
+          UserInformation userInfo = DatabaseClientFactory.INSTANCE.getUserInformation(player);
+          if (userInfo.getCountry() == null) {
+            UserInfo info = playerCountry.computeIfAbsent(player.getUuid(), uuid -> fetchCountryInfo(player));
+            if (info != null) userInfo.setCountry(info.country());
+          }
+          DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInfo);
+          DatabaseClientFactory.INSTANCE.removeIfNecessary(player);
+        } catch (Exception e) {
+          CobbleUtils.LOGGER.error(MOD_ID, "Error on player quit: " + player.getName().getString());
         }
-      }
-      DatabaseClientFactory.INSTANCE.updateUserInformation(player, userinfo);
-      DatabaseClientFactory.INSTANCE.removeIfNecessary(player);
+      });
     });
-
 
     CobblemonEvents.POKEMON_CAPTURED.subscribe(Priority.HIGHEST, evt -> {
       fixBreedable(evt.getPokemon());
       return Unit.INSTANCE;
     });
-
 
     CobblemonEvents.POKEMON_ENTITY_SPAWN.subscribe(Priority.LOWEST, evt -> {
       if (!config.isSpawnEggWorld()) return Unit.INSTANCE;
@@ -224,8 +237,33 @@ public class CobbleDaycare {
       }
       return Unit.INSTANCE;
     });
-
   }
+
+  private static UserInfo fetchCountryInfo(ServerPlayerEntity player) {
+    try {
+      URL url = new URL(API_URL_IP + player.getIp());
+      HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+      conn.setRequestMethod("GET");
+
+      try (BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
+        JsonObject json = JsonParser.parseReader(in).getAsJsonObject();
+        if (json.has("country")) {
+          String country = json.get("country").getAsString();
+          String countryCode = json.get("countryCode").getAsString();
+          String language = switch (countryCode) {
+            case "AR", "ES" -> "es";
+            case "US", "GB", "AU" -> "en";
+            default -> "en";
+          };
+          return new UserInfo(country, countryCode, language);
+        }
+      }
+    } catch (Exception e) {
+      CobbleUtils.LOGGER.error(MOD_ID, "Error fetching country for player " + player.getName().getString());
+    }
+    return null;
+  }
+
 
   private static void fixPlayer(ServerPlayerEntity player) {
     var userinfo = DatabaseClientFactory.INSTANCE.getUserInformation(player);
@@ -258,56 +296,6 @@ public class CobbleDaycare {
     boolean isNotBreedable = Plot.isNotBreedable(pokemon);
     if (!nbt.getBoolean(CobbleUtilsTags.BREEDABLE_BUILDER_TAG)) setBreedable(pokemon, !isNotBreedable);
     if (isNotBreedable) setBreedable(pokemon, false);
-  }
-
-  public static void countryPlayer(ServerPlayerEntity player) {
-    if (playerCountry.get(player.getUuid()) != null) return;
-
-
-    CompletableFuture.runAsync(() -> {
-        try {
-          if (conn == null) {
-            URL url = new URL(API_URL_IP + player.getIp());
-            conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("GET");
-          }
-
-          // Usar try-with-resources para asegurar el cierre de BufferedReader
-          try (BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
-            // Parsear la respuesta en un JsonObject
-            JsonObject json = JsonParser.parseReader(in).getAsJsonObject();
-
-            // Verifica si el JSON tiene la información del país
-            if (json.has("country")) {
-              String country = json.get("country").getAsString();
-              String countryCode = json.get("countryCode").getAsString();
-
-              // Determina el idioma según el código del país
-              String language = switch (countryCode) {
-                case "AR", "ES" -> "es";
-                case "US", "GB", "AU" -> "en";
-                default -> "en"; // Idioma por defecto
-              };
-
-              // Crea y almacena la información del usuario
-              UserInfo userInfo = new UserInfo(country, countryCode, language);
-              playerCountry.put(player.getUuid(), userInfo);
-            }
-          }
-
-        } catch (Exception e) {
-          CobbleUtils.LOGGER.error(CobbleDaycare.MOD_ID,
-            "Error while getting country info for player " + player.getName().getString() + ".");
-        }
-      })
-      .orTimeout(5, TimeUnit.SECONDS)
-      .exceptionally(e -> {
-        return null;
-      });
-  }
-
-  public static UserInfo getCountry(ServerPlayerEntity player) {
-    return playerCountry.get(player.getUuid());
   }
 
   public static void setBreedable(Pokemon pokemon, boolean value) {

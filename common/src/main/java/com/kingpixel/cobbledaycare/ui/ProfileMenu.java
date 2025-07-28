@@ -98,7 +98,6 @@ public class ProfileMenu {
       .build();
 
     UIManager.openUIForcefully(player, page);
-
   }
 
   private List<String> replaceLore(List<String> lore, boolean value) {
