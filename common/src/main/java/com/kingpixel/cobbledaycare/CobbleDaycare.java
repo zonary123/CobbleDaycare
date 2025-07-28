@@ -3,9 +3,11 @@ package com.kingpixel.cobbledaycare;
 import ca.landonjw.gooeylibs2.api.tasks.Task;
 import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.api.Priority;
+import com.cobblemon.mod.common.api.battles.model.actor.BattleActor;
 import com.cobblemon.mod.common.api.events.CobblemonEvents;
 import com.cobblemon.mod.common.api.pokemon.PokemonProperties;
 import com.cobblemon.mod.common.api.properties.CustomPokemonProperty;
+import com.cobblemon.mod.common.battles.actor.PlayerBattleActor;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -139,6 +141,26 @@ public class CobbleDaycare {
 
   private static void events() {
     files();
+
+    CobblemonEvents.POKEMON_HEALED.subscribe(Priority.HIGHEST, evt -> {
+      var pokemon = evt.getPokemon();
+      if (pokemon.getSpecies().showdownId().equals("egg")) {
+        evt.cancel();
+      }
+      return Unit.INSTANCE;
+    });
+
+    CobblemonEvents.BATTLE_STARTED_PRE.subscribe(Priority.HIGHEST, evt -> {
+      var actors = evt.getBattle().getActors();
+      for (BattleActor actor : actors) {
+        if (actor instanceof PlayerBattleActor playerBattleActor) {
+          var pokemons = playerBattleActor.getPokemonList();
+          pokemons.removeIf(pokemon -> pokemon.getOriginalPokemon().getSpecies().showdownId().equals("egg"));
+          if (pokemons.isEmpty()) evt.cancel();
+        }
+      }
+      return Unit.INSTANCE;
+    });
 
     CommandRegistrationEvent.EVENT.register((dispatcher, registry, selection) -> {
       CommandTree.register(dispatcher, registry);
