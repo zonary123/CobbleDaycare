@@ -84,7 +84,11 @@ public abstract class PreventDamage {
     }
     if (pokemon.getPersistentData().getBoolean(CobbleDaycare.TAG_SPAWNED) && !pokemon.isPlayerOwned()) {
       pokemon.getPersistentData().remove(CobbleDaycare.TAG_SPAWNED);
-      Cobblemon.INSTANCE.getStorage().getParty(player).add(pokemon);
+      var party = Cobblemon.INSTANCE.getStorage().getParty(player);
+      party.add(pokemon);
+      for (Pokemon p : party) {
+        p.getPersistentData().remove(CobbleDaycare.TAG_SPAWNED);
+      }
       pokemonEntity.remove(Entity.RemovalReason.DISCARDED);
     }
   }

@@ -141,7 +141,7 @@ public class CobbleDaycare {
 
   private static void events() {
     files();
-    
+
     CobblemonEvents.BATTLE_STARTED_PRE.subscribe(Priority.HIGHEST, evt -> {
       var actors = evt.getBattle().getActors();
       for (BattleActor actor : actors) {
