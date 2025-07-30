@@ -156,6 +156,7 @@ public class EggData {
 
   public void hatch(ServerPlayerEntity player, Pokemon egg) {
     try {
+      egg.setOriginalTrainer(player.getUuid());
       egg.getFeatures().removeIf(feature -> feature.getName().equals(PERCENTAGE_TAG));
       egg.getPersistentData().remove(PERCENTAGE_TAG);
       egg.getPersistentData().remove(PERCENTAGE_ROUND_TAG);

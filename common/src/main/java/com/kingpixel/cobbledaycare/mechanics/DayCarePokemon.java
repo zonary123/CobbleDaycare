@@ -73,6 +73,7 @@ public class DayCarePokemon extends Mechanics {
     Pokemon female = builder.getFemale();
     Pokemon egg = builder.getEgg();
     Pokemon firstEvolution;
+    egg.setOriginalTrainer("???");
     boolean maleIsDitto = male.getForm().getEggGroups().contains(EggGroup.DITTO);
     boolean femaleIsDitto = female.getForm().getEggGroups().contains(EggGroup.DITTO);
     boolean dobbleDitto = maleIsDitto && femaleIsDitto;
@@ -118,6 +119,8 @@ public class DayCarePokemon extends Mechanics {
 
   @Override public void applyHatch(HatchBuilder builder) {
     Pokemon egg = builder.getEgg();
+    egg.setOriginalTrainer(builder.getPlayer().getUuid());
+    egg.setOriginalTrainer(builder.getPlayer().getGameProfile().getName());
     ServerPlayerEntity player = builder.getPlayer();
     String pokemon = egg.getPersistentData().getString(TAG_POKEMON);
     if (pokemon.isEmpty()) pokemon = egg.getPersistentData().getString(TAG_OLD_POKEMON);
@@ -150,6 +153,7 @@ public class DayCarePokemon extends Mechanics {
   }
 
   @Override public void createEgg(ServerPlayerEntity player, Pokemon pokemon, Pokemon egg) {
+    egg.setOriginalTrainer("???");
     PokemonProperties.Companion.parse(getTypeEgg(pokemon)).apply(egg);
     egg.getPersistentData().putString(TAG_POKEMON, pokemon.getSpecies().showdownId());
     egg.getPersistentData().putDouble(TAG_STEPS, CobbleDaycare.config.getSteps(pokemon));
