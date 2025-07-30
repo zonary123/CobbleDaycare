@@ -16,6 +16,7 @@ import com.kingpixel.cobbleutils.util.AdventureTranslator;
 import com.kingpixel.cobbleutils.util.PokemonUtils;
 import lombok.Data;
 import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.CustomModelDataComponent;
 import net.minecraft.component.type.LoreComponent;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -56,6 +57,7 @@ public class PlotMenu {
       .builder()
       .display(plot.getMale() != null ? PokemonItem.from(plot.getMale()) : male.getItemStack())
       .with(DataComponentTypes.LORE, new LoreComponent(AdventureTranslator.toNativeL(PokemonUtils.replaceLore(plot.getMale()))))
+      .with(DataComponentTypes.CUSTOM_MODEL_DATA, new CustomModelDataComponent((int) egg.getCustomModelData()))
       .onClick(action -> {
         if (CobbleDaycare.config.hasOpenCooldown(action.getPlayer())) return;
         if (plot.getMale() != null) {
@@ -71,13 +73,17 @@ public class PlotMenu {
     male.applyTemplate(template, maleButton);
 
     ItemStack displayEgg = plot.getEggs().isEmpty() ? egg.getItemStack() : PokemonItem.from(plot.getEggs().getFirst());
-    GooeyButton eggButton = egg.getButton(1, null, null, action -> {
-      if (plot.giveEggs(player)) {
-        if (plot.limitEggs(player) >= plot.getEggs().size()) plot.setTime(player);
-        DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
-        CobbleDaycare.language.getPrincipalMenu().open(player);
-      }
-    });
+    GooeyButton eggButton = GooeyButton.builder()
+      .display(displayEgg)
+      .with(DataComponentTypes.CUSTOM_MODEL_DATA, new CustomModelDataComponent((int) egg.getCustomModelData()))
+      .onClick(action -> {
+        if (plot.giveEggs(player)) {
+          if (plot.limitEggs(player) >= plot.getEggs().size()) plot.setTime(player);
+          DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
+          CobbleDaycare.language.getPrincipalMenu().open(player);
+        }
+      })
+      .build();
     eggButton.setDisplay(displayEgg);
     egg.applyTemplate(template, eggButton);
 
@@ -85,6 +91,7 @@ public class PlotMenu {
       .builder()
       .display(plot.getFemale() != null ? PokemonItem.from(plot.getFemale()) : female.getItemStack())
       .with(DataComponentTypes.LORE, new LoreComponent(AdventureTranslator.toNativeL(PokemonUtils.replaceLore(plot.getFemale()))))
+      .with(DataComponentTypes.CUSTOM_MODEL_DATA, new CustomModelDataComponent((int) female.getCustomModelData()))
       .onClick(action -> {
         if (CobbleDaycare.config.hasOpenCooldown(action.getPlayer())) return;
         if (plot.getFemale() != null) {

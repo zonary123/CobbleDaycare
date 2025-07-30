@@ -10,6 +10,7 @@ import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.models.EggBuilder;
 import com.kingpixel.cobbledaycare.models.HatchBuilder;
 import com.kingpixel.cobbledaycare.models.PokemonRareMecanic;
+import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.Model.PokemonChance;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
 import com.kingpixel.cobbleutils.util.PokemonUtils;
@@ -33,6 +34,7 @@ public class DayCarePokemon extends Mechanics {
   public static final String TAG_POKEMON = "pokemon";
   public static final String TAG_STEPS = "steps";
   public static final String TAG_REFERENCE_STEPS = "reference_steps";
+  public static final String TAG_REFERENCE_CYCLES = "reference_cycles";
   public static final String TAG_CYCLES = "cycles";
   public static final String TAG_GENDER = "gender";
   private List<PokemonRareMecanic> pokemonRareMechanics;
@@ -95,13 +97,23 @@ public class DayCarePokemon extends Mechanics {
     }
 
     builder.setFirstEvolution(firstEvolution);
-
+    PokemonProperties.Companion.parse(getTypeEgg(firstEvolution)).apply(egg);
     double steps = CobbleDaycare.config.getSteps(firstEvolution);
     egg.getPersistentData().putString(TAG_POKEMON, firstEvolution.getSpecies().showdownId());
     egg.getPersistentData().putDouble(TAG_STEPS, steps);
     egg.getPersistentData().putDouble(TAG_REFERENCE_STEPS, steps);
     egg.getPersistentData().putString(TAG_GENDER, firstEvolution.getGender().name());
-    egg.getPersistentData().putInt(TAG_CYCLES, firstEvolution.getSpecies().getEggCycles());
+    int cycles = firstEvolution.getSpecies().getEggCycles();
+    egg.getPersistentData().putInt(TAG_CYCLES, cycles);
+    egg.getPersistentData().putInt(TAG_REFERENCE_CYCLES, cycles);
+  }
+
+  private String getTypeEgg(Pokemon pokemon) {
+    String showdownId = pokemon.showdownId();
+    if (CobbleDaycare.config.isDebug()) {
+      CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "type_egg=" + showdownId);
+    }
+    return "type_egg=" + showdownId;
   }
 
   @Override public void applyHatch(HatchBuilder builder) {
@@ -126,20 +138,25 @@ public class DayCarePokemon extends Mechanics {
       }
     } catch (IllegalArgumentException ignored) {
     }
+
+
     egg.getPersistentData().remove(TAG_POKEMON);
     egg.getPersistentData().remove(TAG_OLD_POKEMON);
     egg.getPersistentData().remove(TAG_STEPS);
     egg.getPersistentData().remove(TAG_REFERENCE_STEPS);
     egg.getPersistentData().remove(TAG_CYCLES);
     egg.getPersistentData().remove(TAG_GENDER);
+    egg.getPersistentData().remove(TAG_REFERENCE_CYCLES);
   }
 
   @Override public void createEgg(ServerPlayerEntity player, Pokemon pokemon, Pokemon egg) {
+    PokemonProperties.Companion.parse(getTypeEgg(pokemon)).apply(egg);
     egg.getPersistentData().putString(TAG_POKEMON, pokemon.getSpecies().showdownId());
     egg.getPersistentData().putDouble(TAG_STEPS, CobbleDaycare.config.getSteps(pokemon));
     egg.getPersistentData().putDouble(TAG_REFERENCE_STEPS, CobbleDaycare.config.getSteps(pokemon));
     egg.getPersistentData().putString(TAG_GENDER, pokemon.getGender().name());
     egg.getPersistentData().putInt(TAG_CYCLES, pokemon.getSpecies().getEggCycles());
+    egg.getPersistentData().putInt(TAG_REFERENCE_CYCLES, pokemon.getSpecies().getEggCycles());
   }
 
   @Override public String getEggInfo(String s, NbtCompound nbt) {

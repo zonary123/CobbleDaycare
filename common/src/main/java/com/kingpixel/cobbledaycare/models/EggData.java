@@ -5,6 +5,8 @@ import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.api.events.CobblemonEvents;
 import com.cobblemon.mod.common.api.pokemon.PokemonProperties;
 import com.cobblemon.mod.common.api.pokemon.PokemonPropertyExtractor;
+import com.cobblemon.mod.common.api.pokemon.feature.IntSpeciesFeature;
+import com.cobblemon.mod.common.net.messages.client.pokemon.update.SpeciesFeatureUpdatePacket;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.events.HatchEggEvent;
@@ -14,6 +16,7 @@ import com.kingpixel.cobbledaycare.mechanics.Mechanics;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
 import com.kingpixel.cobbleutils.util.TypeMessage;
+import kotlin.jvm.functions.Function0;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -33,6 +36,8 @@ import net.minecraft.text.Text;
 @Setter
 @ToString
 public class EggData {
+  private static final String PERCENTAGE_ROUND_TAG = "PERCENTAGE_ROUND_EGG";
+  private static final String PERCENTAGE_TAG = "percentage";
   private String pokemon;
   private String form;
   private double steps;
@@ -53,6 +58,44 @@ public class EggData {
 
   public void steps(ServerPlayerEntity player, Pokemon egg, double deltaMovement, UserInformation userInformation) {
     double totalSteps = deltaMovement * userInformation.getActualMultiplier(player);
+    int referenceCycles = egg.getPersistentData().getInt(DayCarePokemon.TAG_REFERENCE_CYCLES);
+    int pasosPorCiclo = (int) egg.getPersistentData().getDouble(DayCarePokemon.TAG_REFERENCE_STEPS);
+    int totalReferenceSteps = referenceCycles * pasosPorCiclo;
+    int totalPasosRecorridos = (referenceCycles - cycles) * pasosPorCiclo + (pasosPorCiclo - (int) steps);
+    int percentage = (int) ((totalPasosRecorridos * 100.0) / totalReferenceSteps);
+    int percentageBlock = (percentage / 25) * 25;
+
+
+    var features = egg.getFeatures();
+    IntSpeciesFeature feature;
+    if (features.stream().noneMatch(data -> data.getName().equals(PERCENTAGE_TAG))) {
+      feature = new IntSpeciesFeature(PERCENTAGE_TAG, percentageBlock);
+      features.add(feature);
+    } else {
+      feature = (IntSpeciesFeature) features.stream()
+        .filter(f -> f.getName().equals(PERCENTAGE_TAG))
+        .findFirst()
+        .orElse(null);
+      assert feature != null;
+      feature.setValue(percentage);
+    }
+    try {
+      SpeciesFeatureUpdatePacket packet = new SpeciesFeatureUpdatePacket((Function0<? extends Pokemon>) () -> egg,
+        egg.getSpecies().resourceIdentifier,
+        feature);
+      packet.set(egg, feature);
+      packet.sendToPlayer(player);
+      //packet.applyToPokemon();
+    } catch (Exception e) {
+      CobbleUtils.LOGGER.error("Error updating egg percentage feature: " + e.getMessage());
+      e.printStackTrace();
+    }
+
+    if (percentageBlock != egg.getPersistentData().getInt(PERCENTAGE_ROUND_TAG)) {
+      egg.getPersistentData().putInt(PERCENTAGE_ROUND_TAG, percentageBlock);
+      PokemonProperties.Companion.parse("egg_crack=" + percentageBlock).apply(egg);
+    }
+
 
     while (totalSteps > 0 && cycles > 0) {
       double stepsPerCycle = egg.getPersistentData().getDouble(DayCarePokemon.TAG_REFERENCE_STEPS);
@@ -113,11 +156,16 @@ public class EggData {
 
   public void hatch(ServerPlayerEntity player, Pokemon egg) {
     try {
+      egg.getFeatures().removeIf(feature -> feature.getName().equals(PERCENTAGE_TAG));
+      egg.getPersistentData().remove(PERCENTAGE_TAG);
+      egg.getPersistentData().remove(PERCENTAGE_ROUND_TAG);
       HatchBuilder builder = HatchBuilder.builder()
         .egg(egg)
         .player(player)
         .pokemon(null)
         .build();
+
+      int level = egg.getLevel();
       for (Mechanics mechanic : CobbleDaycare.mechanics) {
         try {
           mechanic.applyHatch(builder);
@@ -129,6 +177,7 @@ public class EggData {
       var party = Cobblemon.INSTANCE.getStorage().getParty(player);
       if (builder.getPokemon() != null && builder.getEgg() != null) {
         party.remove(egg);
+        builder.getPokemon().setLevel(level);
         party.add(builder.getPokemon());
         HatchEggEvent.HATCH_EGG_EVENT.emit(builder.getPlayer(), builder.getPokemon());
         PokemonProperties pokemonProperties = builder.getPokemon().createPokemonProperties(PokemonPropertyExtractor.ALL);

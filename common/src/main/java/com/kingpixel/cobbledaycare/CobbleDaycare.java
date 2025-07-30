@@ -273,7 +273,9 @@ public class CobbleDaycare {
         }
       }
     } catch (Exception e) {
-      CobbleUtils.LOGGER.error(MOD_ID, "Error fetching country for player " + player.getName().getString());
+      if (CobbleDaycare.config.isDebug()) {
+        CobbleUtils.LOGGER.warn(MOD_ID, "Error fetching country for player " + player.getName().getString());
+      }
     }
     return null;
   }
