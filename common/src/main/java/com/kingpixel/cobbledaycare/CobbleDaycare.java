@@ -9,6 +9,7 @@ import com.cobblemon.mod.common.api.pokemon.PokemonProperties;
 import com.cobblemon.mod.common.api.properties.CustomPokemonProperty;
 import com.cobblemon.mod.common.battles.actor.PlayerBattleActor;
 import com.cobblemon.mod.common.pokemon.Pokemon;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.kingpixel.cobbledaycare.commands.CommandTree;
@@ -38,6 +39,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -58,6 +61,10 @@ public class CobbleDaycare {
   public static Language language = new Language();
   public static Task task;
   public static List<Mechanics> mechanics = new ArrayList<>();
+  public static ExecutorService DAYCARE_EXECUTOR = Executors.newFixedThreadPool(4, new ThreadFactoryBuilder()
+    .setDaemon(true)
+    .setNameFormat("CobbleDaycare-Executor-%d")
+    .build());
   private static HttpURLConnection conn;
 
   public static void init() {
@@ -90,7 +97,7 @@ public class CobbleDaycare {
               if (update) DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
               fixPlayer(player);
             }
-          })
+          }, DAYCARE_EXECUTOR)
           .orTimeout(30, TimeUnit.SECONDS)
           .exceptionally(e -> {
             CobbleUtils.LOGGER.error(MOD_ID, "Error Task Daycare.");
@@ -203,8 +210,7 @@ public class CobbleDaycare {
           } catch (Exception e) {
             CobbleUtils.LOGGER.error(MOD_ID, "Error loading player " + player.getName().getString());
           }
-        })
-        .orTimeout(5, TimeUnit.SECONDS)
+        }, DAYCARE_EXECUTOR)
         .exceptionallyAsync(e -> {
           CobbleUtils.LOGGER.error(MOD_ID, "Error on player join: " + player.getName().getString());
           e.printStackTrace();
@@ -225,7 +231,7 @@ public class CobbleDaycare {
         } catch (Exception e) {
           CobbleUtils.LOGGER.error(MOD_ID, "Error on player quit: " + player.getName().getString());
         }
-      });
+      }, DAYCARE_EXECUTOR);
     });
 
     CobblemonEvents.POKEMON_CAPTURED.subscribe(Priority.HIGHEST, evt -> {

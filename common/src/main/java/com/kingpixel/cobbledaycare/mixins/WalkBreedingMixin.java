@@ -23,6 +23,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.concurrent.CompletableFuture;
+
 @Mixin(ServerPlayNetworkHandler.class)
 public abstract class WalkBreedingMixin {
 
@@ -36,59 +38,64 @@ public abstract class WalkBreedingMixin {
 
   @Inject(method = "onTeleportConfirm", at = @At("HEAD"))
   public void onTeleportConfirm(TeleportConfirmC2SPacket packet, CallbackInfo ci) {
-    cobbleDaycare$logDebug("TeleportConfirm: " + packet.getTeleportId());
+    //cobbleDaycare$logDebug("TeleportConfirm: " + packet.getTeleportId());
     cobbleDaycare$teleport = MAX_TELEPORT;
   }
 
   @Inject(method = "requestTeleport(DDDFF)V", at = @At("HEAD"))
   public void requestTeleport(double x, double y, double z, float yaw, float pitch, CallbackInfo ci) {
-    cobbleDaycare$logDebug("requestTeleport: " + x + ", " + y + ", " + z);
+    //cobbleDaycare$logDebug("requestTeleport: " + x + ", " + y + ", " + z);
     cobbleDaycare$teleport = MAX_TELEPORT;
   }
 
   @Inject(method = "requestTeleport(DDDFFLjava/util/Set;)V", at = @At("HEAD"))
   public void requestTeleportWithSet(double x, double y, double z, float yaw, float pitch, java.util.Set<?> set, CallbackInfo ci) {
-    cobbleDaycare$logDebug("requestTeleport with Set: " + x + ", " + y + ", " + z);
+    //cobbleDaycare$logDebug("requestTeleport with Set: " + x + ", " + y + ", " + z);
     cobbleDaycare$teleport = MAX_TELEPORT;
   }
 
   @Inject(method = "onPlayerMove", at = @At("HEAD"))
   public void onPlayerMove(PlayerMoveC2SPacket packet, CallbackInfo ci) {
-    long currentTime = System.currentTimeMillis();
+    CompletableFuture.runAsync(() -> {
+        long currentTime = System.currentTimeMillis();
 
-    if (currentTime > cobbleDaycare$lastUpdateTime) {
-      try {
-        if (cobbleDaycare$isPlayerEligibleForStepUpdate()) {
-          var party = Cobblemon.INSTANCE.getStorage().getParty(player);
-          Entity entity = cobbleDaycare$getEffectiveEntity();
+        if (currentTime > cobbleDaycare$lastUpdateTime) {
+          try {
+            if (cobbleDaycare$isPlayerEligibleForStepUpdate()) {
+              var party = Cobblemon.INSTANCE.getStorage().getParty(player);
+              Entity entity = cobbleDaycare$getEffectiveEntity();
 
-          if (entity == null) return;
+              if (entity == null) return;
 
-          if (cobbleDaycare$previousX == 0 && cobbleDaycare$previousZ == 0) {
-            cobbleDaycare$teleport = MAX_TELEPORT;
-            cobbleDaycare$previousX = entity.getX();
-            cobbleDaycare$previousZ = entity.getZ();
-          }
-          double deltaMovement = cobbleDaycare$calculateDeltaMovement(packet, party, entity);
-          if (deltaMovement <= 0 || cobbleDaycare$teleport > 0) {
-            if (cobbleDaycare$teleport > 0) cobbleDaycare$teleport--;
-            cobbleDaycare$previousX = entity.getX();
-            cobbleDaycare$previousZ = entity.getZ();
+              if (cobbleDaycare$previousX == 0 && cobbleDaycare$previousZ == 0) {
+                cobbleDaycare$teleport = MAX_TELEPORT;
+                cobbleDaycare$previousX = entity.getX();
+                cobbleDaycare$previousZ = entity.getZ();
+              }
+              double deltaMovement = cobbleDaycare$calculateDeltaMovement(packet, party, entity);
+              if (deltaMovement <= 0 || cobbleDaycare$teleport > 0) {
+                if (cobbleDaycare$teleport > 0) cobbleDaycare$teleport--;
+                cobbleDaycare$previousX = entity.getX();
+                cobbleDaycare$previousZ = entity.getZ();
+                cobbleDaycare$lastUpdateTime = currentTime + (CobbleDaycare.config.getTicksToWalking() * TICKS_TO_MILLISECONDS);
+                return;
+              }
+
+              cobbleDaycare$updateEggSteps(party, deltaMovement);
+              cobbleDaycare$updateUserInformation();
+
+              cobbleDaycare$lastUpdateTime = currentTime + (CobbleDaycare.config.getTicksToWalking() * TICKS_TO_MILLISECONDS);
+            }
+          } catch (Exception e) {
+            e.printStackTrace();
             cobbleDaycare$lastUpdateTime = currentTime + (CobbleDaycare.config.getTicksToWalking() * TICKS_TO_MILLISECONDS);
-            return;
           }
-
-          cobbleDaycare$updateEggSteps(party, deltaMovement);
-          cobbleDaycare$updateUserInformation();
-
-          cobbleDaycare$lastUpdateTime = currentTime + (CobbleDaycare.config.getTicksToWalking() * TICKS_TO_MILLISECONDS);
         }
-      } catch (Exception e) {
+      }, CobbleDaycare.DAYCARE_EXECUTOR)
+      .exceptionally(e -> {
         e.printStackTrace();
-        cobbleDaycare$lastUpdateTime = currentTime + (CobbleDaycare.config.getTicksToWalking() * TICKS_TO_MILLISECONDS);
-      }
-    }
-
+        return null;
+      });
   }
 
   @Unique private boolean cobbleDaycare$isPlayerEligibleForStepUpdate() {
@@ -144,10 +151,7 @@ public abstract class WalkBreedingMixin {
 
     for (Pokemon pokemon : party) {
       if (pokemon != null && "egg".equals(pokemon.showdownId())) {
-        EggData eggData = EggData.from(pokemon);
-        if (eggData != null) {
-          eggData.steps(player, pokemon, deltaMovement, userInformation);
-        }
+        EggData.steps(player, pokemon, deltaMovement, userInformation);
       }
     }
   }

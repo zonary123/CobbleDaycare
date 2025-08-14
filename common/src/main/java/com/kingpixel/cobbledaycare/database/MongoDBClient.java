@@ -82,7 +82,7 @@ public class MongoDBClient extends DatabaseClient {
         } catch (Exception e) {
           e.printStackTrace(); // Manejo básico de errores
         }
-      })
+      }, CobbleDaycare.DAYCARE_EXECUTOR)
       .orTimeout(5, TimeUnit.SECONDS)
       .exceptionally(e -> {
         CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Error updating user information: " + e);

@@ -10,7 +10,6 @@ import com.cobblemon.mod.common.net.messages.client.pokemon.update.SpeciesFeatur
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.events.HatchEggEvent;
-import com.kingpixel.cobbledaycare.mechanics.DayCareForm;
 import com.kingpixel.cobbledaycare.mechanics.DayCarePokemon;
 import com.kingpixel.cobbledaycare.mechanics.Mechanics;
 import com.kingpixel.cobbleutils.CobbleUtils;
@@ -21,7 +20,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import net.minecraft.block.Blocks;
-import net.minecraft.nbt.NbtCompound;
 import net.minecraft.particle.BlockStateParticleEffect;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -38,26 +36,12 @@ import net.minecraft.text.Text;
 public class EggData {
   private static final String PERCENTAGE_ROUND_TAG = "PERCENTAGE_ROUND_EGG";
   private static final String PERCENTAGE_TAG = "percentage";
-  private String pokemon;
-  private String form;
-  private double steps;
-  private int cycles;
 
 
-  public static EggData from(Pokemon pokemon) {
-    if (pokemon == null) return null;
-    EggData eggData = new EggData();
-    NbtCompound nbt = pokemon.getPersistentData();
-    eggData.setPokemon(nbt.getString(DayCarePokemon.TAG_POKEMON));
-    eggData.setCycles(nbt.getInt(DayCarePokemon.TAG_CYCLES));
-    eggData.setSteps(nbt.getDouble(DayCarePokemon.TAG_STEPS));
-    eggData.setForm(nbt.getString(DayCareForm.TAG));
-    return eggData;
-  }
-
-
-  public void steps(ServerPlayerEntity player, Pokemon egg, double deltaMovement, UserInformation userInformation) {
+  public static void steps(ServerPlayerEntity player, Pokemon egg, double deltaMovement, UserInformation userInformation) {
     double totalSteps = deltaMovement * userInformation.getActualMultiplier(player);
+    double steps = egg.getPersistentData().getDouble(DayCarePokemon.TAG_STEPS);
+    int cycles = egg.getPersistentData().getInt(DayCarePokemon.TAG_CYCLES);
     int referenceCycles = egg.getPersistentData().getInt(DayCarePokemon.TAG_REFERENCE_CYCLES);
     int pasosPorCiclo = (int) egg.getPersistentData().getDouble(DayCarePokemon.TAG_REFERENCE_STEPS);
     int totalReferenceSteps = referenceCycles * pasosPorCiclo;
@@ -65,29 +49,34 @@ public class EggData {
     int percentage = (int) ((totalPasosRecorridos * 100.0) / totalReferenceSteps);
     int percentageBlock = (percentage / 25) * 25;
 
-
     var features = egg.getFeatures();
-    IntSpeciesFeature feature;
-    if (features.stream().noneMatch(data -> data.getName().equals(PERCENTAGE_TAG))) {
+    IntSpeciesFeature feature = null;
+
+    for (var f : features) {
+      if (f == null) continue;
+      if (f.getName().equals(PERCENTAGE_TAG)) {
+        feature = (IntSpeciesFeature) f;
+        break;
+      }
+    }
+
+    if (feature == null) {
       feature = new IntSpeciesFeature(PERCENTAGE_TAG, percentageBlock);
       features.add(feature);
     } else {
-      feature = (IntSpeciesFeature) features.stream()
-        .filter(f -> f.getName().equals(PERCENTAGE_TAG))
-        .findFirst()
-        .orElse(null);
-      assert feature != null;
       feature.setValue(percentage);
     }
+
+
     try {
-      SpeciesFeatureUpdatePacket packet = new SpeciesFeatureUpdatePacket((Function0<? extends Pokemon>) () -> egg,
+      SpeciesFeatureUpdatePacket packet = new SpeciesFeatureUpdatePacket(
+        (Function0<? extends Pokemon>) () -> egg,
         egg.getSpecies().resourceIdentifier,
-        feature);
-      packet.set(egg, feature);
+        feature
+      );
       packet.sendToPlayer(player);
-      //packet.applyToPokemon();
     } catch (Exception e) {
-      CobbleUtils.LOGGER.error("Error updating egg percentage feature: " + e.getMessage());
+      CobbleUtils.LOGGER.error("Error actualizando el feature del huevo: " + e.getMessage());
       e.printStackTrace();
     }
 
@@ -96,22 +85,19 @@ public class EggData {
       PokemonProperties.Companion.parse("egg_crack=" + percentageBlock).apply(egg);
     }
 
-
     while (totalSteps > 0 && cycles > 0) {
       double stepsPerCycle = egg.getPersistentData().getDouble(DayCarePokemon.TAG_REFERENCE_STEPS);
 
-      if (steps <= 0) {
-        steps = stepsPerCycle;
-      }
+      if (steps <= 0) steps = stepsPerCycle;
 
       if (totalSteps >= steps) {
         totalSteps -= steps;
         steps = 0;
         cycles--;
 
-        if (cycles % 3 == 0 && cycles > 0) {
+        if (cycles % 3 == 0 && cycles > 0)
           player.playSoundToPlayer(SoundEvents.ENTITY_TURTLE_EGG_CRACK, SoundCategory.PLAYERS, 1.0F, 1.0F);
-        }
+
       } else {
         steps -= totalSteps;
         totalSteps = 0;
@@ -141,20 +127,20 @@ public class EggData {
       egg.getPersistentData().putInt(DayCarePokemon.TAG_CYCLES, cycles);
     }
 
-    updateName(egg);
+    updateName(egg, cycles, steps);
   }
 
 
-  private void updateName(Pokemon egg) {
+  private static void updateName(Pokemon egg, int cycles, double steps) {
     egg.setNickname(Text.literal(
       CobbleDaycare.language.getEggName()
         .replace("%steps%", String.format("%.2f", steps))
         .replace("%cycles%", String.valueOf(cycles))
-        .replace("%pokemon%", pokemon)
+        .replace("%pokemon%", egg.getPersistentData().getString(DayCarePokemon.TAG_POKEMON))
     ));
   }
 
-  public void hatch(ServerPlayerEntity player, Pokemon egg) {
+  public static void hatch(ServerPlayerEntity player, Pokemon egg) {
     try {
       egg.setOriginalTrainer(player.getUuid());
       egg.getFeatures().removeIf(feature -> feature.getName().equals(PERCENTAGE_TAG));

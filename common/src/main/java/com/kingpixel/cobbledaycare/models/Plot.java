@@ -250,7 +250,7 @@ public class Plot {
               TypeMessage.CHAT
             );
           }
-          if (PermissionApi.hasPermission(player, List.of("cobbleutils.autoclaim", "cobbleutils.admin"), 2)) {
+          if (PermissionApi.hasPermission(player, CobbleDaycare.MOD_ID + ".autoclaim", 4)) {
             Cobblemon.INSTANCE.getStorage().getParty(player).add(egg);
           } else {
             eggs.add(egg);

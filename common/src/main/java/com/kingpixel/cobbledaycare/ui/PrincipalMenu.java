@@ -4,6 +4,7 @@ import ca.landonjw.gooeylibs2.api.UIManager;
 import ca.landonjw.gooeylibs2.api.button.GooeyButton;
 import ca.landonjw.gooeylibs2.api.page.GooeyPage;
 import ca.landonjw.gooeylibs2.api.template.types.ChestTemplate;
+import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.database.DatabaseClientFactory;
@@ -23,6 +24,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -85,76 +87,88 @@ public class PrincipalMenu {
     ), 0);
   }
 
+  private boolean isBattle(ServerPlayerEntity player) {
+    var battle = Cobblemon.INSTANCE.getBattleRegistry().getBattleByParticipatingPlayer(player);
+    return battle != null;
+  }
+
   public void open(ServerPlayerEntity player) {
-    ChestTemplate template = ChestTemplate.builder(rows).build();
-    UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
-    int numPlots = 0;
-    int size = CobbleDaycare.config.getSlotPlots().size();
-    for (int i = 0; i < size; i++) {
-      if (PermissionApi.hasPermission(player, Plot.plotPermission(i), 4)) {
-        numPlots = i + 1;
-      }
-    }
-    if (numPlots == 0) numPlots = 1;
-    userInformation.check(numPlots, player);
-    for (int i = 0; i < numPlots; i++) {
-      int slot = CobbleDaycare.config.getSlotPlots().get(i);
-      Plot plot = userInformation.getPlots().get(i);
-      if (plot == null) continue;
-      ItemModel itemModel;
-      if (plot.hasEggs()) {
-        itemModel = plotWithEgg;
-      } else if (plot.notParents()) {
-        itemModel = plotWithOutParents;
-      } else {
-        itemModel = plotWithOutEgg;
-      }
+    CompletableFuture.runAsync(() -> {
+        if (isBattle(player)) return;
+        ChestTemplate template = ChestTemplate.builder(rows).build();
+        UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
+        int numPlots = 0;
+        int size = CobbleDaycare.config.getSlotPlots().size();
+        for (int i = 0; i < size; i++) {
+          if (PermissionApi.hasPermission(player, Plot.plotPermission(i), 4)) {
+            numPlots = i + 1;
+          }
+        }
+        if (numPlots == 0) numPlots = 1;
+        userInformation.check(numPlots, player);
+        for (int i = 0; i < numPlots; i++) {
+          int slot = CobbleDaycare.config.getSlotPlots().get(i);
+          Plot plot = userInformation.getPlots().get(i);
+          if (plot == null) continue;
+          ItemModel itemModel;
+          if (plot.hasEggs()) {
+            itemModel = plotWithEgg;
+          } else if (plot.notParents()) {
+            itemModel = plotWithOutParents;
+          } else {
+            itemModel = plotWithOutEgg;
+          }
 
-      template.set(slot, itemModel.getButton(plot.getEggs().size(), null, replacePlotLore(plot, player), action -> {
-        CobbleDaycare.language.getPlotMenu().open(player, plot, userInformation);
-      }));
+          template.set(slot, itemModel.getButton(plot.getEggs().size(), null, replacePlotLore(plot, player), action -> {
+            CobbleDaycare.language.getPlotMenu().open(player, plot, userInformation);
+          }));
 
-    }
+        }
 
-    List<String> loreInfo = new ArrayList<>(info.getLore());
-    long cooldown = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(PlayerUtils.getCooldown(CobbleDaycare.config.getCooldowns(), CobbleDaycare.config.getCooldown()
-      , player));
-    loreInfo.replaceAll(s -> {
-      for (Mechanics mechanic : CobbleDaycare.mechanics) {
-        s = mechanic.replace(s, player);
-      }
-      s = s.replace("%cooldown%", PlayerUtils.getCooldown(cooldown));
-      return s;
-    });
+        List<String> loreInfo = new ArrayList<>(info.getLore());
+        long cooldown = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(PlayerUtils.getCooldown(CobbleDaycare.config.getCooldowns(), CobbleDaycare.config.getCooldown()
+          , player));
+        loreInfo.replaceAll(s -> {
+          for (Mechanics mechanic : CobbleDaycare.mechanics) {
+            s = mechanic.replace(s, player);
+          }
+          s = s.replace("%cooldown%", PlayerUtils.getCooldown(cooldown));
+          return s;
+        });
 
-    info.applyTemplate(template, info.getButton(1, null, loreInfo, action -> {
-    }));
+        info.applyTemplate(template, info.getButton(1, null, loreInfo, action -> {
+        }));
 
-    close.applyTemplate(template, close.getButton(action -> {
-      UIManager.closeUI(player);
-    }));
+        close.applyTemplate(template, close.getButton(action -> {
+          UIManager.closeUI(player);
+        }));
 
 
-    GooeyButton profileButton = profileOptions.getButton(action -> {
-      CobbleDaycare.language.getProfileMenu().open(player, userInformation);
-    });
+        GooeyButton profileButton = profileOptions.getButton(action -> {
+          CobbleDaycare.language.getProfileMenu().open(player, userInformation);
+        });
 
-    if (profileOptions.getItem().contains("minecraft:player_head")) {
-      ItemStack headItem = PlayerUtils.getHeadItem(player);
-      headItem.set(DataComponentTypes.CUSTOM_NAME, AdventureTranslator.toNative(profileOptions.getDisplayname()));
-      headItem.set(DataComponentTypes.LORE,
-        new LoreComponent(AdventureTranslator.toNativeL(profileOptions.getLore())));
-      profileButton.setDisplay(headItem);
-    }
+        if (profileOptions.getItem().contains("minecraft:player_head")) {
+          ItemStack headItem = PlayerUtils.getHeadItem(player);
+          headItem.set(DataComponentTypes.CUSTOM_NAME, AdventureTranslator.toNative(profileOptions.getDisplayname()));
+          headItem.set(DataComponentTypes.LORE,
+            new LoreComponent(AdventureTranslator.toNativeL(profileOptions.getLore())));
+          profileButton.setDisplay(headItem);
+        }
 
-    profileOptions.applyTemplate(template, profileButton);
+        profileOptions.applyTemplate(template, profileButton);
 
-    GooeyPage page = GooeyPage.builder()
-      .template(template)
-      .title(AdventureTranslator.toNative(title))
-      .build();
+        GooeyPage page = GooeyPage.builder()
+          .template(template)
+          .title(AdventureTranslator.toNative(title))
+          .build();
 
-    UIManager.openUIForcefully(player, page);
+        UIManager.openUIForcefully(player, page);
+      }, CobbleDaycare.DAYCARE_EXECUTOR)
+      .exceptionally(e -> {
+        e.printStackTrace();
+        return null;
+      });
   }
 
   private List<String> replacePlotLore(Plot plot, ServerPlayerEntity player) {

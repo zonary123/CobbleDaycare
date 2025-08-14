@@ -64,6 +64,11 @@ public class Migrate {
                 try (FileReader reader = new FileReader(file, StandardCharsets.UTF_8)) {
                   List<OldPlot> oldPlots = Utils.newWithoutSpacingGson().fromJson(reader, new TypeToken<List<OldPlot>>() {
                   }.getType());
+                  if (oldPlots == null || oldPlots.isEmpty()) {
+                    CobbleUtils.LOGGER.error(CobbleDaycare.MOD_ID, "No plots found in file: " + file.getAbsolutePath());
+                    file.delete();
+                    continue;
+                  }
                   UserInformation userInformation = new UserInformation();
                   userInformation.setPlayerUUID(UUID.fromString(fileName));
                   for (OldPlot oldPlot : oldPlots) {
