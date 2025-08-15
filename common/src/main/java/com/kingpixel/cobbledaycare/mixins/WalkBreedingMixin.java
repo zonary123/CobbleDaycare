@@ -6,149 +6,115 @@ import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.database.DatabaseClientFactory;
 import com.kingpixel.cobbledaycare.models.EggData;
+import com.kingpixel.cobbledaycare.models.Position;
 import com.kingpixel.cobbledaycare.models.UserInformation;
-import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
 import com.kingpixel.cobbleutils.util.TypeMessage;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityPose;
-import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.network.packet.c2s.play.TeleportConfirmC2SPacket;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 
 @Mixin(ServerPlayNetworkHandler.class)
 public abstract class WalkBreedingMixin {
 
+
   @Unique private static final long TICKS_TO_MILLISECONDS = 50;
   @Unique private static final int MAX_TELEPORT = 3;
-  @Shadow public ServerPlayerEntity player;
-  @Unique private double cobbleDaycare$previousX = 0;
-  @Unique private double cobbleDaycare$previousZ = 0;
-  @Unique private int cobbleDaycare$teleport = 0;
-  @Unique private long cobbleDaycare$lastUpdateTime = 0;
+  // Mapa para guardar la posición inicial de cada jugador
+  @Unique
+  private static final Map<ServerPlayerEntity, Position> cobbleDaycare$playerPositions = new ConcurrentHashMap<>();
+  @Unique
+  private static final Map<ServerPlayerEntity, Integer> cobbleDaycare$playerTeleport = new ConcurrentHashMap<>();
+  @Unique
+  private static final ScheduledExecutorService cobbleDaycare$scheduler = Executors.newSingleThreadScheduledExecutor();
 
-  @Inject(method = "onTeleportConfirm", at = @At("HEAD"))
-  public void onTeleportConfirm(TeleportConfirmC2SPacket packet, CallbackInfo ci) {
-    //cobbleDaycare$logDebug("TeleportConfirm: " + packet.getTeleportId());
-    cobbleDaycare$teleport = MAX_TELEPORT;
+  static {
+    cobbleDaycare$scheduler.scheduleAtFixedRate(WalkBreedingMixin::cobbleDaycare$processPlayers, 0, 1, TimeUnit.SECONDS);
   }
 
-  @Inject(method = "requestTeleport(DDDFF)V", at = @At("HEAD"))
-  public void requestTeleport(double x, double y, double z, float yaw, float pitch, CallbackInfo ci) {
-    //cobbleDaycare$logDebug("requestTeleport: " + x + ", " + y + ", " + z);
-    cobbleDaycare$teleport = MAX_TELEPORT;
-  }
+  @Unique
+  private ServerPlayerEntity cobbleDaycare$player;
 
-  @Inject(method = "requestTeleport(DDDFFLjava/util/Set;)V", at = @At("HEAD"))
-  public void requestTeleportWithSet(double x, double y, double z, float yaw, float pitch, java.util.Set<?> set, CallbackInfo ci) {
-    //cobbleDaycare$logDebug("requestTeleport with Set: " + x + ", " + y + ", " + z);
-    cobbleDaycare$teleport = MAX_TELEPORT;
-  }
+  @Unique
+  private static void cobbleDaycare$processPlayers() {
+    long currentTime = System.currentTimeMillis();
 
-  @Inject(method = "onPlayerMove", at = @At("HEAD"))
-  public void onPlayerMove(PlayerMoveC2SPacket packet, CallbackInfo ci) {
-    CompletableFuture.runAsync(() -> {
-        long currentTime = System.currentTimeMillis();
+    for (ServerPlayerEntity player : CobbleDaycare.server.getPlayerManager().getPlayerList()) {
+      try {
+        if (player == null || !player.isAlive() || player.isRemoved()) continue;
+        if (!cobbleDaycare$isPlayerEligibleForStepUpdate(player)) continue;
 
-        if (currentTime > cobbleDaycare$lastUpdateTime) {
-          try {
-            if (cobbleDaycare$isPlayerEligibleForStepUpdate()) {
-              var party = Cobblemon.INSTANCE.getStorage().getParty(player);
-              Entity entity = cobbleDaycare$getEffectiveEntity();
+        Entity entity = cobbleDaycare$getEffectiveEntity(player);
+        if (entity == null) continue;
 
-              if (entity == null) return;
+        // Obtiene posición inicial o la crea si no existe
+        Position pos = cobbleDaycare$playerPositions.computeIfAbsent(player, p ->
+          new Position(entity.getX(), entity.getZ(), currentTime)
+        );
 
-              if (cobbleDaycare$previousX == 0 && cobbleDaycare$previousZ == 0) {
-                cobbleDaycare$teleport = MAX_TELEPORT;
-                cobbleDaycare$previousX = entity.getX();
-                cobbleDaycare$previousZ = entity.getZ();
-              }
-              double deltaMovement = cobbleDaycare$calculateDeltaMovement(packet, party, entity);
-              if (deltaMovement <= 0 || cobbleDaycare$teleport > 0) {
-                if (cobbleDaycare$teleport > 0) cobbleDaycare$teleport--;
-                cobbleDaycare$previousX = entity.getX();
-                cobbleDaycare$previousZ = entity.getZ();
-                cobbleDaycare$lastUpdateTime = currentTime + (CobbleDaycare.config.getTicksToWalking() * TICKS_TO_MILLISECONDS);
-                return;
-              }
+        double deltaX = entity.getX() - pos.getX();
+        double deltaZ = entity.getZ() - pos.getZ();
+        double deltaMovement = Math.hypot(deltaX, deltaZ);
 
-              cobbleDaycare$updateEggSteps(party, deltaMovement);
-              cobbleDaycare$updateUserInformation();
-
-              cobbleDaycare$lastUpdateTime = currentTime + (CobbleDaycare.config.getTicksToWalking() * TICKS_TO_MILLISECONDS);
-            }
-          } catch (Exception e) {
-            e.printStackTrace();
-            cobbleDaycare$lastUpdateTime = currentTime + (CobbleDaycare.config.getTicksToWalking() * TICKS_TO_MILLISECONDS);
-          }
+        // Manejo de teletransportes
+        int teleportCount = cobbleDaycare$playerTeleport.getOrDefault(player, 0);
+        if (deltaMovement <= 0 || teleportCount > 0) {
+          if (teleportCount > 0) teleportCount--;
+          cobbleDaycare$playerTeleport.put(player, teleportCount);
+          pos.setX(entity.getX());
+          pos.setZ(entity.getZ());
+          pos.setLastUpdate(currentTime);
+          continue;
         }
-      }, CobbleDaycare.DAYCARE_EXECUTOR)
-      .exceptionally(e -> {
+
+        // Actualiza pasos de huevos y info de usuario
+        PlayerPartyStore party = Cobblemon.INSTANCE.getStorage().getParty(player);
+        cobbleDaycare$updateEggSteps(party, deltaMovement, player);
+        cobbleDaycare$updateUserInformation(player);
+
+        // Actualiza posición inicial para el siguiente intervalo
+        pos.setX(entity.getX());
+        pos.setZ(entity.getZ());
+        pos.setLastUpdate(currentTime);
+        cobbleDaycare$playerPositions.put(player, pos);
+
+      } catch (Exception e) {
         e.printStackTrace();
-        return null;
-      });
+      }
+    }
   }
 
-  @Unique private boolean cobbleDaycare$isPlayerEligibleForStepUpdate() {
+  @Unique private static boolean cobbleDaycare$isPlayerEligibleForStepUpdate(ServerPlayerEntity player) {
     return (CobbleDaycare.config.isAllowElytra() || !player.isInPose(EntityPose.FALL_FLYING))
       && !player.getAbilities().flying
       && !player.isInvulnerable()
-      && cobbleDaycare$isVehiclePermitted()
+      && cobbleDaycare$isVehiclePermitted(player)
       && (!player.isTouchingWater() || player.isInPose(EntityPose.SWIMMING));
   }
 
-  @Unique private Entity cobbleDaycare$getEffectiveEntity() {
+  // -------------------- Mismos métodos existentes pero sin CompletableFuture --------------------
+
+  @Unique private static Entity cobbleDaycare$getEffectiveEntity(ServerPlayerEntity player) {
     return player.getVehicle() != null ? player.getVehicle() : player;
   }
 
   @Unique
-  private double cobbleDaycare$calculateDeltaMovement(PlayerMoveC2SPacket packet, PlayerPartyStore party, Entity entity) {
-    double newX = entity instanceof ServerPlayerEntity ? packet.getX(entity.getX()) : entity.getX();
-    double newZ = entity instanceof ServerPlayerEntity ? packet.getZ(entity.getZ()) : entity.getZ();
-
-    if (Double.isNaN(newX) || Double.isNaN(newZ)) return 0;
-
-    double deltaX = newX - cobbleDaycare$previousX;
-    double deltaZ = newZ - cobbleDaycare$previousZ;
-
-    cobbleDaycare$previousX = newX;
-    cobbleDaycare$previousZ = newZ;
-
-    if (Double.isNaN(deltaX) || Double.isNaN(deltaZ)) return 0;
-
-    double deltaMovement = Math.hypot(deltaX, deltaZ);
-
-    if (!(entity instanceof ServerPlayerEntity)) {
-      deltaMovement /= CobbleDaycare.config.getReduceEggStepsVehicle();
-    }
-
-    return cobbleDaycare$hasStepAcceleratingPokemon(party)
-      ? deltaMovement * CobbleDaycare.config.getMultiplierAbilityAcceleration()
-      : deltaMovement / 2;
-  }
-
-  @Unique private boolean cobbleDaycare$hasStepAcceleratingPokemon(PlayerPartyStore party) {
-    for (Pokemon pokemon : party) {
-      if (pokemon != null) {
-        String abilityName = pokemon.getAbility().getName();
-        if (CobbleDaycare.config.getAbilityAcceleration().contains(abilityName)) return true;
-      }
-    }
-    return false;
-  }
-
-  @Unique private void cobbleDaycare$updateEggSteps(PlayerPartyStore party, double deltaMovement) {
+  private static void cobbleDaycare$updateEggSteps(PlayerPartyStore party, double deltaMovement, ServerPlayerEntity player) {
     UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
-
     for (Pokemon pokemon : party) {
       if (pokemon != null && "egg".equals(pokemon.showdownId())) {
         EggData.steps(player, pokemon, deltaMovement, userInformation);
@@ -156,7 +122,7 @@ public abstract class WalkBreedingMixin {
     }
   }
 
-  @Unique private void cobbleDaycare$updateUserInformation() {
+  @Unique private static void cobbleDaycare$updateUserInformation(ServerPlayerEntity player) {
     UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
     long timeMultiplierSteps = userInformation.getTimeMultiplierSteps();
 
@@ -172,11 +138,12 @@ public abstract class WalkBreedingMixin {
     }
 
     if (userInformation.isActionBar()) {
-      cobbleDaycare$sendMessageMultiplierSteps(userInformation);
+      cobbleDaycare$sendMessageMultiplierSteps(userInformation, player);
     }
   }
 
-  @Unique private void cobbleDaycare$sendMessageMultiplierSteps(UserInformation userInformation) {
+  @Unique
+  private static void cobbleDaycare$sendMessageMultiplierSteps(UserInformation userInformation, ServerPlayerEntity player) {
     boolean activeMultiplier = CobbleDaycare.config.isGlobalMultiplierSteps();
     float actualSteps = userInformation.getActualMultiplier(player);
     boolean hasMultiplier = actualSteps > CobbleDaycare.config.getMultiplierSteps();
@@ -198,23 +165,33 @@ public abstract class WalkBreedingMixin {
   }
 
   @Unique
-  private boolean cobbleDaycare$isVehiclePermitted() {
+  private static boolean cobbleDaycare$isVehiclePermitted(ServerPlayerEntity player) {
     String vehicleId = player.getVehicle() == null ? "" : player.getVehicle().getSavedEntityId();
     if (vehicleId == null) vehicleId = "";
     return CobbleDaycare.config.getPermittedVehicles().contains(vehicleId) || vehicleId.isEmpty();
   }
 
-  @Unique private void cobbleDaycare$logDebug(String message) {
-    if (CobbleDaycare.config.isDebug()) {
-      CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, message);
+  @Inject(method = "onTeleportConfirm", at = @At("HEAD"))
+  public void onTeleportConfirm(TeleportConfirmC2SPacket packet, CallbackInfo ci) {
+    if (cobbleDaycare$player == null) {
+      cobbleDaycare$player = ((ServerPlayNetworkHandler) (Object) this).player;
     }
+    cobbleDaycare$playerTeleport.put(cobbleDaycare$player, MAX_TELEPORT);
   }
 
-  public int getTeleport() {
-    return cobbleDaycare$teleport;
+  @Inject(method = "requestTeleport(DDDFF)V", at = @At("HEAD"))
+  public void requestTeleport(double x, double y, double z, float yaw, float pitch, CallbackInfo ci) {
+    if (cobbleDaycare$player == null) {
+      cobbleDaycare$player = ((ServerPlayNetworkHandler) (Object) this).player;
+    }
+    cobbleDaycare$playerTeleport.put(cobbleDaycare$player, MAX_TELEPORT);
   }
 
-  public void setTeleport(int teleport) {
-    this.cobbleDaycare$teleport = teleport;
+  @Inject(method = "requestTeleport(DDDFFLjava/util/Set;)V", at = @At("HEAD"))
+  public void requestTeleportWithSet(double x, double y, double z, float yaw, float pitch, java.util.Set<?> set, CallbackInfo ci) {
+    if (cobbleDaycare$player == null) {
+      cobbleDaycare$player = ((ServerPlayNetworkHandler) (Object) this).player;
+    }
+    cobbleDaycare$playerTeleport.put(cobbleDaycare$player, MAX_TELEPORT);
   }
 }
