@@ -3,6 +3,7 @@ package com.kingpixel.cobbledaycare.mixins;
 import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.api.storage.party.PlayerPartyStore;
 import com.cobblemon.mod.common.pokemon.Pokemon;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.database.DatabaseClientFactory;
 import com.kingpixel.cobbledaycare.models.EggData;
@@ -40,7 +41,9 @@ public abstract class WalkBreedingMixin {
   @Unique
   private static final Map<ServerPlayerEntity, Integer> cobbleDaycare$playerTeleport = new ConcurrentHashMap<>();
   @Unique
-  private static final ScheduledExecutorService cobbleDaycare$scheduler = Executors.newSingleThreadScheduledExecutor();
+  private static final ScheduledExecutorService cobbleDaycare$scheduler = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder()
+    .setNameFormat("CobbleDaycare-walk-breeding-%d")
+    .build());
 
   static {
     cobbleDaycare$scheduler.scheduleAtFixedRate(WalkBreedingMixin::cobbleDaycare$processPlayers, 0, 1, TimeUnit.SECONDS);
@@ -53,8 +56,11 @@ public abstract class WalkBreedingMixin {
   private static void cobbleDaycare$processPlayers() {
     long currentTime = System.currentTimeMillis();
 
-    for (ServerPlayerEntity player : CobbleDaycare.server.getPlayerManager().getPlayerList()) {
+    var players = CobbleDaycare.server.getPlayerManager().getPlayerList();
+    int size = players.size();
+    for (int i = 0; i < size; i++) {
       try {
+        ServerPlayerEntity player = players.get(i);
         if (player == null || !player.isAlive() || player.isRemoved()) continue;
         if (!cobbleDaycare$isPlayerEligibleForStepUpdate(player)) continue;
 
