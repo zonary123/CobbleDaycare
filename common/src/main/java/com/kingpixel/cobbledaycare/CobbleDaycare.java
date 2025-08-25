@@ -239,6 +239,15 @@ public class CobbleDaycare {
       return Unit.INSTANCE;
     });
 
+    CobblemonEvents.POKEMON_SENT_PRE.subscribe(Priority.HIGHEST, evt -> {
+      Pokemon pokemon = evt.getPokemon();
+      if (pokemon.getSpecies().showdownId().equals("egg")) {
+        evt.cancel();
+        return Unit.INSTANCE;
+      }
+      return Unit.INSTANCE;
+    });
+
     CobblemonEvents.POKEMON_ENTITY_SPAWN.subscribe(Priority.LOWEST, evt -> {
       if (!config.isSpawnEggWorld()) return Unit.INSTANCE;
       var pokemonEntity = evt.getEntity();
