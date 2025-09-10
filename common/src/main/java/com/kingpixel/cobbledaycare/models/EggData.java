@@ -4,6 +4,7 @@ package com.kingpixel.cobbledaycare.models;
 import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.api.events.CobblemonEvents;
 import com.cobblemon.mod.common.api.pokemon.PokemonProperties;
+import com.cobblemon.mod.common.api.pokemon.PokemonPropertyExtractor;
 import com.cobblemon.mod.common.api.pokemon.feature.IntSpeciesFeature;
 import com.cobblemon.mod.common.net.messages.client.pokemon.update.SpeciesFeatureUpdatePacket;
 import com.cobblemon.mod.common.pokemon.Pokemon;
@@ -166,8 +167,10 @@ public class EggData {
         builder.getPokemon().setLevel(level);
         party.add(builder.getPokemon());
         HatchEggEvent.HATCH_EGG_EVENT.emit(builder.getPlayer(), builder.getPokemon());
-        CobblemonEvents.HATCH_EGG_POST.emit(new com.cobblemon.mod.common.api.events.pokemon.HatchEggEvent.Post(player,
-          builder.getEgg()));
+        CobblemonEvents.HATCH_EGG_POST.emit(new com.cobblemon.mod.common.api.events.pokemon.HatchEggEvent.Post(
+          builder.getEgg().createPokemonProperties(
+            PokemonPropertyExtractor.ALL
+          ), player));
       }
     } catch (Exception e) {
       CobbleUtils.LOGGER.error("Error hatching egg");

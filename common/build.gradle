@@ -14,12 +14,11 @@ dependencies {
     modImplementation "dev.architectury:architectury:${project.architectury_version}"
 
 
-    //modImplementation("com.cobblemon:fabric:${property("cobblemon_version")}")
+    modImplementation("com.cobblemon:fabric:${property("cobblemon_version")}")
     // alL fabric dependencies:
     modImplementation("ca.landonjw.gooeylibs:fabric-api-repack:${property("gooeylibs_version")}")
 
     modImplementation(files("libs/CobbleUtils-1.6.1-1.21.1-fabric-1.1.4-53c7bd7.jar"))
-    modImplementation(files("libs/Cobblemon-fabric-1.7.0+1.21.1-HEAD-3a074bf.jar"))
 
     // Database
     api("org.mongodb:mongodb-driver-sync:${property("mongodb_version")}")
