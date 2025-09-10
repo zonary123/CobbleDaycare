@@ -122,7 +122,7 @@ public abstract class WalkBreedingMixin {
   private static void cobbleDaycare$updateEggSteps(PlayerPartyStore party, double deltaMovement, ServerPlayerEntity player) {
     UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
     for (Pokemon pokemon : party) {
-      if (pokemon != null && "egg".equals(pokemon.showdownId())) {
+      if (pokemon != null && "egg".intern().equals(pokemon.showdownId())) {
         EggData.steps(player, pokemon, deltaMovement, userInformation);
       }
     }
@@ -141,10 +141,10 @@ public abstract class WalkBreedingMixin {
         userInformation.setTimeMultiplierSteps(0);
         DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
       }
-    }
 
-    if (userInformation.isActionBar()) {
-      cobbleDaycare$sendMessageMultiplierSteps(userInformation, player);
+      if (userInformation.isActionBar()) {
+        cobbleDaycare$sendMessageMultiplierSteps(userInformation, player);
+      }
     }
   }
 

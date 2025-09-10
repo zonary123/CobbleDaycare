@@ -97,7 +97,8 @@ public class SelectPokemonMenu {
   private List<Button> getButtons(Plot plot, ServerPlayerEntity player, SelectGender gender, UserInformation userInformation, int position) {
     List<Button> buttons = new ArrayList<>();
     List<Pokemon> allPokemons = new ArrayList<>();
-    for (Pokemon pokemon : Cobblemon.INSTANCE.getStorage().getParty(player).toGappyList()) {
+    var list = Cobblemon.INSTANCE.getStorage().getParty(player).toGappyList();
+    for (Pokemon pokemon : list) {
       if (plot.canBreed(pokemon, gender)) {
         allPokemons.add(pokemon);
       }

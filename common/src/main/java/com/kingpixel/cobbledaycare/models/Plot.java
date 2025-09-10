@@ -60,7 +60,6 @@ public class Plot {
 
   public boolean canBreed(Pokemon pokemon, SelectGender gender) {
     if (pokemon == null) return false;
-    CobbleDaycare.fixBreedable(pokemon);
     if (isNotBreedable(pokemon)) return false;
     if (CobbleDaycare.config.getBlackList().isBlackListed(pokemon)) return false;
     Pokemon other = gender == SelectGender.MALE ? female : male;
@@ -110,17 +109,21 @@ public class Plot {
 
   public void addFemale(ServerPlayerEntity player, Pokemon female) {
     this.female = female;
-    if (!Cobblemon.INSTANCE.getStorage().getParty(player).remove(female)) {
-      Cobblemon.INSTANCE.getStorage().getPC(player).remove(female);
-    }
+    CobbleDaycare.server.executeSync(() -> {
+      if (!Cobblemon.INSTANCE.getStorage().getParty(player).remove(female)) {
+        Cobblemon.INSTANCE.getStorage().getPC(player).remove(female);
+      }
+    });
     setTime(player);
   }
 
   public void addMale(ServerPlayerEntity player, Pokemon male) {
     this.male = male;
-    if (!Cobblemon.INSTANCE.getStorage().getParty(player).remove(male)) {
-      Cobblemon.INSTANCE.getStorage().getPC(player).remove(male);
-    }
+    CobbleDaycare.server.executeSync(() -> {
+      if (!Cobblemon.INSTANCE.getStorage().getParty(player).remove(male)) {
+        Cobblemon.INSTANCE.getStorage().getPC(player).remove(male);
+      }
+    });
     setTime(player);
   }
 

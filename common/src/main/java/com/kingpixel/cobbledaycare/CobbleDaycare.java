@@ -41,7 +41,6 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Carlos Varas Alonso - 23/07/2024 9:24
@@ -83,7 +82,7 @@ public class CobbleDaycare {
   }
 
   private static void tasks() {
-    if (task != null) task.setExpired();
+    /*if (task != null) task.setExpired();
     long cooldown = 20L * 60;
     task = Task.builder()
       .execute(() -> {
@@ -108,7 +107,7 @@ public class CobbleDaycare {
       })
       .infinite()
       .interval(cooldown)
-      .build();
+      .build();*/
   }
 
   private static void files() {
@@ -177,39 +176,38 @@ public class CobbleDaycare {
     PlayerEvent.PLAYER_JOIN.register(player -> {
       long start = System.currentTimeMillis();
       CompletableFuture.runAsync(() -> {
-          try {
-            UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
-
-            if (userInformation.getCountry() == null) {
-              UserInfo info = playerCountry.computeIfAbsent(player.getUuid(), uuid -> fetchCountryInfo(player));
-              if (info != null) userInformation.setCountry(info.country());
+          UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
+          boolean update = false;
+          if (userInformation.getCountry() == null) {
+            UserInfo info = playerCountry.computeIfAbsent(player.getUuid(), uuid -> fetchCountryInfo(player));
+            if (info != null) {
+              userInformation.setCountry(info.country());
+              update = true;
             }
-
-            fixPlayer(player);
-
-            int numPlots = 1;
-            int size = CobbleDaycare.config.getSlotPlots().size();
-            for (int i = 0; i < size; i++) {
-              if (PermissionApi.hasPermission(player, Plot.plotPermission(i), 4)) {
-                numPlots = i + 1;
-              }
-            }
-
-            boolean update = userInformation.check(numPlots, player);
-            if (userInformation.fix(player)) update = true;
-
-            if (update) {
-              DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
-            }
-
-            long end = System.currentTimeMillis();
-            if (config.isDebug()) {
-              CobbleUtils.LOGGER.info(MOD_ID, "Time to load player " + player.getName().getString() + ": " + (end - start) + "ms");
-            }
-
-          } catch (Exception e) {
-            CobbleUtils.LOGGER.error(MOD_ID, "Error loading player " + player.getName().getString());
           }
+
+          fixPlayer(player);
+
+          int numPlots = 1;
+          int size = CobbleDaycare.config.getSlotPlots().size();
+          for (int i = 0; i < size; i++) {
+            if (PermissionApi.hasPermission(player, Plot.plotPermission(i), 4)) {
+              numPlots = i + 1;
+            }
+          }
+
+          if (userInformation.check(numPlots, player)) update = true;
+          if (userInformation.fix(player)) update = true;
+
+          if (update) {
+            DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
+          }
+
+          long end = System.currentTimeMillis();
+          if (config.isDebug()) {
+            CobbleUtils.LOGGER.info(MOD_ID, "Time to load player " + player.getName().getString() + ": " + (end - start) + "ms");
+          }
+
         }, DAYCARE_EXECUTOR)
         .exceptionallyAsync(e -> {
           CobbleUtils.LOGGER.error(MOD_ID, "Error on player join: " + player.getName().getString());

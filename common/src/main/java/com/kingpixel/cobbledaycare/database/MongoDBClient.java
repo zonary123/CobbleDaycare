@@ -14,8 +14,6 @@ import com.kingpixel.cobbleutils.mongodb.client.model.ReplaceOptions;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 import static com.kingpixel.cobbleutils.mongodb.client.model.Filters.eq;
 
@@ -70,24 +68,17 @@ public class MongoDBClient extends DatabaseClient {
 
   @Override
   public void updateUserInformation(ServerPlayerEntity player, UserInformation userInformation) {
-    CompletableFuture.runAsync(() -> {
-        try {
-          if (player == null || userInformation == null) {
-            return;
-          }
-          UUID uuid = player.getUuid();
-          Bson filter = eq("playerUUID", uuid.toString());
-          Document document = userInformation.toDocument();
-          collection.replaceOne(filter, document, new ReplaceOptions().upsert(true));
-        } catch (Exception e) {
-          e.printStackTrace(); // Manejo básico de errores
-        }
-      }, CobbleDaycare.DAYCARE_EXECUTOR)
-      .orTimeout(5, TimeUnit.SECONDS)
-      .exceptionally(e -> {
-        CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "Error updating user information: " + e);
-        return null;
-      });
+    try {
+      if (player == null || userInformation == null) {
+        return;
+      }
+      UUID uuid = player.getUuid();
+      Bson filter = eq("playerUUID", uuid.toString());
+      Document document = userInformation.toDocument();
+      collection.replaceOne(filter, document, new ReplaceOptions().upsert(true));
+    } catch (Exception e) {
+      e.printStackTrace(); // Manejo básico de errores
+    }
   }
 
 }
