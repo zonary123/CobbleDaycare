@@ -163,7 +163,9 @@ public class EggData {
       }
       var party = Cobblemon.INSTANCE.getStorage().getParty(player);
       if (builder.getPokemon() != null && builder.getEgg() != null) {
-        party.remove(egg);
+        CobbleUtils.server.execute(() -> {
+          party.remove(egg);
+        });
         builder.getPokemon().setLevel(level);
         party.add(builder.getPokemon());
         HatchEggEvent.HATCH_EGG_EVENT.emit(builder.getPlayer(), builder.getPokemon());
