@@ -132,12 +132,13 @@ public class EggData {
 
 
   private static void updateName(Pokemon egg, int cycles, double steps) {
-    egg.setNickname(Text.literal(
-      CobbleDaycare.language.getEggName()
-        .replace("%steps%", String.format("%.2f", steps))
-        .replace("%cycles%", String.valueOf(cycles))
-        .replace("%pokemon%", egg.getPersistentData().getString(DayCarePokemon.TAG_POKEMON))
-    ));
+    var nickname = egg.getNickname();
+    String result = CobbleDaycare.language.getEggName()
+      .replace("%steps%", String.format("%.2f", steps))
+      .replace("%cycles%", String.valueOf(cycles))
+      .replace("%pokemon%", egg.getPersistentData().getString(DayCarePokemon.TAG_POKEMON));
+    if (nickname != null && nickname.getString().equals(result)) return;
+    egg.setNickname(Text.literal(result));
   }
 
   public static void hatch(ServerPlayerEntity player, Pokemon egg) {
