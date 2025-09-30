@@ -71,44 +71,45 @@ public class SelectPokemonMenu {
 
   public void open(ServerPlayerEntity player, Plot plot, UserInformation userInformation, SelectGender gender, int position) {
     CompletableFuture.runAsync(() -> {
-      // Clonar el template base
-      ChestTemplate template = baseTemplate.clone();
+        // Clonar el template base
+        ChestTemplate template = baseTemplate.clone();
 
-      // Obtener botones para esta página
-      List<Button> buttons = getButtons(plot, player, gender, userInformation, position);
+        // Obtener botones para esta página
+        List<Button> buttons = getButtons(plot, player, gender, userInformation, position);
 
-      LinkedPage.Builder builder = LinkedPage.builder().title(AdventureTranslator.toNative(title));
+        LinkedPage.Builder builder = LinkedPage.builder().title(AdventureTranslator.toNative(title));
 
-      // Botón cerrar
-      close.applyTemplate(template, close.getButton(action ->
-        CobbleDaycare.language.getPlotMenu().open(player, plot, userInformation)
-      ));
+        // Botón cerrar
+        close.applyTemplate(template, close.getButton(action ->
+          CobbleDaycare.language.getPlotMenu().open(player, plot, userInformation)
+        ));
 
-      // Botón previo
-      if (position > 0) {
-        previous.applyTemplate(template, previous.getButton(action -> {
-          if (CobbleDaycare.config.hasOpenCooldown(action.getPlayer())) return;
-          open(player, plot, userInformation, gender, Math.max(0, position - POKEMONS_PER_PAGE));
-        }));
-      }
+        // Botón previo
+        if (position > 0) {
+          previous.applyTemplate(template, previous.getButton(action -> {
+            if (CobbleDaycare.config.hasOpenCooldown(action.getPlayer())) return;
+            open(player, plot, userInformation, gender, Math.max(0, position - POKEMONS_PER_PAGE));
+          }));
+        }
 
-      // Botón siguiente
-      if (buttons.size() == POKEMONS_PER_PAGE) {
-        next.applyTemplate(template, next.getButton(action -> {
-          if (CobbleDaycare.config.hasOpenCooldown(action.getPlayer())) return;
-          open(player, plot, userInformation, gender, position + POKEMONS_PER_PAGE);
-        }));
-      }
+        // Botón siguiente
+        if (buttons.size() == POKEMONS_PER_PAGE) {
+          next.applyTemplate(template, next.getButton(action -> {
+            if (CobbleDaycare.config.hasOpenCooldown(action.getPlayer())) return;
+            open(player, plot, userInformation, gender, position + POKEMONS_PER_PAGE);
+          }));
+        }
 
-      GooeyPage page = PaginationHelper.createPagesFromPlaceholders(template, buttons, builder);
+        GooeyPage page = PaginationHelper.createPagesFromPlaceholders(template, buttons, builder);
 
-      // Abrir en el main thread de MC
-      CobbleDaycare.server.execute(() -> UIManager.openUIForcefully(player, page));
+        // Abrir en el main thread de MC
+        CobbleDaycare.server.execute(() -> UIManager.openUIForcefully(player, page));
 
-    }, CobbleDaycare.DAYCARE_EXECUTOR).exceptionally(e -> {
-      e.printStackTrace();
-      return null;
-    });
+      }, CobbleDaycare.DAYCARE_EXECUTOR)
+      .exceptionally(e -> {
+        e.printStackTrace();
+        return null;
+      });
   }
 
   private List<Button> getButtons(Plot plot, ServerPlayerEntity player, SelectGender gender,
