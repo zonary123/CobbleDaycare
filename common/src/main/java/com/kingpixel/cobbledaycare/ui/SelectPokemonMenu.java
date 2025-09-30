@@ -22,113 +22,153 @@ import com.kingpixel.cobbleutils.util.PokemonUtils;
 import lombok.Data;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.LoreComponent;
+import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 /**
  * Author: Carlos Varas Alonso - 11/03/2025 5:56
+ * Refactor optimizado para mejor rendimiento.
  */
 @Data
 public class SelectPokemonMenu {
   private static final int POKEMONS_PER_PAGE = 45;
-  private int rows;
-  private String title;
-  private Rectangle rectangle;
-  private ItemModel previous;
-  private ItemModel close;
-  private ItemModel next;
-  private List<PanelsConfig> panels;
+
+  private final int rows;
+  private final String title;
+  private final Rectangle rectangle;
+  private final ItemModel previous;
+  private final ItemModel close;
+  private final ItemModel next;
+  private final List<PanelsConfig> panels;
+
+  // Cache de visualización
+  private final Map<UUID, ItemStack> pokemonItemCache = new HashMap<>();
+  private final Map<UUID, List<String>> pokemonLoreCache = new HashMap<>();
+
+  // Template base (solo se construye una vez)
+  transient
+  private final ChestTemplate baseTemplate;
 
   public SelectPokemonMenu() {
     this.rows = 6;
     this.title = "&6Select Pokemon";
     this.rectangle = new Rectangle(rows);
-    this.previous = new ItemModel(45, "minecraft:arrow", "&6Previous", List.of(""), 1);
-    this.close = new ItemModel(49, "minecraft:barrier", "&cClose", List.of(""), 1);
-    this.next = new ItemModel(53, "minecraft:arrow", "&6Next", List.of(""), 1);
+    this.previous = new ItemModel(45, "minecraft:arrow", "&6Previous", Collections.emptyList(), 1);
+    this.close = new ItemModel(49, "minecraft:barrier", "&cClose", Collections.emptyList(), 1);
+    this.next = new ItemModel(53, "minecraft:arrow", "&6Next", Collections.emptyList(), 1);
     this.panels = new ArrayList<>();
     panels.add(new PanelsConfig(new ItemModel("minecraft:gray_stained_glass_pane"), rows));
+
+    // Construcción del template base
+    ChestTemplate template = ChestTemplate.builder(rows).build();
+    PanelsConfig.applyConfig(template, panels);
+    rectangle.apply(template);
+    this.baseTemplate = template;
   }
 
   public void open(ServerPlayerEntity player, Plot plot, UserInformation userInformation, SelectGender gender, int position) {
     CompletableFuture.runAsync(() -> {
-        ChestTemplate template = ChestTemplate
-          .builder(6)
-          .build();
+      // Clonar el template base
+      ChestTemplate template = baseTemplate.clone();
 
-        List<Button> buttons = getButtons(plot, player, gender, userInformation, position);
+      // Obtener botones para esta página
+      List<Button> buttons = getButtons(plot, player, gender, userInformation, position);
 
-        PanelsConfig.applyConfig(template, panels);
-        rectangle.apply(template);
+      LinkedPage.Builder builder = LinkedPage.builder().title(AdventureTranslator.toNative(title));
 
-        LinkedPage.Builder builder = LinkedPage.builder().title(AdventureTranslator.toNative(title));
+      // Botón cerrar
+      close.applyTemplate(template, close.getButton(action ->
+        CobbleDaycare.language.getPlotMenu().open(player, plot, userInformation)
+      ));
 
-        close.applyTemplate(template, close.getButton(action -> {
-          CobbleDaycare.language.getPlotMenu().open(player, plot, userInformation);
+      // Botón previo
+      if (position > 0) {
+        previous.applyTemplate(template, previous.getButton(action -> {
+          if (CobbleDaycare.config.hasOpenCooldown(action.getPlayer())) return;
+          open(player, plot, userInformation, gender, Math.max(0, position - POKEMONS_PER_PAGE));
         }));
+      }
 
-        if (position > 0) {
-          previous.applyTemplate(template, previous.getButton(action -> {
-            if (CobbleDaycare.config.hasOpenCooldown(action.getPlayer())) return;
-            open(player, plot, userInformation, gender, position - POKEMONS_PER_PAGE);
-          }));
-        }
+      // Botón siguiente
+      if (buttons.size() == POKEMONS_PER_PAGE) {
+        next.applyTemplate(template, next.getButton(action -> {
+          if (CobbleDaycare.config.hasOpenCooldown(action.getPlayer())) return;
+          open(player, plot, userInformation, gender, position + POKEMONS_PER_PAGE);
+        }));
+      }
 
-        if (buttons.size() == POKEMONS_PER_PAGE) {
-          next.applyTemplate(template, next.getButton(action -> {
-            if (CobbleDaycare.config.hasOpenCooldown(action.getPlayer())) return;
-            open(player, plot, userInformation, gender, position + POKEMONS_PER_PAGE);
-          }));
-        }
+      GooeyPage page = PaginationHelper.createPagesFromPlaceholders(template, buttons, builder);
 
-        GooeyPage page = PaginationHelper.createPagesFromPlaceholders(template, buttons, builder);
+      // Abrir en el main thread de MC
+      CobbleDaycare.server.execute(() -> UIManager.openUIForcefully(player, page));
 
-        UIManager.openUIForcefully(player, page);
-      }, CobbleDaycare.DAYCARE_EXECUTOR)
-      .exceptionally(e -> {
-        e.printStackTrace();
-        return null;
-      });
+    }, CobbleDaycare.DAYCARE_EXECUTOR).exceptionally(e -> {
+      e.printStackTrace();
+      return null;
+    });
   }
 
-  private List<Button> getButtons(Plot plot, ServerPlayerEntity player, SelectGender gender, UserInformation userInformation, int position) {
-    List<Button> buttons = new ArrayList<>();
-    List<Pokemon> allPokemons = new ArrayList<>();
-    var list = Cobblemon.INSTANCE.getStorage().getParty(player).toGappyList();
-    for (Pokemon pokemon : list) {
-      if (plot.canBreed(pokemon, gender)) {
-        allPokemons.add(pokemon);
+  private List<Button> getButtons(Plot plot, ServerPlayerEntity player, SelectGender gender,
+                                  UserInformation userInformation, int position) {
+
+    List<Button> buttons = new ArrayList<>(POKEMONS_PER_PAGE);
+
+    int start = position;
+    int end = position + POKEMONS_PER_PAGE;
+    int index = 0;
+
+    // Party
+    for (Pokemon pokemon : Cobblemon.INSTANCE.getStorage().getParty(player)) {
+      if (pokemon != null && plot.canBreed(pokemon, gender)) {
+        if (index >= start && index < end) {
+          addPokemon(pokemon, plot, player, gender, userInformation, buttons);
+        }
+        index++;
       }
     }
-    Cobblemon.INSTANCE.getStorage().getPC(player).iterator().forEachRemaining(pokemon -> {
-      if (plot.canBreed(pokemon, gender)) {
-        allPokemons.add(pokemon);
+
+    // PC
+    var pcIterator = Cobblemon.INSTANCE.getStorage().getPC(player).iterator();
+    while (pcIterator.hasNext()) {
+      Pokemon pokemon = pcIterator.next();
+      if (pokemon != null && plot.canBreed(pokemon, gender)) {
+        if (index >= start && index < end) {
+          addPokemon(pokemon, plot, player, gender, userInformation, buttons);
+        }
+        index++;
       }
-    });
-
-    int end = Math.min(position + POKEMONS_PER_PAGE, allPokemons.size());
-
-    for (int i = position; i < end; i++) {
-      addPokemon(allPokemons.get(i), plot, player, gender, userInformation, buttons);
     }
 
     return buttons;
   }
 
-  private void addPokemon(Pokemon pokemon, Plot plot, ServerPlayerEntity player, SelectGender gender, UserInformation userInformation, List<Button> buttons) {
+  private void addPokemon(Pokemon pokemon, Plot plot, ServerPlayerEntity player,
+                          SelectGender gender, UserInformation userInformation, List<Button> buttons) {
+
     if (pokemon == null) return;
+
+    UUID id = pokemon.getUuid();
+
+    // Cache del ItemStack
+    ItemStack display = pokemonItemCache.computeIfAbsent(id, uuid -> PokemonItem.from(pokemon));
+
+    // Cache del lore traducido
+    List<String> lore = pokemonLoreCache.computeIfAbsent(id,
+      uuid -> PokemonUtils.replaceLore(pokemon));
+
     GooeyButton button = GooeyButton.builder()
-      .display(PokemonItem.from(pokemon))
+      .display(display)
       .with(DataComponentTypes.CUSTOM_NAME, AdventureTranslator.toNative(PokemonUtils.getTranslatedName(pokemon)))
-      .with(DataComponentTypes.LORE, new LoreComponent(AdventureTranslator.toNativeL(PokemonUtils.replaceLore(pokemon))))
+      .with(DataComponentTypes.LORE, new LoreComponent(AdventureTranslator.toNativeL(lore)))
       .onClick(action -> {
         plot.addPokemon(player, pokemon, gender, userInformation);
         CobbleDaycare.language.getPlotMenu().open(player, plot, userInformation);
-      }).build();
-    buttons.add(button);
+      })
+      .build();
 
+    buttons.add(button);
   }
 }

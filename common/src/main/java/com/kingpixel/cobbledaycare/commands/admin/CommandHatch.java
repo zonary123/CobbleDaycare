@@ -25,6 +25,9 @@ import java.util.concurrent.CompletableFuture;
  * @author Carlos Varas Alonso - 05/04/2025 2:07
  */
 public class CommandHatch {
+  private static final String HATCH_ALL_TYPE = "all";
+  private static final String HATCH_SLOT_TYPE = "slot";
+
   public static void register(CommandDispatcher<ServerCommandSource> dispatcher,
                               LiteralArgumentBuilder<ServerCommandSource> base) {
     dispatcher.register(
@@ -36,7 +39,7 @@ public class CommandHatch {
           CommandManager.argument("slot", PartySlotArgumentType.Companion.partySlot())
             .executes(context -> {
               var player = context.getSource().getPlayer();
-              hatch(context, player);
+              hatch(HATCH_SLOT_TYPE, context, player);
               return 1;
             }).then(
               CommandManager.argument("player", EntityArgumentType.players())
@@ -45,7 +48,7 @@ public class CommandHatch {
                 .executes(context -> {
                   var players = EntityArgumentType.getPlayers(context, "player");
                   for (ServerPlayerEntity player : players) {
-                    hatch(context, player);
+                    hatch(HATCH_SLOT_TYPE, context, player);
                   }
                   return 1;
                 })
@@ -56,7 +59,7 @@ public class CommandHatch {
               "cobbledaycare.admin"), 4))
             .executes(context -> {
               var player = context.getSource().getPlayer();
-              hatch(context, player);
+              hatch(HATCH_ALL_TYPE, context, player);
               return 1;
             })
             .then(
@@ -66,7 +69,7 @@ public class CommandHatch {
                 .executes(context -> {
                   var players = EntityArgumentType.getPlayers(context, "player");
                   for (ServerPlayerEntity player : players) {
-                    hatch(context, player);
+                    hatch(HATCH_ALL_TYPE, context, player);
                   }
                   return 1;
                 })
@@ -75,19 +78,17 @@ public class CommandHatch {
     );
   }
 
-  private static void hatch(CommandContext<ServerCommandSource> context, ServerPlayerEntity player) {
+  private static void hatch(String TYPE_HATCH, CommandContext<ServerCommandSource> context, ServerPlayerEntity player) {
     CompletableFuture.runAsync(() -> {
         List<Pokemon> pokemons = new ArrayList<>();
-        try {
-          var pokemon = PartySlotArgumentType.Companion.getPokemon(context, "slot");
-          pokemons.add(pokemon);
-        } catch (Exception e) {
-          if (CobbleDaycare.config.isDebug()) {
-            e.printStackTrace();
-          }
+        if (TYPE_HATCH.equals(HATCH_ALL_TYPE)) {
           for (Pokemon pokemon : Cobblemon.INSTANCE.getStorage().getParty(player)) {
             pokemons.add(pokemon);
           }
+          if (pokemons.isEmpty()) return;
+        } else {
+          var pokemon = PartySlotArgumentType.Companion.getPokemon(context, "slot");
+          pokemons.add(pokemon);
         }
         boolean hasEgg = pokemons
           .stream()

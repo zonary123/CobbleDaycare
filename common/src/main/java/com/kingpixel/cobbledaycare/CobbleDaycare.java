@@ -53,6 +53,10 @@ public class CobbleDaycare {
   public static final String PATH_OLD_DATA = PATH + "old_data/";
   public static final String PATH_MODULES = PATH + "modules/";
   public static final String TAG_SPAWNED = "spawned";
+  public static final ExecutorService DAYCARE_EXECUTOR = Executors.newFixedThreadPool(4, new ThreadFactoryBuilder()
+    .setDaemon(true)
+    .setNameFormat("CobbleDaycare-Executor-%d")
+    .build());
   private static final String API_URL_IP = "http://ip-api.com/json/";
   private static final Map<UUID, UserInfo> playerCountry = new HashMap<>();
   public static MinecraftServer server;
@@ -60,10 +64,6 @@ public class CobbleDaycare {
   public static Language language = new Language();
   public static Task task;
   public static List<Mechanics> mechanics = new ArrayList<>();
-  public static ExecutorService DAYCARE_EXECUTOR = Executors.newFixedThreadPool(4, new ThreadFactoryBuilder()
-    .setDaemon(true)
-    .setNameFormat("CobbleDaycare-Executor-%d")
-    .build());
   private static HttpURLConnection conn;
 
   public static void init() {

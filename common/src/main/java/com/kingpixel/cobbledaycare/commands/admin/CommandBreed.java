@@ -73,9 +73,11 @@ public class CommandBreed {
     }
     Plot plot = new Plot();
     Pokemon male = PartySlotArgumentType.Companion.getPokemon(context, "male");
+    CobbleDaycare.fixBreedable(male);
     boolean maleCanBreed = plot.canBreed(male, SelectGender.MALE);
     plot.setMale(male);
     Pokemon female = PartySlotArgumentType.Companion.getPokemon(context, "female");
+    CobbleDaycare.fixBreedable(female);
     boolean femaleCanBreed = plot.canBreed(female, SelectGender.FEMALE);
     plot.setFemale(female);
 
