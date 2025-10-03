@@ -7,8 +7,16 @@ import lombok.Data;
  */
 @Data
 public class UserInfoOptions {
-  private boolean notifyCreateEgg = true;
-  private boolean notifyLimitEggs = true;
-  private boolean notifyBanPokemon = true;
-  private boolean actionBar = true;
+  private boolean notifyCreateEgg;
+  private boolean notifyLimitEggs;
+  private boolean notifyBanPokemon;
+  private boolean actionBar;
+
+  public UserInfoOptions() {
+    notifyCreateEgg = true;
+    notifyLimitEggs = true;
+    notifyBanPokemon = true;
+    actionBar = true;
+  }
+
 }

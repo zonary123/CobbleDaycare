@@ -69,9 +69,7 @@ public class MongoDBClient extends DatabaseClient {
   @Override
   public void updateUserInformation(ServerPlayerEntity player, UserInformation userInformation) {
     try {
-      if (player == null || userInformation == null) {
-        return;
-      }
+      if (player == null || userInformation == null) return;
       UUID uuid = player.getUuid();
       Bson filter = eq("playerUUID", uuid.toString());
       Document document = userInformation.toDocument();

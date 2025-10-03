@@ -166,7 +166,7 @@ public class Config {
       }
     );
 
-    if (!futureRead.join()) {
+    if (Boolean.FALSE.equals(futureRead.join())) {
       CobbleDaycare.config = this;
       Utils.writeFileAsync(
         CobbleDaycare.PATH, "config.json", Utils.newGson().toJson(CobbleDaycare.config)
