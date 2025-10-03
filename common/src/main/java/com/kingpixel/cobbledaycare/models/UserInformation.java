@@ -30,10 +30,10 @@ public class UserInformation {
   private UUID playerUUID;
   private String playerName;
   private String country;
-  private boolean notifyCreateEgg = true;
-  private boolean notifyLimitEggs = true;
-  private boolean notifyBanPokemon = true;
-  private boolean actionBar = true;
+  private boolean notifyCreateEgg;
+  private boolean notifyLimitEggs;
+  private boolean notifyBanPokemon;
+  private boolean actionBar;
   private float multiplierSteps;
   private long timeMultiplierSteps;
   private long cooldownHatch;
@@ -47,17 +47,18 @@ public class UserInformation {
     this.timeMultiplierSteps = 0;
     this.cooldownHatch = 0;
     this.cooldownBreed = 0;
+    var userInfoOptions = CobbleDaycare.config.getUserInfoOptions();
+    this.notifyBanPokemon = userInfoOptions.isNotifyBanPokemon();
+    this.notifyCreateEgg = userInfoOptions.isNotifyCreateEgg();
+    this.notifyLimitEggs = userInfoOptions.isNotifyLimitEggs();
+    this.actionBar = userInfoOptions.isActionBar();
     this.plots = new ArrayList<>();
   }
 
   public UserInformation(ServerPlayerEntity player) {
+    super();
     this.playerUUID = player.getUuid();
     this.playerName = player.getGameProfile().getName();
-    this.multiplierSteps = 1.0f;
-    this.timeMultiplierSteps = 0;
-    this.cooldownHatch = 0;
-    this.cooldownBreed = 0;
-    this.plots = new ArrayList<>();
   }
 
   public static UserInformation fromDocument(Document document) {

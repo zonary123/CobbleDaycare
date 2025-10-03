@@ -164,12 +164,12 @@ public class EggData {
       }
       var party = Cobblemon.INSTANCE.getStorage().getParty(player);
       if (builder.getPokemon() != null && builder.getEgg() != null) {
-        CobbleUtils.server.execute(() -> {
-          party.remove(egg);
-        });
         builder.getPokemon().setLevel(level);
         CobbleDaycare.fixBreedable(builder.getPokemon());
-        party.add(builder.getPokemon());
+        CobbleUtils.server.execute(() -> {
+          party.remove(egg);
+          party.add(builder.getPokemon());
+        });
         HatchEggEvent.HATCH_EGG_EVENT.emit(builder.getPlayer(), builder.getPokemon());
         CobblemonEvents.HATCH_EGG_POST.emit(new com.cobblemon.mod.common.api.events.pokemon.HatchEggEvent.Post(
           builder.getEgg().createPokemonProperties(

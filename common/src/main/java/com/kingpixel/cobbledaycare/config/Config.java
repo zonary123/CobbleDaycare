@@ -3,6 +3,7 @@ package com.kingpixel.cobbledaycare.config;
 import com.cobblemon.mod.common.api.pokemon.egg.EggGroup;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
+import com.kingpixel.cobbledaycare.models.UserInfoOptions;
 import com.kingpixel.cobbleutils.Model.DataBaseConfig;
 import com.kingpixel.cobbleutils.Model.FilterPokemons;
 import com.kingpixel.cobbleutils.Model.PokemonBlackList;
@@ -30,6 +31,7 @@ public class Config {
   private DataBaseConfig dataBase;
   private String commandEggInfo;
   private List<String> commands;
+  private UserInfoOptions userInfoOptions;
   private boolean fixIlegalAbilities;
   private boolean canUseNativeGUI;
   private boolean showIvs;
@@ -65,6 +67,7 @@ public class Config {
     this.fixIlegalAbilities = true;
     this.canUseNativeGUI = false;
     this.lang = "en";
+    this.userInfoOptions = new UserInfoOptions();
     this.dataBase = new DataBaseConfig();
     this.showIvs = false;
     this.dobbleDitto = false;

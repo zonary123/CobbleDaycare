@@ -24,8 +24,11 @@ import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.LoreComponent;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -43,10 +46,6 @@ public class SelectPokemonMenu {
   private final ItemModel close;
   private final ItemModel next;
   private final List<PanelsConfig> panels;
-
-  // Cache de visualización
-  private final Map<UUID, ItemStack> pokemonItemCache = new HashMap<>();
-  private final Map<UUID, List<String>> pokemonLoreCache = new HashMap<>();
 
   // Template base (solo se construye una vez)
   transient
@@ -146,19 +145,10 @@ public class SelectPokemonMenu {
     return buttons;
   }
 
-  private void addPokemon(Pokemon pokemon, Plot plot, ServerPlayerEntity player,
+  private void addPokemon(@NotNull Pokemon pokemon, Plot plot, ServerPlayerEntity player,
                           SelectGender gender, UserInformation userInformation, List<Button> buttons) {
-
-    if (pokemon == null) return;
-
-    UUID id = pokemon.getUuid();
-
-    // Cache del ItemStack
-    ItemStack display = pokemonItemCache.computeIfAbsent(id, uuid -> PokemonItem.from(pokemon));
-
-    // Cache del lore traducido
-    List<String> lore = pokemonLoreCache.computeIfAbsent(id,
-      uuid -> PokemonUtils.replaceLore(pokemon));
+    ItemStack display = PokemonItem.from(pokemon);
+    List<String> lore = PokemonUtils.replaceLore(pokemon);
 
     GooeyButton button = GooeyButton.builder()
       .display(display)
