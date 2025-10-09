@@ -35,8 +35,14 @@ public class CommandBreed {
           4))
         .then(
           CommandManager.argument("male", PartySlotArgumentType.Companion.partySlot())
+            .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.breed.base", "cobbledaycare" +
+                ".admin"),
+              4))
             .then(
               CommandManager.argument("female", PartySlotArgumentType.Companion.partySlot())
+                .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.breed.base", "cobbledaycare" +
+                    ".admin"),
+                  4))
                 .executes(context -> {
                     var player = context.getSource().getPlayer();
                     return breed(context, player);
