@@ -218,7 +218,6 @@ public class CobbleDaycare {
 
     PlayerEvent.PLAYER_QUIT.register(player -> {
       CompletableFuture.runAsync(() -> {
-        try {
           UserInformation userInfo = DatabaseClientFactory.INSTANCE.getUserInformation(player);
           if (userInfo.getCountry() == null) {
             UserInfo info = playerCountry.computeIfAbsent(player.getUuid(), uuid -> fetchCountryInfo(player));
@@ -226,10 +225,12 @@ public class CobbleDaycare {
           }
           DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInfo);
           DatabaseClientFactory.INSTANCE.removeIfNecessary(player);
-        } catch (Exception e) {
+        }, DAYCARE_EXECUTOR)
+        .exceptionally(e -> {
           CobbleUtils.LOGGER.error(MOD_ID, "Error on player quit: " + player.getName().getString());
-        }
-      }, DAYCARE_EXECUTOR);
+          e.printStackTrace();
+          return null;
+        });
     });
 
     CobblemonEvents.POKEMON_CAPTURED.subscribe(Priority.HIGHEST, evt -> {

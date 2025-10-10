@@ -73,8 +73,9 @@ public class UserInformation {
   public float getActualMultiplier(ServerPlayerEntity player) {
     float steps = CobbleDaycare.config.getMultiplierSteps();
     for (Map.Entry<String, Float> entry : CobbleDaycare.config.getMultiplierStepsPermission().entrySet()) {
-      if (PermissionApi.hasPermission(player, entry.getKey(), 2))
-        if (steps <= entry.getValue()) steps = entry.getValue();
+      if (steps <= entry.getValue() && PermissionApi.hasPermission(player, entry.getKey(), 2)) {
+        steps = entry.getValue();
+      }
     }
     return Math.max(steps, multiplierSteps);
   }
@@ -103,36 +104,53 @@ public class UserInformation {
 
   public boolean check(int numPlots, ServerPlayerEntity player) {
     boolean update = false;
+
+    // Asegurar que la lista esté inicializada
+    if (plots == null) {
+      plots = new ArrayList<>();
+      update = true;
+    }
+
+    // Asegurar que el jugador esté inicializado
+    if (player == null) {
+      throw new IllegalArgumentException("El jugador no puede ser nulo.");
+    }
+
+    // Validar y actualizar datos del jugador
     if (playerUUID == null || playerName == null) {
       playerUUID = player.getUuid();
       playerName = player.getGameProfile().getName();
       update = true;
     }
-    // Add plots if the user has fewer plots than numPlots
-    if (plots.size() < numPlots) {
-      for (int i = plots.size(); i < numPlots; i++) {
+
+    // Obtener el número actual de plots
+    int currentSize = plots.size();
+
+    // Si faltan plots, añadirlos
+    if (currentSize < numPlots) {
+      for (int i = currentSize; i < numPlots; i++) {
         plots.add(new Plot());
-        update = true;
       }
+      update = true;
     }
 
-    // Transfer Pokémon and eggs if the user has more plots than numPlots
-    if (plots.size() > numPlots) {
-      for (int i = plots.size() - 1; i >= numPlots; i--) {
+    // Si sobran plots, transferir Pokémon y eliminarlos
+    else if (currentSize > numPlots) {
+      var party = Cobblemon.INSTANCE.getStorage().getParty(player);
+      for (int i = currentSize - 1; i >= numPlots; i--) {
         Plot plot = plots.get(i);
-        var party = Cobblemon.INSTANCE.getStorage().getParty(player);
-        var male = plot.getMale();
-        if (male != null) party.add(male);
-        var female = plot.getFemale();
-        if (female != null) party.add(female);
-        for (Pokemon egg : plot.getEggs()) {
-          if (egg != null) party.add(egg);
+
+        if (plot != null) {
+          if (plot.getMale() != null) party.add(plot.getMale());
+          if (plot.getFemale() != null) party.add(plot.getFemale());
+          for (Pokemon egg : plot.getEggs()) {
+            if (egg != null) party.add(egg);
+          }
         }
 
-        // Remove the excess plot
         plots.remove(i);
-        update = true;
       }
+      update = true;
     }
 
     return update;

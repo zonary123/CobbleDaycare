@@ -155,8 +155,10 @@ public class SelectPokemonMenu {
       .with(DataComponentTypes.CUSTOM_NAME, AdventureTranslator.toNative(PokemonUtils.getTranslatedName(pokemon)))
       .with(DataComponentTypes.LORE, new LoreComponent(AdventureTranslator.toNativeL(lore)))
       .onClick(action -> {
-        plot.addPokemon(player, pokemon, gender, userInformation);
-        CobbleDaycare.language.getPlotMenu().open(player, plot, userInformation);
+        CompletableFuture.runAsync(() -> {
+          plot.addPokemon(player, pokemon, gender, userInformation);
+          CobbleDaycare.language.getPlotMenu().open(player, plot, userInformation);
+        }, CobbleDaycare.DAYCARE_EXECUTOR);
       })
       .build();
 
