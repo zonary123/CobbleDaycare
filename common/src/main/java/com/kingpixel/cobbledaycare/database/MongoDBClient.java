@@ -4,18 +4,18 @@ import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.models.UserInformation;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.Model.DataBaseConfig;
-import com.kingpixel.cobbleutils.bson.Document;
-import com.kingpixel.cobbleutils.bson.conversions.Bson;
-import com.kingpixel.cobbleutils.mongodb.client.MongoClient;
-import com.kingpixel.cobbleutils.mongodb.client.MongoClients;
-import com.kingpixel.cobbleutils.mongodb.client.MongoCollection;
-import com.kingpixel.cobbleutils.mongodb.client.MongoDatabase;
-import com.kingpixel.cobbleutils.mongodb.client.model.ReplaceOptions;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.ReplaceOptions;
 import net.minecraft.server.network.ServerPlayerEntity;
+import org.bson.Document;
+import org.bson.conversions.Bson;
 
 import java.util.UUID;
 
-import static com.kingpixel.cobbleutils.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.eq;
 
 public class MongoDBClient extends DatabaseClient {
 

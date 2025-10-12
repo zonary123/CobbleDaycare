@@ -4,7 +4,6 @@ import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbleutils.api.PermissionApi;
-import com.kingpixel.cobbleutils.bson.Document;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
 import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Data;
@@ -12,6 +11,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import net.minecraft.server.network.ServerPlayerEntity;
+import org.bson.Document;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -160,11 +160,9 @@ public class UserInformation {
   public boolean fix(ServerPlayerEntity player) {
     boolean update = false;
     for (Plot plot : plots) {
-      var iterator = plot.getEggs().iterator();
-      while (iterator.hasNext()) {
-        Pokemon egg = iterator.next();
+      for (Pokemon egg : plot.getEggs()) {
         if (egg == null) {
-          iterator.remove();
+          plot.getEggs().remove(egg);
           update = true;
         }
       }

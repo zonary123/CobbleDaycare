@@ -1,6 +1,5 @@
 package com.kingpixel.cobbledaycare;
 
-import ca.landonjw.gooeylibs2.api.tasks.Task;
 import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.api.Priority;
 import com.cobblemon.mod.common.api.battles.model.actor.BattleActor;
@@ -39,9 +38,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
 /**
  * @author Carlos Varas Alonso - 23/07/2024 9:24
@@ -60,10 +57,14 @@ public class CobbleDaycare {
     .build());
   private static final String API_URL_IP = "http://ip-api.com/json/";
   private static final Map<UUID, UserInfo> playerCountry = new HashMap<>();
+  private static final ScheduledExecutorService SCHEDULER_DAYCARE = Executors.newScheduledThreadPool(1,
+    new ThreadFactoryBuilder()
+      .setDaemon(true)
+      .setNameFormat("CobbleDaycare-Scheduler-%d")
+      .build());
   public static MinecraftServer server;
   public static Config config = new Config();
   public static Language language = new Language();
-  public static Task task;
   public static List<Mechanics> mechanics = new ArrayList<>();
   private static HttpURLConnection conn;
 
@@ -71,6 +72,7 @@ public class CobbleDaycare {
     server = (MinecraftServer) FabricLoader.getInstance().getGameInstance();
     load();
     events();
+    tasks();
   }
 
 
@@ -79,37 +81,25 @@ public class CobbleDaycare {
     files();
     DatabaseClientFactory.userPlots.clear();
     DatabaseClientFactory.createDatabaseClient(config.getDataBase());
-    tasks();
+
     Migrate.migrate();
   }
 
   private static void tasks() {
-    /*if (task != null) task.setExpired();
-    long cooldown = 20L * 60;
-    task = Task.builder()
-      .execute(() -> {
-        var players = server.getPlayerManager().getPlayerList();
-        CompletableFuture.runAsync(() -> {
-            for (ServerPlayerEntity player : players) {
-              if (player == null) continue;
-              boolean update;
-              UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
-              update = userInformation.fix(player);
-              if (update) DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
-              fixPlayer(player);
-            }
-          }, DAYCARE_EXECUTOR)
-          .orTimeout(30, TimeUnit.SECONDS)
-          .exceptionally(e -> {
-            CobbleUtils.LOGGER.error(MOD_ID, "Error Task Daycare.");
-            e.printStackTrace();
-            return null;
-          });
-
-      })
-      .infinite()
-      .interval(cooldown)
-      .build();*/
+    SCHEDULER_DAYCARE.scheduleWithFixedDelay(() -> {
+      try {
+        List<ServerPlayerEntity> players = new ArrayList<>(server.getPlayerManager().getPlayerList());
+        for (ServerPlayerEntity player : players) {
+          if (player == null) continue;
+          var userinfo = DatabaseClientFactory.INSTANCE.getUserInformation(player);
+          if (userinfo == null) return;
+          if (userinfo.fix(player)) DatabaseClientFactory.INSTANCE.updateUserInformation(player, userinfo);
+        }
+      } catch (Exception e) {
+        CobbleUtils.LOGGER.error(MOD_ID, "Error on scheduled task");
+        e.printStackTrace();
+      }
+    }, 15, 15, TimeUnit.SECONDS);
   }
 
   private static void files() {
@@ -173,6 +163,11 @@ public class CobbleDaycare {
         PermissionApi.hasPermission(server.getCommandSource(), Plot.plotPermission(i), 4);
       }
       CustomPokemonProperty.Companion.register(BreedablePropertyType.getInstance());
+    });
+
+    LifecycleEvent.SERVER_STOPPING.register(server -> {
+      CobbleUtils.shutdownAndAwait(DAYCARE_EXECUTOR);
+      CobbleUtils.shutdownAndAwait(SCHEDULER_DAYCARE);
     });
 
     PlayerEvent.PLAYER_JOIN.register(player -> {
