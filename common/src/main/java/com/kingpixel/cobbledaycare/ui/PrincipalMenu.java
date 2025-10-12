@@ -25,7 +25,6 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Carlos Varas Alonso - 11/03/2025 4:11
@@ -126,8 +125,8 @@ public class PrincipalMenu {
         }
 
         List<String> loreInfo = new ArrayList<>(info.getLore());
-        long cooldown = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(PlayerUtils.getCooldown(CobbleDaycare.config.getCooldowns(), CobbleDaycare.config.getCooldown()
-          , player));
+        long cooldown = System.currentTimeMillis() + PlayerUtils.getCooldown(CobbleDaycare.config.getCooldowns(), CobbleDaycare.config.getCooldown()
+          , player);
         loreInfo.replaceAll(s -> {
           for (Mechanics mechanic : CobbleDaycare.mechanics) {
             s = mechanic.replace(s, player);

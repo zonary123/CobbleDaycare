@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Carlos Varas Alonso - 31/01/2025 1:17
@@ -101,7 +100,7 @@ public class Plot {
     if (hasTwoParents()) {
       long cooldown = PlayerUtils.getCooldown(CobbleDaycare.config.getCooldowns(), CobbleDaycare.config.getCooldown()
         , player);
-      timeToHatch = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(cooldown);
+      timeToHatch = System.currentTimeMillis() + cooldown;
     } else {
       timeToHatch = 0;
     }
@@ -271,7 +270,7 @@ public class Plot {
 
   private void fixCooldown(ServerPlayerEntity player) {
     long correctCooldown = PlayerUtils.getCooldown(CobbleDaycare.config.getCooldowns(), CobbleDaycare.config.getCooldown(), player);
-    long correctTimeToHatch = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(correctCooldown);
+    long correctTimeToHatch = System.currentTimeMillis() + correctCooldown;
     if (timeToHatch > correctTimeToHatch) {
       timeToHatch = correctTimeToHatch;
     }

@@ -5,6 +5,7 @@ import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.models.UserInfoOptions;
 import com.kingpixel.cobbleutils.Model.DataBaseConfig;
+import com.kingpixel.cobbleutils.Model.DurationValue;
 import com.kingpixel.cobbleutils.Model.FilterPokemons;
 import com.kingpixel.cobbleutils.Model.PokemonBlackList;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
@@ -45,12 +46,12 @@ public class Config {
   private Map<String, Float> multiplierStepsPermission;
   private double defaultSteps;
   private Map<EggGroup, Double> steps;
-  private int cooldown;
-  private Map<String, Integer> cooldowns;
-  private int defaultCooldownBreed;
-  private Map<String, Integer> cooldownsBreed;
-  private int defaultCooldownHatch;
-  private Map<String, Integer> cooldownsHatch;
+  private DurationValue cooldown;
+  private Map<String, DurationValue> cooldowns;
+  private DurationValue defaultCooldownBreed;
+  private Map<String, DurationValue> cooldownsBreed;
+  private DurationValue defaultCooldownHatch;
+  private Map<String, DurationValue> cooldownsHatch;
   private int cooldownToOpenMenus;
   private List<Integer> slotPlots;
   private double multiplierAbilityAcceleration;
@@ -99,11 +100,11 @@ public class Config {
     this.multiplierStepsPermission.put("multipliersteps.vip", 2.0f);
     this.permittedVehicles = List.of("minecraft:boat", "minecraft:horse", "cobblemon:pokemon");
     this.cooldownToOpenMenus = 3;
-    this.cooldown = 30;
+    this.cooldown = DurationValue.parse("3m");
     this.cooldowns = Map.of(
-      "cooldown.vip", 15,
-      "cooldown.legendary", 10,
-      "cooldown.master", 5
+      "cooldown.vip", DurationValue.parse("15m"),
+      "cooldown.legendary", DurationValue.parse("10m"),
+      "cooldown.master", DurationValue.parse("5m")
     );
     this.ticksToWalking = 20;
     this.slotPlots = new ArrayList<>();
@@ -112,12 +113,12 @@ public class Config {
     this.slotPlots.add(14);
     this.slotPlots.add(16);
     this.raritySpawnEgg = 2048;
-    this.defaultCooldownBreed = 60;
+    this.defaultCooldownBreed = DurationValue.parse("60s");
     this.cooldownsBreed = new HashMap<>();
-    this.cooldownsBreed.put("cooldown.vip", 30);
-    this.defaultCooldownHatch = 60;
+    this.cooldownsBreed.put("cooldown.vip", DurationValue.parse("30s"));
+    this.defaultCooldownHatch = DurationValue.parse("60s");
     this.cooldownsHatch = new HashMap<>();
-    this.cooldownsHatch.put("cooldown.vip", 30);
+    this.cooldownsHatch.put("cooldown.vip", DurationValue.parse("30s"));
     this.whitelist = new ArrayList<>();
     this.dobbleDittoFilter = new FilterPokemons();
 

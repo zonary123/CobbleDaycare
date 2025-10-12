@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Carlos Varas Alonso - 31/01/2025 1:16
@@ -87,8 +86,8 @@ public class UserInformation {
 
   public void setCooldownHatch(ServerPlayerEntity player) {
     this.cooldownHatch = System.currentTimeMillis() +
-      TimeUnit.SECONDS.toMillis(PlayerUtils.getCooldown(CobbleDaycare.config.getCooldownsHatch(),
-        CobbleDaycare.config.getDefaultCooldownHatch(), player));
+      PlayerUtils.getCooldown(CobbleDaycare.config.getCooldownsHatch(),
+        CobbleDaycare.config.getDefaultCooldownHatch(), player);
   }
 
   public boolean hasCooldownBreed(ServerPlayerEntity player) {
@@ -98,8 +97,8 @@ public class UserInformation {
 
   public void setCooldownBreed(ServerPlayerEntity player) {
     this.cooldownBreed =
-      System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(PlayerUtils.getCooldown(CobbleDaycare.config.getCooldownsBreed(),
-        CobbleDaycare.config.getDefaultCooldownBreed(), player));
+      System.currentTimeMillis() + PlayerUtils.getCooldown(CobbleDaycare.config.getCooldownsBreed(),
+        CobbleDaycare.config.getDefaultCooldownBreed(), player);
   }
 
   public boolean check(int numPlots, ServerPlayerEntity player) {
