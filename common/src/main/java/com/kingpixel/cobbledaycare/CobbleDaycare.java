@@ -30,6 +30,7 @@ import dev.architectury.event.events.common.CommandRegistrationEvent;
 import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.event.events.common.PlayerEvent;
 import kotlin.Unit;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 
@@ -67,6 +68,7 @@ public class CobbleDaycare {
   private static HttpURLConnection conn;
 
   public static void init() {
+    server = (MinecraftServer) FabricLoader.getInstance().getGameInstance();
     load();
     events();
   }
