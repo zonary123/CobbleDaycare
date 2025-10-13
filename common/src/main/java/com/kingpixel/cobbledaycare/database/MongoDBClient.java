@@ -36,9 +36,8 @@ public class MongoDBClient extends DatabaseClient {
 
   @Override
   public void disconnect() {
-    if (mongoClient != null) {
-      mongoClient.close();
-    }
+    if (mongoClient != null) mongoClient.close();
+
   }
 
   @Override

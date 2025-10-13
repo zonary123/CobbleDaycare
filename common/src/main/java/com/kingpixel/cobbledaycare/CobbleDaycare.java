@@ -88,6 +88,7 @@ public class CobbleDaycare {
   private static void tasks() {
     SCHEDULER_DAYCARE.scheduleWithFixedDelay(() -> {
       try {
+        if (server == null) return;
         List<ServerPlayerEntity> players = new ArrayList<>(server.getPlayerManager().getPlayerList());
         for (ServerPlayerEntity player : players) {
           if (player == null) continue;
@@ -165,7 +166,8 @@ public class CobbleDaycare {
       CustomPokemonProperty.Companion.register(BreedablePropertyType.getInstance());
     });
 
-    LifecycleEvent.SERVER_STOPPING.register(server -> {
+    LifecycleEvent.SERVER_STOPPED.register(server -> {
+      DatabaseClientFactory.INSTANCE.disconnect();
       CobbleUtils.shutdownAndAwait(DAYCARE_EXECUTOR);
       CobbleUtils.shutdownAndAwait(SCHEDULER_DAYCARE);
     });
@@ -214,6 +216,7 @@ public class CobbleDaycare {
     });
 
     PlayerEvent.PLAYER_QUIT.register(player -> {
+      if (server.isStopped() || server.isStopping()) return;
       CompletableFuture.runAsync(() -> {
           UserInformation userInfo = DatabaseClientFactory.INSTANCE.getUserInformation(player);
           if (userInfo.getCountry() == null) {
