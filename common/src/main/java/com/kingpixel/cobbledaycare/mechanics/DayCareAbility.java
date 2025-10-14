@@ -73,19 +73,17 @@ public class DayCareAbility extends Mechanics {
     boolean giveHA = false;
 
     if (hasHA) {
-      if (maleIsDitto ^ femaleIsDitto) {
+      if (male.getSpecies().equals(female.getSpecies())) {
+        if (CobbleDaycare.config.isDebug()) CobbleUtils.LOGGER.info("Same Species");
+        giveHA = true;
+      } else if (maleIsDitto ^ femaleIsDitto) {
         boolean nonDittoHA = maleIsDitto ? femaleHA : maleHA;
         giveHA = this.dittoTransmitHA || nonDittoHA;
-      } else {
-        if (eggGroupTransmitHA) {
-          giveHA = true;
-        } else if (male.getSpecies().equals(female.getSpecies())) {
-          if (CobbleDaycare.config.isDebug()) CobbleUtils.LOGGER.info("Same Species");
-          giveHA = true;
-        } else if (femaleHA) {
-          if (CobbleDaycare.config.isDebug()) CobbleUtils.LOGGER.info("Female HA");
-          giveHA = true;
-        }
+      } else if (eggGroupTransmitHA) {
+        giveHA = true;
+      } else if (femaleHA) {
+        if (CobbleDaycare.config.isDebug()) CobbleUtils.LOGGER.info("Female HA");
+        giveHA = true;
       }
     }
 
@@ -93,9 +91,9 @@ public class DayCareAbility extends Mechanics {
 
     if (giveHA) {
       if (femaleHA) {
-        result = Utils.RANDOM.nextDouble() < percentageTransmitHAFemale / 100;
+        result = Utils.getRandom().nextDouble() < percentageTransmitHAFemale / 100;
       } else {
-        result = Utils.RANDOM.nextDouble() < percentageTransmitHAMale / 100;
+        result = Utils.getRandom().nextDouble() < percentageTransmitHAMale / 100;
       }
     }
 
