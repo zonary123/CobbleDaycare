@@ -19,9 +19,6 @@ public class BreedablePropertyType implements CustomPokemonPropertyType<Breedabl
   }
 
   public static BreedablePropertyType getInstance() {
-    if (INSTANCE == null) {
-      return new BreedablePropertyType();
-    }
     return INSTANCE;
   }
 

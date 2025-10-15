@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Carlos Varas Alonso - 04/08/2024 19:40
  */
 public class BreedableProperty implements CustomPokemonProperty {
-  private boolean value;
+  private boolean value = true;
 
   public BreedableProperty(boolean s) {
     this.value = s;
