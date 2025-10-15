@@ -100,7 +100,7 @@ public class CobbleDaycare {
         CobbleUtils.LOGGER.error(MOD_ID, "Error on scheduled task");
         e.printStackTrace();
       }
-    }, 15, 15, TimeUnit.SECONDS);
+    }, 15, 60, TimeUnit.SECONDS);
   }
 
   private static void files() {
@@ -208,7 +208,7 @@ public class CobbleDaycare {
           }
 
         }, DAYCARE_EXECUTOR)
-        .exceptionallyAsync(e -> {
+        .exceptionally(e -> {
           CobbleUtils.LOGGER.error(MOD_ID, "Error on player join: " + player.getName().getString());
           e.printStackTrace();
           return null;
@@ -240,6 +240,7 @@ public class CobbleDaycare {
 
     CobblemonEvents.POKEMON_SENT_PRE.subscribe(Priority.HIGHEST, evt -> {
       Pokemon pokemon = evt.getPokemon();
+      fixBreedable(pokemon);
       if (pokemon.getSpecies().showdownId().equals("egg")) {
         evt.cancel();
         return Unit.INSTANCE;
@@ -252,7 +253,7 @@ public class CobbleDaycare {
       var pokemonEntity = evt.getEntity();
       var pokemon = pokemonEntity.getPokemon();
       if (pokemon.getSpecies().showdownId().equals("egg")) return Unit.INSTANCE;
-      boolean rarity = Utils.RANDOM.nextInt(config.getRaritySpawnEgg()) == 0;
+      boolean rarity = Utils.getRandom().nextInt(config.getRaritySpawnEgg()) == 0;
       if (rarity) {
         var egg = PokemonProperties.Companion.parse("egg").create();
         for (Mechanics mechanic : mechanics) {

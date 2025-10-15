@@ -13,6 +13,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
+import java.util.Map;
 import java.util.UUID;
 
 import static com.mongodb.client.model.Filters.eq;
@@ -36,6 +37,9 @@ public class MongoDBClient extends DatabaseClient {
 
   @Override
   public void disconnect() {
+    for (Map.Entry<UUID, UserInformation> entry : DatabaseClientFactory.userPlots.entrySet()) {
+      upsertUserInformation(entry.getKey(), entry.getValue());
+    }
     if (mongoClient != null) mongoClient.close();
 
   }
@@ -70,12 +74,16 @@ public class MongoDBClient extends DatabaseClient {
     try {
       if (player == null || userInformation == null) return;
       UUID uuid = player.getUuid();
-      Bson filter = eq("playerUUID", uuid.toString());
-      Document document = userInformation.toDocument();
-      collection.replaceOne(filter, document, new ReplaceOptions().upsert(true));
+      upsertUserInformation(uuid, userInformation);
     } catch (Exception e) {
       e.printStackTrace(); // Manejo básico de errores
     }
+  }
+
+  private void upsertUserInformation(UUID uuid, UserInformation userInformation) {
+    Bson filter = eq("playerUUID", uuid.toString());
+    Document document = userInformation.toDocument();
+    collection.replaceOne(filter, document, new ReplaceOptions().upsert(true));
   }
 
 }
