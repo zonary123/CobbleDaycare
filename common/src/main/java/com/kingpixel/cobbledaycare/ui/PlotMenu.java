@@ -103,23 +103,21 @@ public class PlotMenu {
           .display(plot.getFemale() != null ? PokemonItem.from(plot.getFemale()) : female.getItemStack())
           .with(DataComponentTypes.LORE, new LoreComponent(AdventureTranslator.toNativeL(PokemonUtils.replaceLore(plot.getFemale()))))
           .with(DataComponentTypes.CUSTOM_MODEL_DATA, new CustomModelDataComponent((int) female.getCustomModelData()))
-          .onClick(action -> {
-            CompletableFuture.runAsync(() -> {
-                if (CobbleDaycare.config.hasOpenCooldown(action.getPlayer())) return;
-                if (plot.getFemale() != null) {
-                  Cobblemon.INSTANCE.getStorage().getParty(player).add(plot.getFemale());
-                  plot.setFemale(null);
-                  DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
-                  open(player, plot, userInformation);
-                } else {
-                  CobbleDaycare.language.getSelectPokemonMenu().open(player, plot, userInformation, SelectGender.FEMALE, 0);
-                }
-              }, CobbleDaycare.DAYCARE_EXECUTOR)
-              .exceptionally(e -> {
-                e.printStackTrace();
-                return null;
-              });
-          })
+          .onClick(action -> CompletableFuture.runAsync(() -> {
+              if (CobbleDaycare.config.hasOpenCooldown(action.getPlayer())) return;
+              if (plot.getFemale() != null) {
+                Cobblemon.INSTANCE.getStorage().getParty(player).add(plot.getFemale());
+                plot.setFemale(null);
+                DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
+                open(player, plot, userInformation);
+              } else {
+                CobbleDaycare.language.getSelectPokemonMenu().open(player, plot, userInformation, SelectGender.FEMALE, 0);
+              }
+            }, CobbleDaycare.DAYCARE_EXECUTOR)
+            .exceptionally(e -> {
+              e.printStackTrace();
+              return null;
+            }))
           .build();
         female.applyTemplate(template, femaleButton);
 

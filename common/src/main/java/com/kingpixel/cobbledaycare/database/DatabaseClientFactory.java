@@ -15,10 +15,8 @@ public class DatabaseClientFactory {
   public static DatabaseClient INSTANCE;
   public static Map<UUID, UserInformation> userPlots = new ConcurrentHashMap<>();
 
-  public static DatabaseClient createDatabaseClient(DataBaseConfig database) {
-    if (INSTANCE != null) {
-      INSTANCE.disconnect();
-    }
+  public synchronized static DatabaseClient createDatabaseClient(DataBaseConfig database) {
+    if (INSTANCE != null) INSTANCE.disconnect();
     switch (database.getType()) {
       case MONGODB -> INSTANCE = new MongoDBClient(database);
       case JSON -> INSTANCE = new JSONClient(database);
