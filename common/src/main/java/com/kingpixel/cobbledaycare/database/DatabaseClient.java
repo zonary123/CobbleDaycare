@@ -12,13 +12,11 @@ public abstract class DatabaseClient {
 
   public abstract void disconnect();
 
-  public abstract void save();
-
   public abstract UserInformation getUserInformation(ServerPlayerEntity player);
 
   public abstract void updateUserInformation(ServerPlayerEntity player, UserInformation userInformation);
 
-  public void removeIfNecessary(ServerPlayerEntity player) {
-    DatabaseClientFactory.userPlots.remove(player.getUuid());
+  public UserInformation removeFromCache(ServerPlayerEntity player) {
+    return DatabaseClientFactory.userPlots.remove(player.getUuid());
   }
 }

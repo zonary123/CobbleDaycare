@@ -4,6 +4,8 @@ import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.models.UserInformation;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.Model.DataBaseConfig;
+import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
@@ -13,7 +15,6 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
-import java.util.Map;
 import java.util.UUID;
 
 import static com.mongodb.client.model.Filters.eq;
@@ -30,23 +31,19 @@ public class MongoDBClient extends DatabaseClient {
 
   @Override
   public void connect(DataBaseConfig config) {
-    mongoClient = MongoClients.create(config.getUrl());
+    var settings = MongoClientSettings.builder()
+      .applicationName("CobbleDaycare")
+      .applyConnectionString(new ConnectionString(config.getUrl()))
+      .build();
+    mongoClient = MongoClients.create(settings);
     database = mongoClient.getDatabase(config.getDatabase());
     collection = database.getCollection("user_information");
   }
 
   @Override
   public void disconnect() {
-    for (Map.Entry<UUID, UserInformation> entry : DatabaseClientFactory.userPlots.entrySet()) {
-      upsertUserInformation(entry.getKey(), entry.getValue());
-    }
     if (mongoClient != null) mongoClient.close();
-
-  }
-
-  @Override
-  public void save() {
-
+    mongoClient = null;
   }
 
   @Override
@@ -63,6 +60,7 @@ public class MongoDBClient extends DatabaseClient {
       DatabaseClientFactory.userPlots.put(uuid, userInformation);
       return userInformation;
     } else {
+      CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "No user information found for player " + player.getGameProfile().getName() + ", creating new entry.");
       userInformation = new UserInformation(player);
       updateUserInformation(player, userInformation);
       return userInformation;
@@ -74,16 +72,13 @@ public class MongoDBClient extends DatabaseClient {
     try {
       if (player == null || userInformation == null) return;
       UUID uuid = player.getUuid();
-      upsertUserInformation(uuid, userInformation);
+      Bson filter = eq("playerUUID", uuid.toString());
+      Document document = userInformation.toDocument();
+      collection.replaceOne(filter, document, new ReplaceOptions().upsert(true));
     } catch (Exception e) {
       e.printStackTrace(); // Manejo básico de errores
     }
   }
 
-  private void upsertUserInformation(UUID uuid, UserInformation userInformation) {
-    Bson filter = eq("playerUUID", uuid.toString());
-    Document document = userInformation.toDocument();
-    collection.replaceOne(filter, document, new ReplaceOptions().upsert(true));
-  }
 
 }

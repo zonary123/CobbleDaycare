@@ -25,10 +25,6 @@ public class JSONClient extends DatabaseClient {
 
   }
 
-  @Override public void save() {
-
-  }
-
   @Override public UserInformation getUserInformation(ServerPlayerEntity player) {
     UserInformation userInformation = DatabaseClientFactory.userPlots.get(player.getUuid());
     if (userInformation == null) {

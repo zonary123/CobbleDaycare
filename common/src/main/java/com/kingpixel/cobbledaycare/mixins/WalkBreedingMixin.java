@@ -22,6 +22,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -56,7 +57,7 @@ public abstract class WalkBreedingMixin {
   private static void cobbleDaycare$processPlayers() {
     long currentTime = System.currentTimeMillis();
 
-    var players = CobbleDaycare.server.getPlayerManager().getPlayerList();
+    var players = new ArrayList<>(CobbleDaycare.server.getPlayerManager().getPlayerList());
     int size = players.size();
     for (int i = 0; i < size; i++) {
       try {
@@ -90,7 +91,7 @@ public abstract class WalkBreedingMixin {
         // Actualiza pasos de huevos y info de usuario
         PlayerPartyStore party = Cobblemon.INSTANCE.getStorage().getParty(player);
         cobbleDaycare$updateEggSteps(party, deltaMovement, player);
-        cobbleDaycare$updateUserInformation(player);
+        cobbleDaycare$sendMessage(player);
 
         // Actualiza posición inicial para el siguiente intervalo
         pos.setX(entity.getX());
@@ -122,13 +123,13 @@ public abstract class WalkBreedingMixin {
   private static void cobbleDaycare$updateEggSteps(PlayerPartyStore party, double deltaMovement, ServerPlayerEntity player) {
     UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
     for (Pokemon pokemon : party) {
-      if (pokemon != null && "egg".intern().equals(pokemon.showdownId())) {
+      if (pokemon != null && "egg".equals(pokemon.showdownId())) {
         EggData.steps(player, pokemon, deltaMovement, userInformation);
       }
     }
   }
 
-  @Unique private static void cobbleDaycare$updateUserInformation(ServerPlayerEntity player) {
+  @Unique private static void cobbleDaycare$sendMessage(ServerPlayerEntity player) {
     UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
     long timeMultiplierSteps = userInformation.getTimeMultiplierSteps();
 
@@ -139,7 +140,6 @@ public abstract class WalkBreedingMixin {
       if (timeMultiplierSteps <= 0) {
         userInformation.setMultiplierSteps(CobbleDaycare.config.getMultiplierSteps());
         userInformation.setTimeMultiplierSteps(0);
-        DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
       }
 
       if (userInformation.isActionBar()) {

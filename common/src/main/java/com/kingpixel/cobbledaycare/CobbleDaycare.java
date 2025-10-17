@@ -16,7 +16,6 @@ import com.kingpixel.cobbledaycare.config.Config;
 import com.kingpixel.cobbledaycare.config.Language;
 import com.kingpixel.cobbledaycare.database.DatabaseClientFactory;
 import com.kingpixel.cobbledaycare.mechanics.*;
-import com.kingpixel.cobbledaycare.migrate.Migrate;
 import com.kingpixel.cobbledaycare.models.Plot;
 import com.kingpixel.cobbledaycare.models.UserInformation;
 import com.kingpixel.cobbledaycare.properties.BreedablePropertyType;
@@ -81,8 +80,6 @@ public class CobbleDaycare {
     files();
     DatabaseClientFactory.userPlots.clear();
     DatabaseClientFactory.createDatabaseClient(config.getDataBase());
-
-    Migrate.migrate();
   }
 
   private static void tasks() {
@@ -215,23 +212,20 @@ public class CobbleDaycare {
         });
     });
 
-    PlayerEvent.PLAYER_QUIT.register(player -> {
-      if (server.isStopped() || server.isStopping()) return;
-      CompletableFuture.runAsync(() -> {
-          UserInformation userInfo = DatabaseClientFactory.INSTANCE.getUserInformation(player);
-          if (userInfo.getCountry() == null) {
-            UserInfo info = playerCountry.computeIfAbsent(player.getUuid(), uuid -> fetchCountryInfo(player));
-            if (info != null) userInfo.setCountry(info.country());
-          }
-          DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInfo);
-          DatabaseClientFactory.INSTANCE.removeIfNecessary(player);
-        }, DAYCARE_EXECUTOR)
-        .exceptionally(e -> {
-          CobbleUtils.LOGGER.error(MOD_ID, "Error on player quit: " + player.getName().getString());
-          e.printStackTrace();
-          return null;
-        });
-    });
+    PlayerEvent.PLAYER_QUIT.register(player -> CompletableFuture.runAsync(() -> {
+        UserInformation userInfo = DatabaseClientFactory.INSTANCE.removeFromCache(player);
+        if (userInfo == null) return;
+        if (userInfo.getCountry() == null) {
+          UserInfo info = playerCountry.computeIfAbsent(player.getUuid(), uuid -> fetchCountryInfo(player));
+          if (info != null) userInfo.setCountry(info.country());
+        }
+        DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInfo);
+      }, DAYCARE_EXECUTOR)
+      .exceptionally(e -> {
+        CobbleUtils.LOGGER.error(MOD_ID, "Error on player quit: " + player.getName().getString());
+        e.printStackTrace();
+        return null;
+      }));
 
     CobblemonEvents.POKEMON_CAPTURED.subscribe(Priority.HIGHEST, evt -> {
       fixBreedable(evt.getPokemon());
