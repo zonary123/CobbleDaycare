@@ -17,6 +17,7 @@ public class DatabaseClientFactory {
 
   public synchronized static DatabaseClient createDatabaseClient(DataBaseConfig database) {
     if (INSTANCE != null) INSTANCE.disconnect();
+    INSTANCE = null;
     switch (database.getType()) {
       case MONGODB -> INSTANCE = new MongoDBClient(database);
       case JSON -> INSTANCE = new JSONClient(database);

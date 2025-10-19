@@ -191,18 +191,8 @@ public class Plot {
       if (!hasTwoParents()) return update;
       int index = userInformation.getPlots().indexOf(this) + 1;
       int sizeEggs = eggs.size();
-      if (sizeEggs >= limitEggs(player)) {
-        if (userInformation.isNotifyLimitEggs()) {
-          PlayerUtils.sendMessage(
-            player,
-            CobbleDaycare.language.getMessageLimitEggs()
-              .replace("%plot%", index + ""),
-            CobbleDaycare.language.getPrefix(),
-            TypeMessage.CHAT
-          );
-        }
-        return update;
-      }
+      if (sizeEggs >= limitEggs(player)) return update;
+
       boolean femaleCanBreed = canBreed(female, SelectGender.FEMALE);
       boolean maleCanBreed = canBreed(male, SelectGender.MALE);
       if (!femaleCanBreed) {

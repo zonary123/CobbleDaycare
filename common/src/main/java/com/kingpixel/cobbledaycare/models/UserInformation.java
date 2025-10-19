@@ -49,7 +49,6 @@ public class UserInformation {
     var userInfoOptions = CobbleDaycare.config.getUserInfoOptions();
     this.notifyBanPokemon = userInfoOptions.isNotifyBanPokemon();
     this.notifyCreateEgg = userInfoOptions.isNotifyCreateEgg();
-    this.notifyLimitEggs = userInfoOptions.isNotifyLimitEggs();
     this.actionBar = userInfoOptions.isActionBar();
     this.plots = new ArrayList<>();
   }
