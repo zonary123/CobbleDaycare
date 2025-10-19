@@ -59,6 +59,7 @@ public class Plot {
 
   public boolean canBreed(Pokemon pokemon, SelectGender gender) {
     if (pokemon == null) return false;
+    CobbleDaycare.fixBreedable(pokemon);
     if (isNotBreedable(pokemon)) return false;
     if (CobbleDaycare.config.getBlackList().isBlackListed(pokemon)) return false;
     Pokemon other = gender == SelectGender.MALE ? female : male;

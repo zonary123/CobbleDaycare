@@ -97,7 +97,7 @@ public class CobbleDaycare {
         CobbleUtils.LOGGER.error(MOD_ID, "Error on scheduled task");
         e.printStackTrace();
       }
-    }, 15, 60, TimeUnit.SECONDS);
+    }, 1, 1, TimeUnit.MINUTES);
   }
 
   private static void files() {
@@ -228,6 +228,11 @@ public class CobbleDaycare {
       }));
 
     CobblemonEvents.POKEMON_CAPTURED.subscribe(Priority.HIGHEST, evt -> {
+      fixBreedable(evt.getPokemon());
+      return Unit.INSTANCE;
+    });
+
+    CobblemonEvents.EVOLUTION_COMPLETE.subscribe(Priority.NORMAL, evt -> {
       fixBreedable(evt.getPokemon());
       return Unit.INSTANCE;
     });
