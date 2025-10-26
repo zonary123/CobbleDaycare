@@ -30,12 +30,13 @@ public class CommandTree {
 
         CommandHatch.register(dispatcher, CommandManager.literal("hatch"));
         CommandBreed.register(dispatcher, CommandManager.literal("breed"));
-        
+
         CommandReload.register(dispatcher, base);
         CommandIncense.register(dispatcher, base);
         CommandBoosterSteps.register(dispatcher, base);
         CommandBreedable.register(dispatcher, base);
         CommandEgg.register(dispatcher, base);
+        CommandSteps.register(dispatcher, base);
 
         dispatcher.register(base
           .executes(context -> {
