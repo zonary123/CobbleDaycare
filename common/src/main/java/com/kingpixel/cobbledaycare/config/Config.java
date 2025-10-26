@@ -125,7 +125,12 @@ public class Config {
   }
 
   public void check() {
-    if (ticksToWalking < 20) ticksToWalking = 20;
+    if (ticksToWalking < 20) {
+      ticksToWalking = 20;
+    }
+    if (multiplierSteps < 1.0f) {
+      multiplierSteps = 1.0f;
+    }
   }
 
   public boolean hasOpenCooldown(ServerPlayerEntity player) {

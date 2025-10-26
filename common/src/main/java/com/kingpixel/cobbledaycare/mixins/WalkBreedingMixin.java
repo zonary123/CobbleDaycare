@@ -9,6 +9,7 @@ import com.kingpixel.cobbledaycare.database.DatabaseClientFactory;
 import com.kingpixel.cobbledaycare.models.EggData;
 import com.kingpixel.cobbledaycare.models.Position;
 import com.kingpixel.cobbledaycare.models.UserInformation;
+import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
 import com.kingpixel.cobbleutils.util.TypeMessage;
 import net.minecraft.entity.Entity;
@@ -30,10 +31,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 
-@Mixin(ServerPlayNetworkHandler.class)
+@Mixin(value = ServerPlayNetworkHandler.class, priority = 9999)
 public abstract class WalkBreedingMixin {
-
-
   @Unique private static final long TICKS_TO_MILLISECONDS = 50;
   @Unique private static final int MAX_TELEPORT = 3;
   // Mapa para guardar la posición inicial de cada jugador
@@ -47,7 +46,13 @@ public abstract class WalkBreedingMixin {
     .build());
 
   static {
-    cobbleDaycare$scheduler.scheduleAtFixedRate(WalkBreedingMixin::cobbleDaycare$processPlayers, 0, 1, TimeUnit.SECONDS);
+    cobbleDaycare$scheduler.scheduleAtFixedRate(() -> {
+      try {
+        cobbleDaycare$processPlayers();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }, 0, 1, TimeUnit.SECONDS);
   }
 
   @Unique
@@ -55,6 +60,10 @@ public abstract class WalkBreedingMixin {
 
   @Unique
   private static void cobbleDaycare$processPlayers() {
+    if (CobbleDaycare.config.isDebug()) {
+      CobbleUtils.LOGGER.info("[CobbleDaycare] Processing players for egg step updates...");
+    }
+    if (CobbleDaycare.server == null) return;
     long currentTime = System.currentTimeMillis();
 
     var players = new ArrayList<>(CobbleDaycare.server.getPlayerManager().getPlayerList());
