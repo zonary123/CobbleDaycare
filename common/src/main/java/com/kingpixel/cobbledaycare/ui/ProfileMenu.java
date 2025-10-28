@@ -26,7 +26,6 @@ public class ProfileMenu {
   private String title;
   private ItemModel close;
   private ItemModel notifyCreateEgg;
-  private ItemModel notifyLimitEggs;
   private ItemModel notifyBanPokemon;
   private ItemModel notifyActionBar;
   private List<PanelsConfig> panels;
@@ -40,9 +39,6 @@ public class ProfileMenu {
       , 1);
     this.notifyCreateEgg = new ItemModel(11, "minecraft:book", "&6Notify Create Egg",
       List.of("&7Notify Create Egg: %active%")
-      , 1);
-    this.notifyLimitEggs = new ItemModel(13, "minecraft:book", "&6Notify Limit Eggs",
-      List.of("&7Notify Limit Eggs: %active%")
       , 1);
     this.notifyBanPokemon = new ItemModel(15, "minecraft:book", "&6Notify Ban Pokemon",
       List.of("&7Notify Ban Pokemon: %active%")
@@ -73,14 +69,6 @@ public class ProfileMenu {
             DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
             open(player, userInformation);
           }));
-
-        notifyLimitEggs.applyTemplate(template, notifyLimitEggs.getButton(1, null, replaceLore(notifyLimitEggs.getLore(),
-          userInformation.isNotifyLimitEggs()), action -> {
-          userInformation.setNotifyLimitEggs(!userInformation.isNotifyLimitEggs());
-          DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
-          open(player, userInformation);
-        }));
-
 
         notifyBanPokemon.applyTemplate(template, notifyBanPokemon.getButton(1, null,
           replaceLore(notifyBanPokemon.getLore(),
