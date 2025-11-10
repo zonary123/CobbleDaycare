@@ -25,8 +25,7 @@ public class MongoDBClient extends DatabaseClient {
   private MongoDatabase database;
   private MongoCollection<Document> collection;
 
-  public MongoDBClient(DataBaseConfig config) {
-    connect(config);
+  public MongoDBClient() {
   }
 
   @Override

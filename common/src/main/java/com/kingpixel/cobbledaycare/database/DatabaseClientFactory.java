@@ -29,8 +29,8 @@ public class DatabaseClientFactory {
     if (INSTANCE != null) INSTANCE.disconnect();
     INSTANCE = null;
     switch (database.getType()) {
-      case MONGODB -> INSTANCE = new MongoDBClient(database);
-      case JSON -> INSTANCE = new JSONClient(database);
+      case MONGODB -> INSTANCE = new MongoDBClient();
+      case JSON -> INSTANCE = new JSONClient();
       default -> {
         throw new IllegalArgumentException("Unsupported database type: " + database.getType());
       }

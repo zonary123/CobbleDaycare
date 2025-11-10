@@ -15,7 +15,7 @@ import java.util.concurrent.CompletableFuture;
  */
 public class JSONClient extends DatabaseClient {
 
-  public JSONClient(DataBaseConfig config) {
+  public JSONClient() {
   }
 
 
