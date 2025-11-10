@@ -3,7 +3,6 @@ package com.kingpixel.cobbledaycare.ui;
 import ca.landonjw.gooeylibs2.api.UIManager;
 import ca.landonjw.gooeylibs2.api.button.Button;
 import ca.landonjw.gooeylibs2.api.button.GooeyButton;
-import ca.landonjw.gooeylibs2.api.button.RateLimitedButton;
 import ca.landonjw.gooeylibs2.api.helpers.PaginationHelper;
 import ca.landonjw.gooeylibs2.api.page.GooeyPage;
 import ca.landonjw.gooeylibs2.api.page.LinkedPage;
@@ -152,6 +151,7 @@ public class SelectPokemonMenu {
     return buttons;
   }
 
+
   private void addPokemon(@NotNull Pokemon pokemon, Plot plot, ServerPlayerEntity player,
                           SelectGender gender, UserInformation userInformation, List<Button> buttons) {
     ItemStack display = PokemonItem.from(pokemon);
@@ -162,6 +162,7 @@ public class SelectPokemonMenu {
       .with(DataComponentTypes.CUSTOM_NAME, AdventureTranslator.toNative(PokemonUtils.getTranslatedName(pokemon)))
       .with(DataComponentTypes.LORE, new LoreComponent(AdventureTranslator.toNativeL(lore)))
       .onClick(action -> CompletableFuture.runAsync(() -> {
+          if (PlayerUtils.isCooldownMenu(player, "select_menu_add", DurationValue.parse("1s"))) return;
           CobbleDaycare.language.getPlotMenu().open(player, plot, userInformation);
           plot.addPokemon(player, pokemon, gender, userInformation);
         }, CobbleDaycare.DAYCARE_EXECUTOR)
@@ -172,6 +173,6 @@ public class SelectPokemonMenu {
         }))
       .build();
 
-    buttons.add(RateLimitedButton.builder().button(button).limit(1).interval(1, TimeUnit.SECONDS).build());
+    buttons.add(button);
   }
 }
