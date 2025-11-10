@@ -33,6 +33,9 @@ dependencies {
 
     //Discord
     api("club.minnced:discord-webhooks:${property("discord_webhooks_version")}")
+    
+    // https://mvnrepository.com/artifact/com.github.ben-manes.caffeine/caffeine
+    implementation("com.github.ben-manes.caffeine:caffeine:3.2.3")
 
     // lombok that makes the life easier
     // https://projectlombok.org/setup/gradle

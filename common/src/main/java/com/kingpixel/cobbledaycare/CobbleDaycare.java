@@ -212,12 +212,13 @@ public class CobbleDaycare {
     });
 
     PlayerEvent.PLAYER_QUIT.register(player -> CompletableFuture.runAsync(() -> {
-        UserInformation userInfo = DatabaseClientFactory.INSTANCE.removeFromCache(player);
+        UserInformation userInfo = DatabaseClientFactory.INSTANCE.getUserInformation(player);
         if (userInfo.getCountry() == null) {
           UserInfo info = playerCountry.computeIfAbsent(player.getUuid(), uuid -> fetchCountryInfo(player));
           if (info != null) userInfo.setCountry(info.country());
         }
         DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInfo);
+        DatabaseClientFactory.INSTANCE.removeFromCache(player);
       }, DAYCARE_EXECUTOR)
       .orTimeout(5, TimeUnit.SECONDS)
       .exceptionally(e -> {

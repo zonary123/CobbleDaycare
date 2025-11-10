@@ -16,7 +16,7 @@ public abstract class DatabaseClient {
 
   public abstract void saveOrUpdateUserInformation(ServerPlayerEntity player, UserInformation userInformation);
 
-  public UserInformation removeFromCache(ServerPlayerEntity player) {
-    return DatabaseClientFactory.USER_INFORMATION_MAP.remove(player.getUuid());
+  public void removeFromCache(ServerPlayerEntity player) {
+    DatabaseClientFactory.USER_INFORMATION_MAP.invalidate(player.getUuid());
   }
 }

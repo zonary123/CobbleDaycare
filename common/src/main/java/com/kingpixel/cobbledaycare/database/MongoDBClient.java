@@ -42,7 +42,7 @@ public class MongoDBClient extends DatabaseClient {
 
   @Override
   public void disconnect() {
-    var entries = DatabaseClientFactory.USER_INFORMATION_MAP.entrySet();
+    var entries = DatabaseClientFactory.USER_INFORMATION_MAP.asMap().entrySet();
     for (var entry : entries) {
       var key = entry.getKey();
       var value = entry.getValue();
@@ -58,14 +58,12 @@ public class MongoDBClient extends DatabaseClient {
   @Override
   public UserInformation getUserInformation(ServerPlayerEntity player) {
     UUID uuid = player.getUuid();
-    UserInformation userInformation = DatabaseClientFactory.USER_INFORMATION_MAP.get(uuid);
+    UserInformation userInformation = DatabaseClientFactory.USER_INFORMATION_MAP.getIfPresent(uuid);
     if (userInformation != null) return userInformation;
     Document document = collection.find(eq("playerUUID", uuid.toString())).first();
     if (document != null) {
       userInformation = UserInformation.fromDocument(document);
-      if (CobbleDaycare.config.isDebug()) {
-        CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "User information loaded from MongoDB: " + userInformation);
-      }
+      CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "User information loaded from MongoDB: " + userInformation);
       DatabaseClientFactory.USER_INFORMATION_MAP.put(uuid, userInformation);
       return userInformation;
     } else {

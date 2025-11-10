@@ -24,7 +24,7 @@ public class JSONClient extends DatabaseClient {
   }
 
   @Override public void disconnect() {
-    var entries = DatabaseClientFactory.USER_INFORMATION_MAP.entrySet();
+    var entries = DatabaseClientFactory.USER_INFORMATION_MAP.asMap().entrySet();
     for (var entry : entries) {
       var key = entry.getKey();
       var value = entry.getValue();
@@ -37,10 +37,10 @@ public class JSONClient extends DatabaseClient {
   }
 
   @Override public UserInformation getUserInformation(ServerPlayerEntity player) {
-    UserInformation userInformation = DatabaseClientFactory.USER_INFORMATION_MAP.get(player.getUuid());
+    UserInformation userInformation = DatabaseClientFactory.USER_INFORMATION_MAP.getIfPresent(player.getUuid());
     if (userInformation == null) {
       readFile(player);
-      userInformation = DatabaseClientFactory.USER_INFORMATION_MAP.get(player.getUuid());
+      userInformation = DatabaseClientFactory.USER_INFORMATION_MAP.getIfPresent(player.getUuid());
     }
     return userInformation;
   }
