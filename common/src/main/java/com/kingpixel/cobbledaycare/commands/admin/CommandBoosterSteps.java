@@ -40,7 +40,7 @@ public class CommandBoosterSteps {
                               DatabaseClientFactory.INSTANCE.getUserInformation(player);
                             userInformation.setTimeMultiplierSteps(seconds * 20L);
                             userInformation.setMultiplierSteps(multiplier);
-                            DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
+                            DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInformation);
                           }
                           return 1;
                         })

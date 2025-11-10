@@ -3,6 +3,7 @@ package com.kingpixel.cobbledaycare.ui;
 import ca.landonjw.gooeylibs2.api.UIManager;
 import ca.landonjw.gooeylibs2.api.button.Button;
 import ca.landonjw.gooeylibs2.api.button.GooeyButton;
+import ca.landonjw.gooeylibs2.api.button.RateLimitedButton;
 import ca.landonjw.gooeylibs2.api.helpers.PaginationHelper;
 import ca.landonjw.gooeylibs2.api.page.GooeyPage;
 import ca.landonjw.gooeylibs2.api.page.LinkedPage;
@@ -14,10 +15,12 @@ import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.models.Plot;
 import com.kingpixel.cobbledaycare.models.SelectGender;
 import com.kingpixel.cobbledaycare.models.UserInformation;
+import com.kingpixel.cobbleutils.Model.DurationValue;
 import com.kingpixel.cobbleutils.Model.ItemModel;
 import com.kingpixel.cobbleutils.Model.PanelsConfig;
 import com.kingpixel.cobbleutils.Model.Rectangle;
 import com.kingpixel.cobbleutils.util.AdventureTranslator;
+import com.kingpixel.cobbleutils.util.PlayerUtils;
 import com.kingpixel.cobbleutils.util.PokemonUtils;
 import lombok.Data;
 import net.minecraft.component.DataComponentTypes;
@@ -30,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Author: Carlos Varas Alonso - 11/03/2025 5:56
@@ -69,6 +73,7 @@ public class SelectPokemonMenu {
   }
 
   public void open(ServerPlayerEntity player, Plot plot, UserInformation userInformation, SelectGender gender, int position) {
+    if (PlayerUtils.isCooldownMenu(player, "select_menu", DurationValue.parse("1s"))) return;
     CompletableFuture.runAsync(() -> {
         // Clonar el template base
         ChestTemplate template = baseTemplate.clone();
@@ -79,16 +84,16 @@ public class SelectPokemonMenu {
         LinkedPage.Builder builder = LinkedPage.builder().title(AdventureTranslator.toNative(title));
 
         // Botón cerrar
-        close.applyTemplate(template, close.getButton(action ->
-          CobbleDaycare.language.getPlotMenu().open(player, plot, userInformation)
-        ));
+        close.applyTemplate(template, close.getButton(action -> {
+          CobbleDaycare.language.getPlotMenu().open(player, plot, userInformation);
+        }, 1, TimeUnit.SECONDS, 1));
 
         // Botón previo
         if (position > 0) {
           previous.applyTemplate(template, previous.getButton(action -> {
             if (CobbleDaycare.config.hasOpenCooldown(action.getPlayer())) return;
             open(player, plot, userInformation, gender, Math.max(0, position - POKEMONS_PER_PAGE));
-          }));
+          }, 1, TimeUnit.SECONDS, 1));
         }
 
         // Botón siguiente
@@ -96,15 +101,17 @@ public class SelectPokemonMenu {
           next.applyTemplate(template, next.getButton(action -> {
             if (CobbleDaycare.config.hasOpenCooldown(action.getPlayer())) return;
             open(player, plot, userInformation, gender, position + POKEMONS_PER_PAGE);
-          }));
+          }, 1, TimeUnit.SECONDS, 1));
         }
 
         GooeyPage page = PaginationHelper.createPagesFromPlaceholders(template, buttons, builder);
+
 
         // Abrir en el main thread de MC
         CobbleDaycare.server.execute(() -> UIManager.openUIForcefully(player, page));
 
       }, CobbleDaycare.DAYCARE_EXECUTOR)
+      .orTimeout(5, TimeUnit.SECONDS)
       .exceptionally(e -> {
         e.printStackTrace();
         return null;
@@ -155,15 +162,16 @@ public class SelectPokemonMenu {
       .with(DataComponentTypes.CUSTOM_NAME, AdventureTranslator.toNative(PokemonUtils.getTranslatedName(pokemon)))
       .with(DataComponentTypes.LORE, new LoreComponent(AdventureTranslator.toNativeL(lore)))
       .onClick(action -> CompletableFuture.runAsync(() -> {
-          plot.addPokemon(player, pokemon, gender, userInformation);
           CobbleDaycare.language.getPlotMenu().open(player, plot, userInformation);
+          plot.addPokemon(player, pokemon, gender, userInformation);
         }, CobbleDaycare.DAYCARE_EXECUTOR)
+        .orTimeout(5, TimeUnit.SECONDS)
         .exceptionally(e -> {
           e.printStackTrace();
           return null;
         }))
       .build();
 
-    buttons.add(button);
+    buttons.add(RateLimitedButton.builder().button(button).limit(1).interval(1, TimeUnit.SECONDS).build());
   }
 }

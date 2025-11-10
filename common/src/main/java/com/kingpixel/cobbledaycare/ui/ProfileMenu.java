@@ -58,7 +58,7 @@ public class ProfileMenu {
         notifyActionBar.applyTemplate(template, notifyActionBar.getButton(1, null, replaceLore(notifyActionBar.getLore(),
           userInformation.isActionBar()), action -> {
           userInformation.setActionBar(!userInformation.isActionBar());
-          DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
+          DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInformation);
           open(player, userInformation);
         }));
 
@@ -66,7 +66,7 @@ public class ProfileMenu {
             userInformation.isNotifyCreateEgg()),
           action -> {
             userInformation.setNotifyCreateEgg(!userInformation.isNotifyCreateEgg());
-            DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
+            DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInformation);
             open(player, userInformation);
           }));
 
@@ -74,7 +74,7 @@ public class ProfileMenu {
           replaceLore(notifyBanPokemon.getLore(),
             userInformation.isNotifyBanPokemon()), action -> {
             userInformation.setNotifyBanPokemon(!userInformation.isNotifyBanPokemon());
-            DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
+            DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInformation);
             open(player, userInformation);
           }));
 

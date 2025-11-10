@@ -110,7 +110,7 @@ public class CommandHatch {
           if (!pokemon.getSpecies().showdownId().equals("egg")) continue;
           EggData.hatch(player, pokemon);
           userInfo.setCooldownHatch(player);
-          DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInfo);
+          DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInfo);
         }
       }, CobbleDaycare.DAYCARE_EXECUTOR)
       .exceptionally(e -> {

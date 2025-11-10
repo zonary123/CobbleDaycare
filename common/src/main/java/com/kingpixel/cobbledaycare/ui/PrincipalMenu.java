@@ -160,6 +160,14 @@ public class PrincipalMenu {
         GooeyPage page = GooeyPage.builder()
           .template(template)
           .title(AdventureTranslator.toNative(title))
+          .onClose(action -> CompletableFuture.runAsync(() -> {
+              DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInformation);
+            }, CobbleDaycare.DAYCARE_EXECUTOR)
+            .orTimeout(5, java.util.concurrent.TimeUnit.SECONDS)
+            .exceptionally(e -> {
+              e.printStackTrace();
+              return null;
+            }))
           .build();
 
         UIManager.openUIForcefully(player, page);

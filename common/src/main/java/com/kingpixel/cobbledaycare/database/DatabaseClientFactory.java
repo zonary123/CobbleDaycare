@@ -12,8 +12,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Carlos Varas Alonso - 24/07/2024 21:03
  */
 public class DatabaseClientFactory {
+  public static final Map<UUID, UserInformation> USER_INFORMATION_MAP = new ConcurrentHashMap<>();
   public static DatabaseClient INSTANCE;
-  public static Map<UUID, UserInformation> userPlots = new ConcurrentHashMap<>();
 
   public synchronized static DatabaseClient createDatabaseClient(DataBaseConfig database) {
     if (INSTANCE != null) INSTANCE.disconnect();

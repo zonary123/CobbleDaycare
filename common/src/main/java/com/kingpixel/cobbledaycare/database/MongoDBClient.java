@@ -42,6 +42,15 @@ public class MongoDBClient extends DatabaseClient {
 
   @Override
   public void disconnect() {
+    var entries = DatabaseClientFactory.USER_INFORMATION_MAP.entrySet();
+    for (var entry : entries) {
+      var key = entry.getKey();
+      var value = entry.getValue();
+      saveOrUpdateUserInformation(
+        key,
+        value
+      );
+    }
     if (mongoClient != null) mongoClient.close();
     mongoClient = null;
   }
@@ -49,7 +58,7 @@ public class MongoDBClient extends DatabaseClient {
   @Override
   public UserInformation getUserInformation(ServerPlayerEntity player) {
     UUID uuid = player.getUuid();
-    UserInformation userInformation = DatabaseClientFactory.userPlots.get(uuid);
+    UserInformation userInformation = DatabaseClientFactory.USER_INFORMATION_MAP.get(uuid);
     if (userInformation != null) return userInformation;
     Document document = collection.find(eq("playerUUID", uuid.toString())).first();
     if (document != null) {
@@ -57,27 +66,25 @@ public class MongoDBClient extends DatabaseClient {
       if (CobbleDaycare.config.isDebug()) {
         CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "User information loaded from MongoDB: " + userInformation);
       }
-      DatabaseClientFactory.userPlots.put(uuid, userInformation);
+      DatabaseClientFactory.USER_INFORMATION_MAP.put(uuid, userInformation);
       return userInformation;
     } else {
       CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "No user information found for player " + player.getGameProfile().getName() + ", creating new entry.");
       userInformation = new UserInformation(player);
-      updateUserInformation(player, userInformation);
+      saveOrUpdateUserInformation(player, userInformation);
       return userInformation;
     }
   }
 
   @Override
-  public void updateUserInformation(ServerPlayerEntity player, UserInformation userInformation) {
-    try {
-      if (player == null || userInformation == null) return;
-      UUID uuid = player.getUuid();
-      Bson filter = eq("playerUUID", uuid.toString());
-      Document document = userInformation.toDocument();
-      collection.replaceOne(filter, document, new ReplaceOptions().upsert(true));
-    } catch (Exception e) {
-      e.printStackTrace(); // Manejo básico de errores
-    }
+  public void saveOrUpdateUserInformation(ServerPlayerEntity player, UserInformation userInformation) {
+    saveOrUpdateUserInformation(player.getUuid(), userInformation);
+  }
+
+  private void saveOrUpdateUserInformation(UUID playerUUID, UserInformation userInformation) {
+    Bson filter = eq("playerUUID", playerUUID.toString());
+    Document document = userInformation.toDocument();
+    collection.replaceOne(filter, document, new ReplaceOptions().upsert(true));
   }
 
 

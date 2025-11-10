@@ -47,13 +47,13 @@ public class CobbleDaycare {
   public static final String PATH = "/config/cobbledaycare/";
   public static final String PATH_LANGUAGE = PATH + "lang/";
   public static final String PATH_DATA = PATH + "data/";
-  public static final String PATH_OLD_DATA = PATH + "old_data/";
   public static final String PATH_MODULES = PATH + "modules/";
   public static final String TAG_SPAWNED = "spawned";
-  public static final ExecutorService DAYCARE_EXECUTOR = Executors.newFixedThreadPool(4, new ThreadFactoryBuilder()
+  public static final ExecutorService DAYCARE_EXECUTOR = Executors.newFixedThreadPool(8, new ThreadFactoryBuilder()
     .setDaemon(true)
     .setNameFormat("CobbleDaycare-Executor-%d")
     .build());
+  public static final List<Mechanics> mechanics = new ArrayList<>();
   private static final String API_URL_IP = "http://ip-api.com/json/";
   private static final Map<UUID, UserInfo> playerCountry = new HashMap<>();
   private static final ScheduledExecutorService SCHEDULER_DAYCARE = Executors.newScheduledThreadPool(1,
@@ -64,8 +64,6 @@ public class CobbleDaycare {
   public static MinecraftServer server;
   public static Config config = new Config();
   public static Language language = new Language();
-  public static List<Mechanics> mechanics = new ArrayList<>();
-  private static HttpURLConnection conn;
 
   public static void init() {
     server = (MinecraftServer) FabricLoader.getInstance().getGameInstance();
@@ -78,7 +76,6 @@ public class CobbleDaycare {
   public static void load() {
     CobbleUtils.info(MOD_ID, "1.0.0", "https://github.com/zonary123/CobbleDaycare");
     files();
-    DatabaseClientFactory.userPlots.clear();
     DatabaseClientFactory.createDatabaseClient(config.getDataBase());
   }
 
@@ -91,7 +88,7 @@ public class CobbleDaycare {
           if (player == null) continue;
           var userinfo = DatabaseClientFactory.INSTANCE.getUserInformation(player);
           if (userinfo == null) return;
-          if (userinfo.fix(player)) DatabaseClientFactory.INSTANCE.updateUserInformation(player, userinfo);
+          if (userinfo.fix(player)) DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userinfo);
         }
       } catch (Exception e) {
         CobbleUtils.LOGGER.error(MOD_ID, "Error on scheduled task");
@@ -163,8 +160,11 @@ public class CobbleDaycare {
       CustomPokemonProperty.Companion.register(BreedablePropertyType.getInstance());
     });
 
-    LifecycleEvent.SERVER_STOPPED.register(server -> {
+    LifecycleEvent.SERVER_STOPPING.register(minecraftServer -> {
       DatabaseClientFactory.INSTANCE.disconnect();
+    });
+
+    LifecycleEvent.SERVER_STOPPED.register(server -> {
       CobbleUtils.shutdownAndAwait(DAYCARE_EXECUTOR);
       CobbleUtils.shutdownAndAwait(SCHEDULER_DAYCARE);
     });
@@ -195,9 +195,7 @@ public class CobbleDaycare {
           if (userInformation.check(numPlots, player)) update = true;
           if (userInformation.fix(player)) update = true;
 
-          if (update) {
-            DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
-          }
+          if (update) DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInformation);
 
           long end = System.currentTimeMillis();
           if (config.isDebug()) {
@@ -205,6 +203,7 @@ public class CobbleDaycare {
           }
 
         }, DAYCARE_EXECUTOR)
+        .orTimeout(10, TimeUnit.SECONDS)
         .exceptionally(e -> {
           CobbleUtils.LOGGER.error(MOD_ID, "Error on player join: " + player.getName().getString());
           e.printStackTrace();
@@ -214,13 +213,13 @@ public class CobbleDaycare {
 
     PlayerEvent.PLAYER_QUIT.register(player -> CompletableFuture.runAsync(() -> {
         UserInformation userInfo = DatabaseClientFactory.INSTANCE.removeFromCache(player);
-        if (userInfo == null) return;
         if (userInfo.getCountry() == null) {
           UserInfo info = playerCountry.computeIfAbsent(player.getUuid(), uuid -> fetchCountryInfo(player));
           if (info != null) userInfo.setCountry(info.country());
         }
-        DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInfo);
+        DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInfo);
       }, DAYCARE_EXECUTOR)
+      .orTimeout(5, TimeUnit.SECONDS)
       .exceptionally(e -> {
         CobbleUtils.LOGGER.error(MOD_ID, "Error on player quit: " + player.getName().getString());
         e.printStackTrace();

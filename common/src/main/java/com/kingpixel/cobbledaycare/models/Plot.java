@@ -43,7 +43,6 @@ public class Plot {
     this.canOpen = 0;
   }
 
-
   public static boolean isNotBreedable(Pokemon pokemon) {
     return pokemon.getForm().getEggGroups().contains(EggGroup.UNDISCOVERED) || CobbleDaycare.config.getBlackList().isBlackListed(pokemon);
   }
@@ -52,12 +51,20 @@ public class Plot {
     return "cobbledaycare.plot." + (i + 1);
   }
 
+  public synchronized void setMale(Pokemon male) {
+    this.male = male;
+  }
+
+  public synchronized void setFemale(Pokemon female) {
+    this.female = female;
+  }
+
   private boolean isDitto(Pokemon pokemon) {
     if (pokemon == null) return false;
     return pokemon.getForm().getEggGroups().contains(EggGroup.DITTO);
   }
 
-  public boolean canBreed(Pokemon pokemon, SelectGender gender) {
+  public synchronized boolean canBreed(Pokemon pokemon, SelectGender gender) {
     if (pokemon == null) return false;
     CobbleDaycare.fixBreedable(pokemon);
     if (isNotBreedable(pokemon)) return false;
@@ -107,23 +114,13 @@ public class Plot {
     }
   }
 
-  public void addFemale(ServerPlayerEntity player, Pokemon female) {
+  public synchronized void addFemale(ServerPlayerEntity player, Pokemon female) {
     this.female = female;
-    CobbleDaycare.server.executeSync(() -> {
-      if (!Cobblemon.INSTANCE.getStorage().getParty(player).remove(female)) {
-        Cobblemon.INSTANCE.getStorage().getPC(player).remove(female);
-      }
-    });
     setTime(player);
   }
 
-  public void addMale(ServerPlayerEntity player, Pokemon male) {
+  public synchronized void addMale(ServerPlayerEntity player, Pokemon male) {
     this.male = male;
-    CobbleDaycare.server.executeSync(() -> {
-      if (!Cobblemon.INSTANCE.getStorage().getParty(player).remove(male)) {
-        Cobblemon.INSTANCE.getStorage().getPC(player).remove(male);
-      }
-    });
     setTime(player);
   }
 
@@ -139,17 +136,7 @@ public class Plot {
     return male == null && female == null;
   }
 
-  public Pokemon getEmptyParent() {
-    if (male == null && female == null) {
-      return null;
-    } else if (male == null) {
-      return female;
-    } else {
-      return male;
-    }
-  }
-
-  public boolean giveEggs(ServerPlayerEntity player) {
+  public synchronized boolean giveEggs(ServerPlayerEntity player) {
     if (!hasEggs()) return false;
     boolean update = false;
     List<Pokemon> remove = new ArrayList<>();
@@ -184,7 +171,7 @@ public class Plot {
     return limit;
   }
 
-  public boolean checkEgg(ServerPlayerEntity player, UserInformation userInformation) {
+  public synchronized boolean checkEgg(ServerPlayerEntity player, UserInformation userInformation) {
     try {
       boolean update = false;
 
@@ -203,8 +190,8 @@ public class Plot {
           CobbleDaycare.language.getPrefix(),
           TypeMessage.CHAT
         );
-        Cobblemon.INSTANCE.getStorage().getParty(player).add(female);
-        female = null;
+        CobbleDaycare.server.execute(() -> Cobblemon.INSTANCE.getStorage().getParty(player).add(female));
+        setFemale(null);
       }
       if (!maleCanBreed) {
         PlayerUtils.sendMessage(
@@ -214,8 +201,8 @@ public class Plot {
           CobbleDaycare.language.getPrefix(),
           TypeMessage.CHAT
         );
-        Cobblemon.INSTANCE.getStorage().getParty(player).add(male);
-        male = null;
+        CobbleDaycare.server.execute(() -> Cobblemon.INSTANCE.getStorage().getParty(player).add(male));
+        setMale(null);
       }
       if (!maleCanBreed || !femaleCanBreed) return true;
       fixCooldown(player);
@@ -289,12 +276,16 @@ public class Plot {
   }
 
 
-  public void addPokemon(ServerPlayerEntity player, Pokemon pokemon, SelectGender gender, UserInformation userInformation) {
-    if (gender == SelectGender.FEMALE) {
-      addFemale(player, pokemon);
-    } else {
-      addMale(player, pokemon);
-    }
-    DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInformation);
+  public synchronized void addPokemon(ServerPlayerEntity player, Pokemon pokemon, SelectGender gender,
+                                      UserInformation userInformation) {
+    if (gender == SelectGender.FEMALE) addFemale(player, pokemon);
+    else addMale(player, pokemon);
+
+    CobbleDaycare.server.submit(() -> {
+      Cobblemon.INSTANCE.getStorage().getParty(player).remove(pokemon);
+      Cobblemon.INSTANCE.getStorage().getPC(player).remove(pokemon);
+    }).join();
+
+    DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInformation);
   }
 }

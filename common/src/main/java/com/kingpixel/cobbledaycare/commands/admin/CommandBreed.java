@@ -94,7 +94,7 @@ public class CommandBreed {
     if (maleCanBreed && femaleCanBreed) {
       Cobblemon.INSTANCE.getStorage().getParty(player).add(plot.createEgg(player));
       userInfo.setCooldownBreed(player);
-      DatabaseClientFactory.INSTANCE.updateUserInformation(player, userInfo);
+      DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInfo);
     } else {
       PlayerUtils.sendMessage(
         player,

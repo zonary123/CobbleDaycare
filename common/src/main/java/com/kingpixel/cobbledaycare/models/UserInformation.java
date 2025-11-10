@@ -2,9 +2,12 @@ package com.kingpixel.cobbledaycare.models;
 
 import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.pokemon.Pokemon;
+import com.google.gson.Gson;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
+import com.kingpixel.cobbledaycare.mechanics.DayCarePokemon;
 import com.kingpixel.cobbleutils.api.PermissionApi;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
+import com.kingpixel.cobbleutils.util.TypeMessage;
 import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Data;
 import lombok.Getter;
@@ -26,6 +29,8 @@ import java.util.UUID;
 @Data
 @ToString
 public class UserInformation {
+  public static final Gson GSON = Utils.newWithoutSpacingGson().newBuilder()
+    .serializeNulls().create();
   private UUID playerUUID;
   private String playerName;
   private String country;
@@ -60,12 +65,11 @@ public class UserInformation {
   }
 
   public static UserInformation fromDocument(Document document) {
-    return Utils.newWithoutSpacingGson().fromJson(document.toJson(), UserInformation.class);
+    return GSON.fromJson(document.toJson(), UserInformation.class);
   }
 
   public Document toDocument() {
-    String json = Utils.newWithoutSpacingGson().toJson(this);
-    return Document.parse(json);
+    return Document.parse(GSON.toJson(this));
   }
 
   public float getActualMultiplier(ServerPlayerEntity player) {
@@ -100,7 +104,7 @@ public class UserInformation {
         CobbleDaycare.config.getDefaultCooldownBreed(), player);
   }
 
-  public boolean check(int numPlots, ServerPlayerEntity player) {
+  public synchronized boolean check(int numPlots, ServerPlayerEntity player) {
     boolean update = false;
 
     // Asegurar que la lista esté inicializada
@@ -139,10 +143,34 @@ public class UserInformation {
         Plot plot = plots.get(i);
 
         if (plot != null) {
-          if (plot.getMale() != null) party.add(plot.getMale());
-          if (plot.getFemale() != null) party.add(plot.getFemale());
+          if (plot.getMale() != null) {
+            PlayerUtils.sendMessage(
+              player,
+              "Your Pokémon " + plot.getMale().getDisplayName().getString() + " has been returned to your party because the plot has been removed.",
+              CobbleDaycare.language.getPrefix(),
+              TypeMessage.CHAT
+            );
+            party.add(plot.getMale());
+          }
+          if (plot.getFemale() != null) {
+            PlayerUtils.sendMessage(
+              player,
+              "Your Pokémon " + plot.getFemale().getDisplayName().getString() + " has been returned to your party because the plot has been removed.",
+              CobbleDaycare.language.getPrefix(),
+              TypeMessage.CHAT
+            );
+            party.add(plot.getFemale());
+          }
           for (Pokemon egg : plot.getEggs()) {
-            if (egg != null) party.add(egg);
+            if (egg != null) {
+              PlayerUtils.sendMessage(
+                player,
+                "Your egg " + egg.getPersistentData().getString(DayCarePokemon.TAG_POKEMON) + " has been returned to your party because the plot has been removed.",
+                CobbleDaycare.language.getPrefix(),
+                TypeMessage.CHAT
+              );
+              party.add(egg);
+            }
           }
         }
 
@@ -155,7 +183,7 @@ public class UserInformation {
   }
 
 
-  public boolean fix(ServerPlayerEntity player) {
+  public synchronized boolean fix(ServerPlayerEntity player) {
     boolean update = false;
     for (Plot plot : plots) {
       for (Pokemon egg : plot.getEggs()) {
@@ -167,5 +195,10 @@ public class UserInformation {
       if (plot.checkEgg(player, this)) update = true;
     }
     return update;
+  }
+
+  public CharSequence getIndexPlot(Plot plot) {
+    int index = plots.indexOf(plot) + 1;
+    return index + "";
   }
 }

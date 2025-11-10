@@ -18,7 +18,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Carlos Varas Alonso - 30/01/2025 23:47
@@ -52,7 +51,7 @@ public class Config {
   private Map<String, DurationValue> cooldownsBreed;
   private DurationValue defaultCooldownHatch;
   private Map<String, DurationValue> cooldownsHatch;
-  private int cooldownToOpenMenus;
+  private DurationValue cooldownToOpenMenus;
   private List<Integer> slotPlots;
   private double multiplierAbilityAcceleration;
   private List<String> abilityAcceleration;
@@ -99,7 +98,7 @@ public class Config {
     this.multiplierStepsPermission = new HashMap<>();
     this.multiplierStepsPermission.put("multipliersteps.vip", 2.0f);
     this.permittedVehicles = List.of("minecraft:boat", "minecraft:horse", "cobblemon:pokemon");
-    this.cooldownToOpenMenus = 3;
+    this.cooldownToOpenMenus = DurationValue.parse("3s");
     this.cooldown = DurationValue.parse("3m");
     this.cooldowns = Map.of(
       "cooldown.vip", DurationValue.parse("15m"),
@@ -131,12 +130,15 @@ public class Config {
     if (multiplierSteps < 1.0f) {
       multiplierSteps = 1.0f;
     }
+    if (cooldownToOpenMenus.toSeconds() <= 1 || cooldownToOpenMenus.toSeconds() >= 5) {
+      cooldownToOpenMenus = DurationValue.parse("1s");
+    }
   }
 
   public boolean hasOpenCooldown(ServerPlayerEntity player) {
     long cooldown = cooldownsOpenMenus.getOrDefault(player.getUuid(), 0L);
     if (cooldown <= System.currentTimeMillis()) {
-      cooldownsOpenMenus.put(player.getUuid(), System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(cooldownToOpenMenus));
+      cooldownsOpenMenus.put(player.getUuid(), System.currentTimeMillis() + cooldownToOpenMenus.toMillis());
       return false;
     }
     PlayerUtils.sendMessage(
