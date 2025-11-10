@@ -60,12 +60,12 @@ public abstract class WalkBreedingMixin {
 
   @Unique
   private static void cobbleDaycare$processPlayers() {
+    if (CobbleDaycare.server == null) return;
+    long currentTime = System.currentTimeMillis();
+    if (CobbleDaycare.server.getPlayerManager().getPlayerList().isEmpty()) return;
     if (CobbleDaycare.config.isDebug()) {
       CobbleUtils.LOGGER.info("[CobbleDaycare] Processing players for egg step updates...");
     }
-    if (CobbleDaycare.server == null) return;
-    long currentTime = System.currentTimeMillis();
-
     var players = new ArrayList<>(CobbleDaycare.server.getPlayerManager().getPlayerList());
     int size = players.size();
     for (int i = 0; i < size; i++) {
@@ -130,7 +130,8 @@ public abstract class WalkBreedingMixin {
 
   @Unique
   private static void cobbleDaycare$updateEggSteps(PlayerPartyStore party, double deltaMovement, ServerPlayerEntity player) {
-    UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
+    UserInformation userInformation = DatabaseClientFactory.INSTANCE.getCacheUserInformation(player);
+    if (userInformation == null) return;
     for (Pokemon pokemon : party) {
       if (pokemon != null && "egg".equals(pokemon.showdownId())) {
         EggData.steps(player, pokemon, deltaMovement, userInformation);
@@ -139,7 +140,8 @@ public abstract class WalkBreedingMixin {
   }
 
   @Unique private static void cobbleDaycare$sendMessage(ServerPlayerEntity player) {
-    UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
+    UserInformation userInformation = DatabaseClientFactory.INSTANCE.getCacheUserInformation(player);
+    if (userInformation == null) return;
     long timeMultiplierSteps = userInformation.getTimeMultiplierSteps();
 
     if (timeMultiplierSteps > 0) {

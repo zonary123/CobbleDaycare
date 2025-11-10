@@ -63,7 +63,8 @@ public class MongoDBClient extends DatabaseClient {
     Document document = collection.find(eq("playerUUID", uuid.toString())).first();
     if (document != null) {
       userInformation = UserInformation.fromDocument(document);
-      CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "User information loaded from MongoDB: " + userInformation);
+      CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID,
+        "User information loaded from MongoDB: " + userInformation.getPlayerName() + " (" + userInformation.getPlayerUUID() + ")");
       DatabaseClientFactory.USER_INFORMATION_MAP.put(uuid, userInformation);
       return userInformation;
     } else {
