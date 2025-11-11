@@ -105,10 +105,7 @@ public class SelectPokemonMenu {
 
         GooeyPage page = PaginationHelper.createPagesFromPlaceholders(template, buttons, builder);
 
-
-        // Abrir en el main thread de MC
         CobbleDaycare.server.execute(() -> UIManager.openUIForcefully(player, page));
-
       }, CobbleDaycare.DAYCARE_EXECUTOR)
       .orTimeout(5, TimeUnit.SECONDS)
       .exceptionally(e -> {

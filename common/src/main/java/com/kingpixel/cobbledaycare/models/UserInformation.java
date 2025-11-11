@@ -107,41 +107,31 @@ public class UserInformation {
   public synchronized boolean check(int numPlots, ServerPlayerEntity player) {
     boolean update = false;
 
-    // Asegurar que la lista esté inicializada
     if (plots == null) {
       plots = new ArrayList<>();
       update = true;
     }
 
-    // Asegurar que el jugador esté inicializado
-    if (player == null) {
-      throw new IllegalArgumentException("El jugador no puede ser nulo.");
-    }
+    if (player == null) throw new IllegalArgumentException("The player cannot be null.");
 
-    // Validar y actualizar datos del jugador
+
     if (playerUUID == null || playerName == null) {
       playerUUID = player.getUuid();
       playerName = player.getGameProfile().getName();
       update = true;
     }
 
-    // Obtener el número actual de plots
     int currentSize = plots.size();
 
-    // Si faltan plots, añadirlos
     if (currentSize < numPlots) {
       for (int i = currentSize; i < numPlots; i++) {
         plots.add(new Plot());
       }
       update = true;
-    }
-
-    // Si sobran plots, transferir Pokémon y eliminarlos
-    else if (currentSize > numPlots) {
+    } else if (currentSize > numPlots) {
       var party = Cobblemon.INSTANCE.getStorage().getParty(player);
       for (int i = currentSize - 1; i >= numPlots; i--) {
         Plot plot = plots.get(i);
-
         if (plot != null) {
           if (plot.getMale() != null) {
             PlayerUtils.sendMessage(
@@ -161,6 +151,7 @@ public class UserInformation {
             );
             party.add(plot.getFemale());
           }
+          plot.giveEggs(player);
           for (Pokemon egg : plot.getEggs()) {
             if (egg != null) {
               PlayerUtils.sendMessage(

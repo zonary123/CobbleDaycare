@@ -6,6 +6,7 @@ import ca.landonjw.gooeylibs2.api.page.GooeyPage;
 import ca.landonjw.gooeylibs2.api.template.types.ChestTemplate;
 import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.item.PokemonItem;
+import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.database.DatabaseClientFactory;
 import com.kingpixel.cobbledaycare.models.Plot;
@@ -22,6 +23,7 @@ import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.CustomModelDataComponent;
 import net.minecraft.component.type.LoreComponent;
 import net.minecraft.item.ItemStack;
+import net.minecraft.registry.DynamicRegistryManager;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.List;
@@ -74,7 +76,8 @@ public class PlotMenu {
                   CobbleDaycare.language.getPrefix(),
                   TypeMessage.CHAT
                 );
-                Cobblemon.INSTANCE.getStorage().getParty(player).add(plot.getMale());
+                Pokemon malePokemon = plot.getMale().clone(false, DynamicRegistryManager.EMPTY);
+                CobbleDaycare.server.submit(() -> Cobblemon.INSTANCE.getStorage().getParty(player).add(malePokemon)).join();
                 plot.setMale(null);
                 DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInformation);
                 open(player, plot, userInformation);
@@ -82,7 +85,7 @@ public class PlotMenu {
                 CobbleDaycare.language.getSelectPokemonMenu().open(player, plot, userInformation, SelectGender.MALE, 0);
               }
             }, CobbleDaycare.DAYCARE_EXECUTOR)
-            .orTimeout(10, TimeUnit.SECONDS)
+            .orTimeout(5, TimeUnit.SECONDS)
             .exceptionally(e -> {
               e.printStackTrace();
               return null;
@@ -117,7 +120,8 @@ public class PlotMenu {
           .onClick(action -> CompletableFuture.runAsync(() -> {
               if (CobbleDaycare.config.hasOpenCooldown(action.getPlayer())) return;
               if (plot.getFemale() != null) {
-                Cobblemon.INSTANCE.getStorage().getParty(player).add(plot.getFemale());
+                Pokemon femalePokemon = plot.getFemale().clone(false, DynamicRegistryManager.EMPTY);
+                CobbleDaycare.server.submit(() -> Cobblemon.INSTANCE.getStorage().getParty(player).add(femalePokemon)).join();
                 PlayerUtils.sendMessage(
                   player,
                   PokemonUtils.replace(CobbleDaycare.language.getMessageRemovedFemale(), plot.getFemale())
@@ -132,6 +136,7 @@ public class PlotMenu {
                 CobbleDaycare.language.getSelectPokemonMenu().open(player, plot, userInformation, SelectGender.FEMALE, 0);
               }
             }, CobbleDaycare.DAYCARE_EXECUTOR)
+            .orTimeout(5, TimeUnit.SECONDS)
             .exceptionally(e -> {
               e.printStackTrace();
               return null;

@@ -23,6 +23,7 @@ public class DatabaseClientFactory {
       }
     })
     .build();
+
   public static DatabaseClient INSTANCE;
 
   public synchronized static DatabaseClient createDatabaseClient(DataBaseConfig database) {
@@ -35,6 +36,7 @@ public class DatabaseClientFactory {
         throw new IllegalArgumentException("Unsupported database type: " + database.getType());
       }
     }
+    
     INSTANCE.connect(database);
     return INSTANCE;
   }
