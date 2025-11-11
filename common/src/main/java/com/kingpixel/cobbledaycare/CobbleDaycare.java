@@ -86,7 +86,7 @@ public class CobbleDaycare {
         List<ServerPlayerEntity> players = new ArrayList<>(server.getPlayerManager().getPlayerList());
         for (ServerPlayerEntity player : players) {
           if (player == null) continue;
-          var userinfo = DatabaseClientFactory.INSTANCE.getCacheUserInformation(player);
+          var userinfo = DatabaseClientFactory.INSTANCE.getUserInformation(player);
           if (userinfo == null) continue;
           if (userinfo.fix(player)) DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userinfo);
         }

@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class DatabaseClientFactory {
   public static final Cache<UUID, UserInformation> USER_INFORMATION_MAP = Caffeine.newBuilder()
-    .expireAfterAccess(3, TimeUnit.SECONDS)
+    .expireAfterAccess(5, TimeUnit.SECONDS)
     .removalListener((key, value, cause) -> {
       if (CobbleDaycare.config.isDebug()) {
         CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "UserInformation for player " + key + " removed from cache due to " + cause);
@@ -36,7 +36,7 @@ public class DatabaseClientFactory {
         throw new IllegalArgumentException("Unsupported database type: " + database.getType());
       }
     }
-    
+
     INSTANCE.connect(database);
     return INSTANCE;
   }

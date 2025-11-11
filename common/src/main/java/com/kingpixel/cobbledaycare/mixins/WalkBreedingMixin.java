@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 @Mixin(value = ServerPlayNetworkHandler.class, priority = 9999)
 public abstract class WalkBreedingMixin {
   @Unique private static final long TICKS_TO_MILLISECONDS = 50;
-  @Unique private static final int MAX_TELEPORT = 3;
+  @Unique private static final int MAX_TELEPORT = 2;
   // Mapa para guardar la posición inicial de cada jugador
   @Unique
   private static final Map<ServerPlayerEntity, Position> cobbleDaycare$playerPositions = new ConcurrentHashMap<>();
@@ -52,7 +52,7 @@ public abstract class WalkBreedingMixin {
       } catch (Exception e) {
         e.printStackTrace();
       }
-    }, 0, 1, TimeUnit.SECONDS);
+    }, 5, 1, TimeUnit.SECONDS);
   }
 
   @Unique
@@ -71,6 +71,8 @@ public abstract class WalkBreedingMixin {
     for (int i = 0; i < size; i++) {
       try {
         ServerPlayerEntity player = players.get(i);
+        UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
+        if (userInformation == null) continue;
         if (player == null || !player.isAlive() || player.isRemoved()) continue;
         if (!cobbleDaycare$isPlayerEligibleForStepUpdate(player)) continue;
 
@@ -130,7 +132,7 @@ public abstract class WalkBreedingMixin {
 
   @Unique
   private static void cobbleDaycare$updateEggSteps(PlayerPartyStore party, double deltaMovement, ServerPlayerEntity player) {
-    UserInformation userInformation = DatabaseClientFactory.INSTANCE.getCacheUserInformation(player);
+    UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
     if (userInformation == null) return;
     for (Pokemon pokemon : party) {
       if (pokemon != null && "egg".equals(pokemon.showdownId())) {
@@ -140,7 +142,7 @@ public abstract class WalkBreedingMixin {
   }
 
   @Unique private static void cobbleDaycare$sendMessage(ServerPlayerEntity player) {
-    UserInformation userInformation = DatabaseClientFactory.INSTANCE.getCacheUserInformation(player);
+    UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
     if (userInformation == null) return;
     long timeMultiplierSteps = userInformation.getTimeMultiplierSteps();
 
@@ -162,8 +164,8 @@ public abstract class WalkBreedingMixin {
   @Unique
   private static void cobbleDaycare$sendMessageMultiplierSteps(UserInformation userInformation, ServerPlayerEntity player) {
     boolean activeMultiplier = CobbleDaycare.config.isGlobalMultiplierSteps();
-    float actualSteps = userInformation.getActualMultiplier(player);
-    boolean hasMultiplier = actualSteps > CobbleDaycare.config.getMultiplierSteps();
+    float multiplier = userInformation.getActualMultiplier(player);
+    boolean hasMultiplier = multiplier >= CobbleDaycare.config.getMultiplierSteps();
 
     if (activeMultiplier || hasMultiplier) {
       long cooldown = userInformation.getTimeMultiplierSteps() * TICKS_TO_MILLISECONDS;
@@ -172,7 +174,7 @@ public abstract class WalkBreedingMixin {
       PlayerUtils.sendMessage(
         player,
         CobbleDaycare.language.getMessageActiveStepsMultiplier()
-          .replace("%multiplier%", String.format("%.2f", actualSteps))
+          .replace("%multiplier%", String.format("%.2f", multiplier))
           .replace("%cooldown%", cooldownMessage)
           .replace("%time%", cooldownMessage),
         CobbleDaycare.language.getPrefix(),

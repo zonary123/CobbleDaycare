@@ -73,13 +73,14 @@ public class UserInformation {
   }
 
   public float getActualMultiplier(ServerPlayerEntity player) {
-    float steps = CobbleDaycare.config.getMultiplierSteps();
+    float multiplier = CobbleDaycare.config.getMultiplierSteps();
     for (Map.Entry<String, Float> entry : CobbleDaycare.config.getMultiplierStepsPermission().entrySet()) {
-      if (steps <= entry.getValue() && PermissionApi.hasPermission(player, entry.getKey(), 2)) {
-        steps = entry.getValue();
+      if (entry.getValue() <= multiplier) continue;
+      if (PermissionApi.hasPermission(player, entry.getKey(), 2)) {
+        multiplier = entry.getValue();
       }
     }
-    return Math.max(steps, multiplierSteps);
+    return Math.max(multiplier, this.multiplierSteps);
   }
 
   public boolean hasCooldownHatch(ServerPlayerEntity player) {
