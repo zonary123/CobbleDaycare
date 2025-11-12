@@ -137,7 +137,8 @@ public class UserInformation {
           if (plot.getMale() != null) {
             PlayerUtils.sendMessage(
               player,
-              "Your Pokémon " + plot.getMale().getDisplayName().getString() + " has been returned to your party because the plot has been removed.",
+              "Your Pokémon " + plot.getMale().getDisplayName(false).getString() + " has been returned to your party " +
+                "because the plot has been removed.",
               CobbleDaycare.language.getPrefix(),
               TypeMessage.CHAT
             );
@@ -146,7 +147,8 @@ public class UserInformation {
           if (plot.getFemale() != null) {
             PlayerUtils.sendMessage(
               player,
-              "Your Pokémon " + plot.getFemale().getDisplayName().getString() + " has been returned to your party because the plot has been removed.",
+              "Your Pokémon " + plot.getFemale().getDisplayName(false).getString() + " has been returned to your party " +
+                "because the plot has been removed.",
               CobbleDaycare.language.getPrefix(),
               TypeMessage.CHAT
             );
