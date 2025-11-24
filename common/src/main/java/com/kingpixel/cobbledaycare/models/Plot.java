@@ -232,7 +232,7 @@ public class Plot {
             );
           }
           if (PermissionApi.hasPermission(player, CobbleDaycare.MOD_ID + ".autoclaim", 4)) {
-            Cobblemon.INSTANCE.getStorage().getParty(player).add(egg);
+            CobbleDaycare.server.executeSync(() -> Cobblemon.INSTANCE.getStorage().getParty(player).add(egg));
           } else {
             eggs.add(egg);
           }
