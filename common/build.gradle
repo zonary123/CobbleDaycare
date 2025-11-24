@@ -1,5 +1,5 @@
 architectury {
-    common("fabric", "neoforge")
+    common("fabric")
 }
 
 loom {
@@ -12,13 +12,12 @@ dependencies {
     modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
 
     modImplementation "dev.architectury:architectury:${project.architectury_version}"
-
-
+    
     modImplementation("com.cobblemon:fabric:${property("cobblemon_version")}")
     // alL fabric dependencies:
     modImplementation("ca.landonjw.gooeylibs:fabric-api-repack:${property("gooeylibs_version")}")
 
-    modImplementation(fileTree("libs") { include("*.jar") })
+    modImplementation(fileTree("libs") { include("*.jar"); exclude("fabric-*") })
 
     // Database
     api("org.mongodb:mongodb-driver-sync:${property("mongodb_version")}")
@@ -33,7 +32,7 @@ dependencies {
 
     //Discord
     api("club.minnced:discord-webhooks:${property("discord_webhooks_version")}")
-    
+
     // https://mvnrepository.com/artifact/com.github.ben-manes.caffeine/caffeine
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.3")
 

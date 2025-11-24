@@ -64,6 +64,7 @@ public class DayCareAbility extends Mechanics {
   public void applyEgg(EggBuilder builder) {
     Pokemon male = builder.getMale();
     Pokemon female = builder.getFemale();
+    if (male == null || female == null) return;
     boolean maleHA = PokemonUtils.isAH(male);
     boolean femaleHA = PokemonUtils.isAH(female);
     boolean maleIsDitto = isDitto(male);

@@ -10,6 +10,7 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.ReplaceOptions;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.bson.Document;
@@ -59,8 +60,9 @@ public class MongoDBClient extends DatabaseClient {
     UUID uuid = player.getUuid();
     UserInformation userInformation = DatabaseClientFactory.USER_INFORMATION_MAP.getIfPresent(uuid);
     if (userInformation != null) return userInformation;
-    Document document = collection.find(eq("playerUUID", uuid.toString())).first();
+    Document document = collection.find(Filters.eq("playerUUID", uuid.toString())).first();
     if (document != null) {
+      // Load user information from the document
       userInformation = UserInformation.fromDocument(document);
       CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID,
         "User information loaded from MongoDB: " + userInformation.getPlayerName() + " (" + userInformation.getPlayerUUID() + ")");

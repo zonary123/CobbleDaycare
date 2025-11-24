@@ -77,8 +77,8 @@ public class PlotMenu {
                   TypeMessage.CHAT
                 );
                 Pokemon malePokemon = plot.getMale().clone(false, DynamicRegistryManager.EMPTY);
-                CobbleDaycare.server.submit(() -> Cobblemon.INSTANCE.getStorage().getParty(player).add(malePokemon)).join();
                 plot.setMale(null);
+                CobbleDaycare.server.submit(() -> Cobblemon.INSTANCE.getStorage().getParty(player).add(malePokemon)).join();
                 DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInformation);
                 open(player, plot, userInformation);
               } else {
@@ -112,6 +112,7 @@ public class PlotMenu {
         eggButton.setDisplay(displayEgg);
         egg.applyTemplate(template, eggButton);
 
+        // Female
         GooeyButton femaleButton = GooeyButton
           .builder()
           .display(plot.getFemale() != null ? PokemonItem.from(plot.getFemale()) : female.getItemStack())
@@ -120,8 +121,6 @@ public class PlotMenu {
           .onClick(action -> CompletableFuture.runAsync(() -> {
               if (CobbleDaycare.config.hasOpenCooldown(action.getPlayer())) return;
               if (plot.getFemale() != null) {
-                Pokemon femalePokemon = plot.getFemale().clone(false, DynamicRegistryManager.EMPTY);
-                CobbleDaycare.server.submit(() -> Cobblemon.INSTANCE.getStorage().getParty(player).add(femalePokemon)).join();
                 PlayerUtils.sendMessage(
                   player,
                   PokemonUtils.replace(CobbleDaycare.language.getMessageRemovedFemale(), plot.getFemale())
@@ -129,7 +128,10 @@ public class PlotMenu {
                   CobbleDaycare.language.getPrefix(),
                   TypeMessage.CHAT
                 );
+                Pokemon femalePokemon = plot.getFemale().clone(false, DynamicRegistryManager.EMPTY);
                 plot.setFemale(null);
+                CobbleDaycare.server.submit(() -> Cobblemon.INSTANCE.getStorage().getParty(player).add(femalePokemon)).join();
+
                 DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInformation);
                 open(player, plot, userInformation);
               } else {
@@ -144,9 +146,7 @@ public class PlotMenu {
           .build();
         female.applyTemplate(template, femaleButton);
 
-        template.set(close.getSlot(), close.getButton(action -> {
-          CobbleDaycare.language.getPrincipalMenu().open(player);
-        }));
+        template.set(close.getSlot(), close.getButton(action -> CobbleDaycare.language.getPrincipalMenu().open(player)));
 
         GooeyPage page = GooeyPage.builder()
           .template(template)

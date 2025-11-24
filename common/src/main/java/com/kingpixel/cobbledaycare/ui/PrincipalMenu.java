@@ -4,7 +4,7 @@ import ca.landonjw.gooeylibs2.api.UIManager;
 import ca.landonjw.gooeylibs2.api.button.GooeyButton;
 import ca.landonjw.gooeylibs2.api.page.GooeyPage;
 import ca.landonjw.gooeylibs2.api.template.types.ChestTemplate;
-import com.cobblemon.mod.common.Cobblemon;
+import com.cobblemon.mod.common.battles.BattleRegistry;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.database.DatabaseClientFactory;
@@ -87,7 +87,8 @@ public class PrincipalMenu {
   }
 
   private boolean isBattle(ServerPlayerEntity player) {
-    var battle = Cobblemon.INSTANCE.getBattleRegistry().getBattleByParticipatingPlayer(player);
+    //var battle = BattleRegistry.getBattleByParticipatingPlayer(player);
+    var battle = BattleRegistry.INSTANCE.getBattleByParticipatingPlayer(player);
     return battle != null;
   }
 

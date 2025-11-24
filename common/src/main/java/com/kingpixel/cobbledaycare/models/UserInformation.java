@@ -5,6 +5,7 @@ import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.google.gson.Gson;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.mechanics.DayCarePokemon;
+import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.api.PermissionApi;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
 import com.kingpixel.cobbleutils.util.TypeMessage;
@@ -16,10 +17,9 @@ import lombok.ToString;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.bson.Document;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author Carlos Varas Alonso - 31/01/2025 1:16
@@ -34,6 +34,7 @@ public class UserInformation {
   private UUID playerUUID;
   private String playerName;
   private String country;
+  private long connectedTime;
   private boolean notifyCreateEgg;
   private boolean notifyLimitEggs;
   private boolean notifyBanPokemon;
@@ -42,7 +43,7 @@ public class UserInformation {
   private long timeMultiplierSteps;
   private long cooldownHatch;
   private long cooldownBreed;
-  private List<Plot> plots;
+  private CopyOnWriteArrayList<Plot> plots;
 
   public UserInformation() {
     this.playerUUID = null;
@@ -55,7 +56,7 @@ public class UserInformation {
     this.notifyBanPokemon = userInfoOptions.isNotifyBanPokemon();
     this.notifyCreateEgg = userInfoOptions.isNotifyCreateEgg();
     this.actionBar = userInfoOptions.isActionBar();
-    this.plots = new ArrayList<>();
+    this.plots = new CopyOnWriteArrayList<>();
   }
 
   public UserInformation(ServerPlayerEntity player) {
@@ -64,11 +65,11 @@ public class UserInformation {
     this.playerName = player.getGameProfile().getName();
   }
 
-  public static UserInformation fromDocument(Document document) {
+  public synchronized static UserInformation fromDocument(Document document) {
     return GSON.fromJson(document.toJson(), UserInformation.class);
   }
 
-  public Document toDocument() {
+  public synchronized Document toDocument() {
     return Document.parse(GSON.toJson(this));
   }
 
@@ -109,7 +110,8 @@ public class UserInformation {
     boolean update = false;
 
     if (plots == null) {
-      plots = new ArrayList<>();
+      CobbleUtils.LOGGER.error(CobbleDaycare.MOD_ID, "UserInformation plots was null for player " + player.getGameProfile().getName() + " fixing...");
+      plots = new CopyOnWriteArrayList<>();
       update = true;
     }
 
@@ -167,7 +169,6 @@ public class UserInformation {
             }
           }
         }
-
         plots.remove(i);
       }
       update = true;
@@ -179,6 +180,11 @@ public class UserInformation {
 
   public synchronized boolean fix(ServerPlayerEntity player) {
     boolean update = false;
+    if (plots == null) {
+      CobbleUtils.LOGGER.error(CobbleDaycare.MOD_ID, "UserInformation plots was null for player " + player.getGameProfile().getName() + " fixing...");
+      plots = new CopyOnWriteArrayList<>();
+      update = true;
+    }
     for (Plot plot : plots) {
       for (Pokemon egg : plot.getEggs()) {
         if (egg == null) {

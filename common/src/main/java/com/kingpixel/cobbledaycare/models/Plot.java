@@ -16,12 +16,14 @@ import com.kingpixel.cobbleutils.util.PokemonUtils;
 import com.kingpixel.cobbleutils.util.TypeMessage;
 import lombok.Data;
 import lombok.ToString;
+import net.minecraft.registry.DynamicRegistryManager;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author Carlos Varas Alonso - 31/01/2025 1:17
@@ -31,14 +33,14 @@ import java.util.UUID;
 public class Plot {
   private Pokemon male;
   private Pokemon female;
-  private List<Pokemon> eggs;
+  private CopyOnWriteArrayList<Pokemon> eggs;
   private long timeToHatch;
   private long canOpen;
 
   public Plot() {
     this.male = null;
     this.female = null;
-    this.eggs = new ArrayList<>();
+    this.eggs = new CopyOnWriteArrayList<>();
     this.timeToHatch = 0;
     this.canOpen = 0;
   }
@@ -100,11 +102,7 @@ public class Plot {
     return false;
   }
 
-  public boolean hasCooldownToOpen(ServerPlayerEntity player) {
-    return canOpen > System.currentTimeMillis();
-  }
-
-  public void setTime(ServerPlayerEntity player) {
+  public synchronized void setTime(ServerPlayerEntity player) {
     if (hasTwoParents()) {
       long cooldown = PlayerUtils.getCooldown(CobbleDaycare.config.getCooldowns(), CobbleDaycare.config.getCooldown()
         , player);
@@ -182,6 +180,7 @@ public class Plot {
 
       boolean femaleCanBreed = canBreed(female, SelectGender.FEMALE);
       boolean maleCanBreed = canBreed(male, SelectGender.MALE);
+      var party = Cobblemon.INSTANCE.getStorage().getParty(player);
       if (!femaleCanBreed) {
         PlayerUtils.sendMessage(
           player,
@@ -190,7 +189,8 @@ public class Plot {
           CobbleDaycare.language.getPrefix(),
           TypeMessage.CHAT
         );
-        CobbleDaycare.server.execute(() -> Cobblemon.INSTANCE.getStorage().getParty(player).add(female));
+        Pokemon pokemonFemale = female.clone(false, DynamicRegistryManager.EMPTY);
+        CobbleDaycare.server.executeSync(() -> party.add(pokemonFemale));
         setFemale(null);
       }
       if (!maleCanBreed) {
@@ -201,7 +201,8 @@ public class Plot {
           CobbleDaycare.language.getPrefix(),
           TypeMessage.CHAT
         );
-        CobbleDaycare.server.execute(() -> Cobblemon.INSTANCE.getStorage().getParty(player).add(male));
+        Pokemon pokemonMale = male.clone(false, DynamicRegistryManager.EMPTY);
+        CobbleDaycare.server.executeSync(() -> party.add(pokemonMale));
         setMale(null);
       }
       if (!maleCanBreed || !femaleCanBreed) return true;
@@ -246,15 +247,13 @@ public class Plot {
     }
   }
 
-  private void fixCooldown(ServerPlayerEntity player) {
+  private synchronized void fixCooldown(ServerPlayerEntity player) {
     long correctCooldown = PlayerUtils.getCooldown(CobbleDaycare.config.getCooldowns(), CobbleDaycare.config.getCooldown(), player);
     long correctTimeToHatch = System.currentTimeMillis() + correctCooldown;
-    if (timeToHatch > correctTimeToHatch) {
-      timeToHatch = correctTimeToHatch;
-    }
+    if (timeToHatch > correctTimeToHatch) timeToHatch = correctTimeToHatch;
   }
 
-  public Pokemon createEgg(ServerPlayerEntity player) {
+  public synchronized Pokemon createEgg(ServerPlayerEntity player) {
     Pokemon egg = PokemonProperties.Companion.parse("egg").create();
     egg.setUuid(UUID.randomUUID());
     Pokemon firstEvolution = female;

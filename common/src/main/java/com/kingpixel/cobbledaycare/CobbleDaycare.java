@@ -19,6 +19,7 @@ import com.kingpixel.cobbledaycare.mechanics.*;
 import com.kingpixel.cobbledaycare.models.Plot;
 import com.kingpixel.cobbledaycare.models.UserInformation;
 import com.kingpixel.cobbledaycare.properties.BreedablePropertyType;
+import com.kingpixel.cobbledaycare.tasks.TaskDayCare;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.Model.CobbleUtilsTags;
 import com.kingpixel.cobbleutils.api.PermissionApi;
@@ -61,6 +62,7 @@ public class CobbleDaycare {
       .setDaemon(true)
       .setNameFormat("CobbleDaycare-Scheduler-%d")
       .build());
+  private static final TaskDayCare TASK_DAY_CARE = new TaskDayCare();
   public static MinecraftServer server;
   public static Config config = new Config();
   public static Language language = new Language();
@@ -101,7 +103,6 @@ public class CobbleDaycare {
     config.init();
     language.init();
     mechanics.clear();
-
     mechanics.addAll(
       List.of(
         new DayCarePokemon().getInstance(),
@@ -154,78 +155,70 @@ public class CobbleDaycare {
     LifecycleEvent.SERVER_STARTED.register(minecraftServer -> {
       server = minecraftServer;
       load();
-      for (int i = 0; i < config.getSlotPlots().size(); i++) {
+      int size = config.getSlotPlots().size();
+      for (int i = 0; i < size; i++) {
         PermissionApi.hasPermission(server.getCommandSource(), Plot.plotPermission(i), 4);
       }
       CustomPokemonProperty.Companion.register(BreedablePropertyType.getInstance());
     });
 
-    LifecycleEvent.SERVER_STOPPING.register(minecraftServer -> {
-      DatabaseClientFactory.INSTANCE.disconnect();
-    });
+    LifecycleEvent.SERVER_STOPPING.register(minecraftServer -> DatabaseClientFactory.INSTANCE.disconnect());
 
     LifecycleEvent.SERVER_STOPPED.register(server -> {
       CobbleUtils.shutdownAndAwait(DAYCARE_EXECUTOR);
       CobbleUtils.shutdownAndAwait(SCHEDULER_DAYCARE);
     });
 
-    PlayerEvent.PLAYER_JOIN.register(player -> {
-      long start = System.currentTimeMillis();
-      CompletableFuture.runAsync(() -> {
-          UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
-          boolean update = false;
-          if (userInformation.getCountry() == null) {
-            UserInfo info = playerCountry.computeIfAbsent(player.getUuid(), uuid -> fetchCountryInfo(player));
-            if (info != null) {
-              userInformation.setCountry(info.country());
-              update = true;
-            }
-          }
-
-          fixPlayer(player);
-
-          int numPlots = 1;
-          int size = CobbleDaycare.config.getSlotPlots().size();
-          for (int i = 0; i < size; i++) {
-            if (PermissionApi.hasPermission(player, Plot.plotPermission(i), 4)) {
-              numPlots = i + 1;
-            }
-          }
-
-          if (userInformation.check(numPlots, player)) update = true;
-          if (userInformation.fix(player)) update = true;
-
-          if (update) DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInformation);
-
-          long end = System.currentTimeMillis();
-          if (config.isDebug()) {
-            CobbleUtils.LOGGER.info(MOD_ID, "Time to load player " + player.getName().getString() + ": " + (end - start) + "ms");
-          }
-
-        }, DAYCARE_EXECUTOR)
-        .orTimeout(10, TimeUnit.SECONDS)
-        .exceptionally(e -> {
-          CobbleUtils.LOGGER.error(MOD_ID, "Error on player join: " + player.getName().getString());
-          e.printStackTrace();
-          return null;
-        });
-    });
-
-    PlayerEvent.PLAYER_QUIT.register(player -> CompletableFuture.runAsync(() -> {
-        UserInformation userInfo = DatabaseClientFactory.INSTANCE.getUserInformation(player);
-        if (userInfo.getCountry() == null) {
+    PlayerEvent.PLAYER_JOIN.register(player -> CompletableFuture.runAsync(() -> {
+        UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
+        userInformation.setConnectedTime(System.currentTimeMillis());
+        boolean update = false;
+        if (userInformation.getCountry() == null) {
           UserInfo info = playerCountry.computeIfAbsent(player.getUuid(), uuid -> fetchCountryInfo(player));
-          if (info != null) userInfo.setCountry(info.country());
+          if (info != null) {
+            userInformation.setCountry(info.country());
+            update = true;
+          }
         }
-        DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInfo);
-        DatabaseClientFactory.INSTANCE.removeFromCache(player);
+
+        fixPlayer(player);
+
+        int numPlots = 1;
+        int size = CobbleDaycare.config.getSlotPlots().size();
+        for (int i = 0; i < size; i++) {
+          if (PermissionApi.hasPermission(player, Plot.plotPermission(i), 4)) {
+            numPlots = i + 1;
+          }
+        }
+
+        if (userInformation.check(numPlots, player)) update = true;
+        if (userInformation.fix(player)) update = true;
+
+        if (update) DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInformation);
       }, DAYCARE_EXECUTOR)
-      .orTimeout(5, TimeUnit.SECONDS)
+      .orTimeout(10, TimeUnit.SECONDS)
       .exceptionally(e -> {
-        CobbleUtils.LOGGER.error(MOD_ID, "Error on player quit: " + player.getName().getString());
+        CobbleUtils.LOGGER.error(MOD_ID, "Error on player join: " + player.getName().getString());
         e.printStackTrace();
         return null;
       }));
+
+    PlayerEvent.PLAYER_QUIT.register(player -> CompletableFuture.runAsync(() -> {
+          UserInformation userInfo = DatabaseClientFactory.INSTANCE.getUserInformation(player);
+          if (userInfo.getCountry() == null) {
+            UserInfo info = playerCountry.computeIfAbsent(player.getUuid(), uuid -> fetchCountryInfo(player));
+            if (info != null) userInfo.setCountry(info.country());
+          }
+          DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInfo);
+          DatabaseClientFactory.INSTANCE.removeFromCache(player);
+        }, DAYCARE_EXECUTOR)
+        .orTimeout(5, TimeUnit.SECONDS)
+        .exceptionally(e -> {
+          CobbleUtils.LOGGER.error(MOD_ID, "Error on player quit: " + player.getName().getString());
+          e.printStackTrace();
+          return null;
+        })
+    );
 
     CobblemonEvents.POKEMON_CAPTURED.subscribe(Priority.HIGHEST, evt -> {
       fixBreedable(evt.getPokemon());
@@ -259,7 +252,7 @@ public class CobbleDaycare {
           mechanic.createEgg(null, pokemon, egg);
         }
         egg.getPersistentData().putBoolean(TAG_SPAWNED, true);
-        pokemonEntity.setMovementSpeed(0);
+        pokemonEntity.speed = 0;
         pokemonEntity.setAiDisabled(true);
         pokemonEntity.setPokemon(egg);
       }
@@ -301,16 +294,18 @@ public class CobbleDaycare {
     for (Pokemon pokemon : party) {
       fixBreedable(pokemon);
       fixCountryInfo(pokemon, userinfo.getCountry());
-      if (config.isFixIlegalAbilities())
+      if (config.isFixIlegalAbilities()) {
         PokemonUtils.isLegalAbility(pokemon);
+      }
     }
 
     var pc = Cobblemon.INSTANCE.getStorage().getPC(player);
     for (Pokemon pokemon : pc) {
       fixBreedable(pokemon);
       fixCountryInfo(pokemon, userinfo.getCountry());
-      if (config.isFixIlegalAbilities())
+      if (config.isFixIlegalAbilities()) {
         PokemonUtils.isLegalAbility(pokemon);
+      }
     }
   }
 
@@ -324,11 +319,20 @@ public class CobbleDaycare {
   public static void fixBreedable(Pokemon pokemon) {
     var nbt = pokemon.getPersistentData();
     boolean isNotBreedable = Plot.isNotBreedable(pokemon);
-    if (!nbt.getBoolean(CobbleUtilsTags.BREEDABLE_BUILDER_TAG)) setBreedable(pokemon, !isNotBreedable);
-    if (isNotBreedable) setBreedable(pokemon, false);
+    boolean builderOverride = nbt.getBoolean(CobbleUtilsTags.BREEDABLE_BUILDER_TAG);
+
+    if (isNotBreedable) {
+      setBreedable(pokemon, false);
+      return;
+    }
+
+    if (!builderOverride) {
+      setBreedable(pokemon, true);
+    }
   }
 
-  public static void setBreedable(Pokemon pokemon, boolean value) {
+
+  public static synchronized void setBreedable(Pokemon pokemon, boolean value) {
     pokemon.getPersistentData().putBoolean(CobbleUtilsTags.BREEDABLE_TAG, value);
   }
 
