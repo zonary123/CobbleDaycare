@@ -39,7 +39,7 @@ public class TaskDayCare implements Runnable {
   public TaskDayCare() {
     cobbleDaycare$scheduler.scheduleAtFixedRate(this, 5, 1, java.util.concurrent.TimeUnit.SECONDS);
   }
-  
+
   private static void cobbleDaycare$sendMessageMultiplierSteps(UserInformation userInformation, ServerPlayerEntity player) {
     boolean activeMultiplier = CobbleDaycare.config.isGlobalMultiplierSteps();
     float multiplier = userInformation.getActualMultiplier(player);
@@ -73,7 +73,6 @@ public class TaskDayCare implements Runnable {
   private boolean cobbleDaycare$isPlayerEligibleForStepUpdate(ServerPlayerEntity player) {
     return (CobbleDaycare.config.isAllowElytra() || !player.isInPose(EntityPose.FALL_FLYING))
       && !player.getAbilities().flying
-      && !player.isInvulnerable()
       && cobbleDaycare$isVehiclePermitted(player)
       && (!player.isTouchingWater() || player.isInPose(EntityPose.SWIMMING));
   }
