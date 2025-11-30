@@ -140,7 +140,7 @@ public class Plot {
     List<Pokemon> remove = new ArrayList<>();
     for (Pokemon egg : eggs) {
       if (egg == null) continue;
-      Cobblemon.INSTANCE.getStorage().getParty(player).add(egg);
+      CobbleDaycare.server.execute(() -> Cobblemon.INSTANCE.getStorage().getParty(player).add(egg));
       remove.add(egg);
     }
     if (!remove.isEmpty()) {

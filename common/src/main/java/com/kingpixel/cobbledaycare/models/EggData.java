@@ -165,13 +165,13 @@ public class EggData {
       if (builder.getPokemon() != null && builder.getEgg() != null) {
         builder.getPokemon().setLevel(level);
         CobbleDaycare.fixBreedable(builder.getPokemon());
-        CobbleUtils.server.submit(() -> {
+        CobbleUtils.server.executeSync(() -> {
           party.remove(egg);
           party.add(builder.getPokemon());
           HatchEggEvent.HATCH_EGG_EVENT.emit(builder.getPlayer(), builder.getPokemon());
           CobblemonEvents.HATCH_EGG_POST.emit(new com.cobblemon.mod.common.api.events.pokemon.HatchEggEvent.Post(
             builder.getPlayer(), builder.getEgg()));
-        }).join();
+        });
       }
     } catch (Exception e) {
       CobbleUtils.LOGGER.error("Error hatching egg");

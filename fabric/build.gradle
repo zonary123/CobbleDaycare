@@ -61,7 +61,6 @@ processResources {
                 "license", project.property("license"),
                 "mod_icon", project.property("mod_icon"),
                 "environment", project.property("environment"),
-                "supported_minecraft_versions", project.property("supported_minecraft_versions")
         )
     }
 }
