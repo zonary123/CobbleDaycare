@@ -98,13 +98,6 @@ public class DayCareAbility extends Mechanics {
       }
     }
 
-    Ability ability;
-    if (result)
-      ability = getHa(builder.getFirstEvolution());
-    else
-      ability = PokemonUtils.getRandomAbility(builder.getFirstEvolution());
-
-    builder.getEgg().getPersistentData().putString(TAG, ability.getName());
     builder.getEgg().getPersistentData().putBoolean(TAG_HA, result);
   }
 
@@ -113,17 +106,11 @@ public class DayCareAbility extends Mechanics {
   public void applyHatch(HatchBuilder builder) {
     Pokemon egg = builder.getEgg();
     Pokemon pokemon = builder.getPokemon();
-    String s = egg.getPersistentData().getString(TAG);
     boolean isHA = egg.getPersistentData().getBoolean(TAG_HA);
 
-    if (s.isEmpty()) {
-      if (isHA) {
-        s = getHa(pokemon).getName();
-      } else {
-        s = PokemonUtils.getRandomAbility(pokemon).getName();
-      }
-    }
-    PokemonProperties.Companion.parse("ability=" + s).apply(pokemon);
+    String s = isHA ? "yes" : "no";
+
+    PokemonProperties.Companion.parse("hiddenability=" + s).apply(pokemon);
     egg.getPersistentData().remove(TAG);
     egg.getPersistentData().remove(TAG_HA);
   }
