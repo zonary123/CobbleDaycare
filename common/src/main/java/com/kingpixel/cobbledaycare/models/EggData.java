@@ -165,18 +165,18 @@ public class EggData {
       if (builder.getPokemon() != null && builder.getEgg() != null) {
         builder.getPokemon().setLevel(level);
         CobbleDaycare.fixBreedable(builder.getPokemon());
-        CobbleUtils.server.executeSync(() -> {
+        CobbleUtils.server.execute(() -> {
           party.remove(egg);
           party.add(builder.getPokemon());
-          HatchEggEvent.HATCH_EGG_EVENT.emit(builder.getPlayer(), builder.getPokemon());
-          CobblemonEvents.HATCH_EGG_POST.emit(new com.cobblemon.mod.common.api.events.pokemon.HatchEggEvent.Post(
-            builder.getPlayer(), builder.getEgg()));
         });
+        HatchEggEvent.HATCH_EGG_EVENT.emit(builder.getPlayer(), builder.getPokemon());
+        CobblemonEvents.HATCH_EGG_POST.emit(new com.cobblemon.mod.common.api.events.pokemon.HatchEggEvent.Post(
+          builder.getPlayer(), builder.getEgg()));
       }
     } catch (Exception e) {
       CobbleUtils.LOGGER.error("Error hatching egg");
       e.printStackTrace();
-      CobbleUtils.server.executeSync(() -> Cobblemon.INSTANCE.getStorage().getParty(player).remove(egg));
+      CobbleUtils.server.execute(() -> Cobblemon.INSTANCE.getStorage().getParty(player).remove(egg));
       PlayerUtils.sendMessage(
         player,
         "Error hatching egg corrupted data or invalid egg talk to the admins for help",
