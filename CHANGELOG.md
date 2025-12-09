@@ -12,3 +12,5 @@
 
 ### Bug Fixes
 
+- Fixed a bug that caused the breeding time to reset if you had more than one egg slot and picked up an egg before the
+  second egg from the daycare was ready to be collected.
