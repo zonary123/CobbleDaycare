@@ -1,8 +1,0 @@
-{
-  "type": "choice",
-  "keys": ["egg_crack"],
-  "default": "none",
-  "choices": ["none", "25", "50", "75"],
-  "isAspect": true,
-  "aspectFormat": "{{choice}}-eggcrack"
-}

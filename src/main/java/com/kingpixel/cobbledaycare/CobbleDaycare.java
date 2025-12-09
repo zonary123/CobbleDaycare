@@ -29,6 +29,7 @@ import dev.architectury.event.events.common.CommandRegistrationEvent;
 import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.event.events.common.PlayerEvent;
 import kotlin.Unit;
+import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -43,7 +44,7 @@ import java.util.concurrent.*;
 /**
  * @author Carlos Varas Alonso - 23/07/2024 9:24
  */
-public class CobbleDaycare {
+public class CobbleDaycare implements ModInitializer {
   public static final String MOD_ID = "cobbledaycare";
   public static final String PATH = "/config/cobbledaycare/";
   public static final String PATH_LANGUAGE = PATH + "lang/";
@@ -66,14 +67,6 @@ public class CobbleDaycare {
   public static MinecraftServer server;
   public static Config config = new Config();
   public static Language language = new Language();
-
-  public static void init() {
-    server = (MinecraftServer) FabricLoader.getInstance().getGameInstance();
-    load();
-    events();
-    tasks();
-  }
-
 
   public static void load() {
     CobbleUtils.info(MOD_ID, "1.0.0", "https://github.com/zonary123/CobbleDaycare");
@@ -287,7 +280,6 @@ public class CobbleDaycare {
     return null;
   }
 
-
   private static void fixPlayer(ServerPlayerEntity player) {
     var userinfo = DatabaseClientFactory.INSTANCE.getUserInformation(player);
     var party = Cobblemon.INSTANCE.getStorage().getParty(player);
@@ -331,9 +323,15 @@ public class CobbleDaycare {
     }
   }
 
-
   public static synchronized void setBreedable(Pokemon pokemon, boolean value) {
     pokemon.getPersistentData().putBoolean(CobbleUtilsTags.BREEDABLE_TAG, value);
+  }
+
+  @Override public void onInitialize() {
+    server = (MinecraftServer) FabricLoader.getInstance().getGameInstance();
+    load();
+    events();
+    tasks();
   }
 
   public record UserInfo(String country, String countryCode, String language) {

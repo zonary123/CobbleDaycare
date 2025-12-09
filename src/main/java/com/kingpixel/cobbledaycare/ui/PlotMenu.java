@@ -99,7 +99,7 @@ public class PlotMenu {
           .with(DataComponentTypes.CUSTOM_MODEL_DATA, new CustomModelDataComponent((int) egg.getCustomModelData()))
           .onClick(action -> CompletableFuture.runAsync(() -> {
               if (plot.giveEggs(player)) {
-                if (plot.limitEggs(player) >= plot.getEggs().size()) plot.setTime(player);
+                if (plot.getEggs().size() >= plot.limitEggs(player)) plot.setTime(player);
                 DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInformation);
                 CobbleDaycare.language.getPrincipalMenu().open(player);
               }

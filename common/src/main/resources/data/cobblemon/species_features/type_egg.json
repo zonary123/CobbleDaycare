@@ -1,8 +1,0 @@
-{
-  "type": "choice",
-  "keys": ["type_egg"],
-  "default": "none",
-  "choices": ["none", "zorua"],
-  "isAspect": true,
-  "aspectFormat": "{{choice}}-eggtype"
-}
