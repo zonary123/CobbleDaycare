@@ -155,9 +155,8 @@ public class CobbleDaycare implements ModInitializer {
       CustomPokemonProperty.Companion.register(BreedablePropertyType.getInstance());
     });
 
-    LifecycleEvent.SERVER_STOPPING.register(minecraftServer -> DatabaseClientFactory.INSTANCE.disconnect());
-
     LifecycleEvent.SERVER_STOPPED.register(server -> {
+      DatabaseClientFactory.INSTANCE.disconnect();
       CobbleUtils.shutdownAndAwait(DAYCARE_EXECUTOR);
       CobbleUtils.shutdownAndAwait(SCHEDULER_DAYCARE);
     });

@@ -73,14 +73,24 @@ public class JSONClient extends DatabaseClient {
 
   @Override public void saveOrUpdateUserInformation(ServerPlayerEntity player, UserInformation userInformation) {
     if (player == null || userInformation == null) return;
-    saveOrUpdateUserInformation(player.getUuid(), userInformation);
+    if (CobbleDaycare.server.isStopped() || CobbleDaycare.server.isStopping()) {
+      saveOrUpdateUserInformation(player.getUuid(), userInformation);
+    } else {
+      CompletableFuture.runAsync(() -> saveOrUpdateUserInformation(player.getUuid(), userInformation), CobbleDaycare.DAYCARE_EXECUTOR)
+        .orTimeout(5, java.util.concurrent.TimeUnit.SECONDS)
+        .exceptionally(e -> {
+          e.printStackTrace();
+          return null;
+        });
+    }
   }
 
   private void saveOrUpdateUserInformation(UUID playerUUID, UserInformation userInformation) {
     DatabaseClientFactory.USER_INFORMATION_MAP.put(playerUUID, userInformation);
-    Utils.writeFileAsync(
+    Utils.writeFileSync(
       Utils.getAbsolutePath(CobbleDaycare.PATH_DATA + playerUUID.toString() + ".json"),
       UserInformation.GSON.toJson(userInformation)
     );
   }
+
 }
