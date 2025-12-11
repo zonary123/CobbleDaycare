@@ -23,7 +23,6 @@ import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.CustomModelDataComponent;
 import net.minecraft.component.type.LoreComponent;
 import net.minecraft.item.ItemStack;
-import net.minecraft.registry.DynamicRegistryManager;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.List;
@@ -77,7 +76,7 @@ public class PlotMenu {
                   CobbleDaycare.language.getPrefix(),
                   TypeMessage.CHAT
                 );
-                Pokemon malePokemon = plot.getMale().clone(false, DynamicRegistryManager.EMPTY);
+                Pokemon malePokemon = plot.getMale().clone(false, CobbleDaycare.server.getRegistryManager());
                 plot.setMale(null);
                 CobbleDaycare.server.submit(() -> Cobblemon.INSTANCE.getStorage().getParty(player).add(malePokemon));
                 DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInformation);
@@ -129,7 +128,7 @@ public class PlotMenu {
                   CobbleDaycare.language.getPrefix(),
                   TypeMessage.CHAT
                 );
-                Pokemon femalePokemon = plot.getFemale().clone(false, DynamicRegistryManager.EMPTY);
+                Pokemon femalePokemon = plot.getFemale().clone(false, CobbleDaycare.server.getRegistryManager());
                 plot.setFemale(null);
                 CobbleDaycare.server.submit(() -> Cobblemon.INSTANCE.getStorage().getParty(player).add(femalePokemon));
                 DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInformation);
