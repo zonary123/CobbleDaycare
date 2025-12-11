@@ -54,6 +54,7 @@ public class PlotMenu {
 
   public void open(ServerPlayerEntity player, Plot plot, UserInformation userInformation) {
     if (PlayerUtils.isCooldownMenu(player, "plot_menu", DurationValue.parse("1s"))) return;
+    CobbleDaycare.server.execute(() -> UIManager.closeUI(player));
     CompletableFuture.runAsync(() -> {
         ChestTemplate template = ChestTemplate.builder(rows)
           .build();
@@ -78,7 +79,7 @@ public class PlotMenu {
                 );
                 Pokemon malePokemon = plot.getMale().clone(false, DynamicRegistryManager.EMPTY);
                 plot.setMale(null);
-                CobbleDaycare.server.submit(() -> Cobblemon.INSTANCE.getStorage().getParty(player).add(malePokemon)).join();
+                CobbleDaycare.server.submit(() -> Cobblemon.INSTANCE.getStorage().getParty(player).add(malePokemon));
                 DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInformation);
                 open(player, plot, userInformation);
               } else {
@@ -130,8 +131,7 @@ public class PlotMenu {
                 );
                 Pokemon femalePokemon = plot.getFemale().clone(false, DynamicRegistryManager.EMPTY);
                 plot.setFemale(null);
-                CobbleDaycare.server.submit(() -> Cobblemon.INSTANCE.getStorage().getParty(player).add(femalePokemon)).join();
-
+                CobbleDaycare.server.submit(() -> Cobblemon.INSTANCE.getStorage().getParty(player).add(femalePokemon));
                 DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInformation);
                 open(player, plot, userInformation);
               } else {
@@ -161,7 +161,7 @@ public class PlotMenu {
             }))
           .build();
 
-        UIManager.openUIForcefully(player, page);
+        CobbleDaycare.server.execute(() -> UIManager.openUIForcefully(player, page));
       }, CobbleDaycare.DAYCARE_EXECUTOR)
       .orTimeout(5, TimeUnit.SECONDS)
       .exceptionally(e -> {
