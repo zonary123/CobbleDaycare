@@ -168,10 +168,10 @@ public class EggData {
         CobbleUtils.server.execute(() -> {
           party.remove(egg);
           party.add(builder.getPokemon());
+          HatchEggEvent.HATCH_EGG_EVENT.emit(builder.getPlayer(), builder.getPokemon());
+          CobblemonEvents.HATCH_EGG_POST.emit(new com.cobblemon.mod.common.api.events.pokemon.HatchEggEvent.Post(
+            builder.getPlayer(), builder.getEgg()));
         });
-        HatchEggEvent.HATCH_EGG_EVENT.emit(builder.getPlayer(), builder.getPokemon());
-        CobblemonEvents.HATCH_EGG_POST.emit(new com.cobblemon.mod.common.api.events.pokemon.HatchEggEvent.Post(
-          builder.getPlayer(), builder.getEgg()));
       }
     } catch (Exception e) {
       CobbleUtils.LOGGER.error("Error hatching egg");
