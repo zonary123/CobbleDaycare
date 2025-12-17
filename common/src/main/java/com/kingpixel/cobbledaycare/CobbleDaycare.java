@@ -241,6 +241,7 @@ public class CobbleDaycare {
     });
 
     CobblemonEvents.POKEMON_ENTITY_SPAWN.subscribe(Priority.LOWEST, evt -> {
+      if (!evt.getEntity().getPokemon().isWild()) return Unit.INSTANCE;
       if (!config.isSpawnEggWorld()) return Unit.INSTANCE;
       var pokemonEntity = evt.getEntity();
       var pokemon = pokemonEntity.getPokemon();
@@ -317,8 +318,9 @@ public class CobbleDaycare {
   }
 
   public static void fixBreedable(Pokemon pokemon) {
-    var nbt = pokemon.getPersistentData();
     boolean isNotBreedable = Plot.isNotBreedable(pokemon);
+
+    var nbt = pokemon.getPersistentData();
     boolean builderOverride = nbt.getBoolean(CobbleUtilsTags.BREEDABLE_BUILDER_TAG);
 
     if (isNotBreedable) {
