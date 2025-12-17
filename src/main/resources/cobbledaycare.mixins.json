@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.kingpixel.cobbledaycare.mixins",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "PastureBlockMixin",
+    "PreventDamage",
+    "WalkBreedingMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
+  }
+}

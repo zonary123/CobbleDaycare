@@ -1,46 +1,40 @@
-# gradle
-
-.factorypath
-.gradle/
-build/
-out/
-classes/
+.gradle
+run
+build
+.idea
+common/run
+forge/run
+fabric/run
+/run/
 .env
 
-actual_versions
+/forge/.architectury-transformer/debug.log
 
 # eclipse
-
+.secrets
+bin
 *.launch
-
-# idea
-
-.idea/
-*.iml
-*.ipr
-*.iws
-
-# vscode
-
-.settings/
-.vscode/
-bin/
+.settings
+.metadata
 .classpath
 .project
+/.architectury-transformer/
+/net.kyori
 
-# macos
+# idea
+out
+*.ipr
+*.iws
+*.iml
 
-*.DS_Store
+# Files from Forge MDK
+forge*changelog.txt
+/showdown/
+/logs/
+.vscode/launch.json
+.vscode
 
-# fabric
-
-run/
-
-# Ignore Gradle project-specific cache directory
-.gradle
-
-# Ignore Gradle build output directory
-build
-
-# Ignore Gragle test report logs
-/common/logs/
+# Generated files
+*/generated/resources/*
+/fabric/src/generated/resources/cobblemon-common.accesswidener
+/actual_versions/
