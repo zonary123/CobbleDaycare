@@ -8,7 +8,7 @@
 
 ### Optimizations
 
-- No significant optimizations in this release.
+- Now only check 1 time if the pokemon is blacklisted instead of checking 2 times.
 
 ### Bug Fixes
 

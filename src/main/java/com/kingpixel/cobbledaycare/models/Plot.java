@@ -70,7 +70,6 @@ public class Plot {
     if (pokemon == null) return false;
     CobbleDaycare.fixBreedable(pokemon);
     if (isNotBreedable(pokemon)) return false;
-    if (CobbleDaycare.config.getBlackList().isBlackListed(pokemon)) return false;
     Pokemon other = gender == SelectGender.MALE ? female : male;
 
     boolean otherIsDitto = isDitto(other);
