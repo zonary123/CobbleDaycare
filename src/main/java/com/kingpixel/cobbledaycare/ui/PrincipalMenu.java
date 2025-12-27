@@ -171,7 +171,7 @@ public class PrincipalMenu {
             }))
           .build();
 
-        UIManager.openUIForcefully(player, page);
+        CobbleDaycare.server.execute(() -> UIManager.openUIForcefully(player, page));
       }, CobbleDaycare.DAYCARE_EXECUTOR)
       .exceptionally(e -> {
         e.printStackTrace();
