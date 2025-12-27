@@ -59,6 +59,7 @@ public class CommandHatch {
               "cobbledaycare.admin"), 4))
             .executes(context -> {
               var player = context.getSource().getPlayer();
+              if (player == null) return 1;
               hatch(HATCH_ALL_TYPE, context, player);
               return 1;
             })
@@ -69,6 +70,7 @@ public class CommandHatch {
                 .executes(context -> {
                   var players = EntityArgumentType.getPlayers(context, "player");
                   for (ServerPlayerEntity player : players) {
+                    if (player == null) continue;
                     hatch(HATCH_ALL_TYPE, context, player);
                   }
                   return 1;
@@ -79,43 +81,43 @@ public class CommandHatch {
   }
 
   private static void hatch(String TYPE_HATCH, CommandContext<ServerCommandSource> context, ServerPlayerEntity player) {
-    CompletableFuture.runAsync(() -> {
-        List<Pokemon> pokemons = new ArrayList<>();
-        if (TYPE_HATCH.equals(HATCH_ALL_TYPE)) {
-          for (Pokemon pokemon : Cobblemon.INSTANCE.getStorage().getParty(player)) {
-            pokemons.add(pokemon);
-          }
-          if (pokemons.isEmpty()) return;
-        } else {
-          var pokemon = PartySlotArgumentType.Companion.getPokemon(context, "slot");
-          pokemons.add(pokemon);
-        }
-        boolean hasEgg = pokemons
-          .stream()
-          .anyMatch(pokemon -> pokemon.getSpecies().showdownId().equals("egg"));
-        if (!hasEgg) return;
-        var userInfo = DatabaseClientFactory.INSTANCE.getUserInformation(player);
-        if (userInfo.hasCooldownHatch(player)) {
-          PlayerUtils.sendMessage(
-            player,
-            CobbleDaycare.language.getMessageCooldownHatch()
-              .replace("%cooldown%", PlayerUtils.getCooldown(userInfo.getCooldownHatch())),
-            CobbleDaycare.language.getPrefix(),
-            TypeMessage.CHAT
-          );
-          return;
-        }
+    List<Pokemon> pokemons = new ArrayList<>();
+    if (TYPE_HATCH.equals(HATCH_ALL_TYPE)) {
+      for (Pokemon pokemon : Cobblemon.INSTANCE.getStorage().getParty(player)) {
+        pokemons.add(pokemon);
+      }
+      if (pokemons.isEmpty()) return;
+    } else {
+      var pokemon = PartySlotArgumentType.Companion.getPokemon(context, "slot");
+      pokemons.add(pokemon);
+    }
+    boolean hasEgg = pokemons
+      .stream()
+      .anyMatch(pokemon -> pokemon.getSpecies().showdownId().equals("egg"));
+    if (!hasEgg) return;
+    var userInfo = DatabaseClientFactory.INSTANCE.getUserInformation(player);
+    if (userInfo.hasCooldownHatch(player)) {
+      PlayerUtils.sendMessage(
+        player,
+        CobbleDaycare.language.getMessageCooldownHatch()
+          .replace("%cooldown%", PlayerUtils.getCooldown(userInfo.getCooldownHatch())),
+        CobbleDaycare.language.getPrefix(),
+        TypeMessage.CHAT
+      );
+      return;
+    }
 
-        for (Pokemon pokemon : pokemons) {
-          if (!pokemon.getSpecies().showdownId().equals("egg")) continue;
-          EggData.hatch(player, pokemon);
-          userInfo.setCooldownHatch(player);
-          DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInfo);
-        }
-      }, CobbleDaycare.DAYCARE_EXECUTOR)
-      .exceptionally(e -> {
-        e.printStackTrace();
-        return null;
-      });
+    for (Pokemon pokemon : pokemons) {
+      if (!pokemon.getSpecies().showdownId().equals("egg")) continue;
+      EggData.hatch(player, pokemon);
+      userInfo.setCooldownHatch(player);
+      CompletableFuture.runAsync(() -> DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInfo), CobbleDaycare.DAYCARE_EXECUTOR)
+        .orTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
+        .exceptionally(e -> {
+          e.printStackTrace();
+          return null;
+        });
+    }
+
   }
 }

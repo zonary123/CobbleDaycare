@@ -4,7 +4,8 @@
 
 ### Features
 
-- No new features in this release.
+- Added EVERSTONE logic with male forms.
+- Fixed forms not being inherited correctly. Added a config option to add more forms if needed.
 
 ### Optimizations
 

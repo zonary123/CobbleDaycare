@@ -1,5 +1,6 @@
 package com.kingpixel.cobbledaycare.mechanics;
 
+import com.cobblemon.mod.common.CobblemonItems;
 import com.cobblemon.mod.common.api.pokemon.PokemonProperties;
 import com.cobblemon.mod.common.api.pokemon.feature.ChoiceSpeciesFeatureProvider;
 import com.cobblemon.mod.common.api.pokemon.feature.SpeciesFeatureProvider;
@@ -9,12 +10,14 @@ import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.models.EggBuilder;
 import com.kingpixel.cobbledaycare.models.EggForm;
 import com.kingpixel.cobbledaycare.models.HatchBuilder;
+import com.kingpixel.cobbleutils.CobbleUtils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Refactorizado por claridad y reducción de duplicación.
@@ -22,28 +25,40 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true) @Data
 public class DayCareForm extends Mechanics {
   public static final String TAG = "form";
+  private Map<String, String> forms;
   private List<EggForm> eggForms;
   private List<String> blacklistForm;
   private List<String> blacklistFeatures;
 
   public DayCareForm() {
+    this.forms = Map.of(
+      "galar", "galarian",
+      "paldea", "paldean",
+      "hisui", "hisuian",
+      "alola", "alolan"
+    );
     this.eggForms = List.of(
       new EggForm("galarian",
         List.of("perrserker", "sirfetchd", "mrrime", "cursola", "runerigus", "obstagoon")),
       new EggForm("paldean", List.of("clodsire")),
       new EggForm("hisuian", List.of("overqwil", "sneasler"))
     );
-    this.blacklistForm = List.of("halloween");
-    this.blacklistFeatures = List.of("netherite_coating");
+    this.blacklistForm = List.of("halloween", "disguised");
+    this.blacklistFeatures = List.of("netherite_coating", "disguised");
   }
 
   @Override
   public void applyEgg(EggBuilder builder) {
     Pokemon female = builder.getFemale();
+    Pokemon male = builder.getMale();
     Pokemon egg = builder.getEgg();
+    Pokemon pokemonFinal = male.heldItem().getItem().equals(CobblemonItems.EVERSTONE)
+      ? male
+      : female;
     Pokemon firstEvolution = builder.getFirstEvolution();
 
-    String configForm = getConfigForm(female);
+
+    String configForm = getConfigForm(pokemonFinal);
     if (configForm != null) {
       if (blacklistForm.contains(configForm)) configForm = "";
       applyForm(egg, configForm, firstEvolution);
@@ -84,13 +99,22 @@ public class DayCareForm extends Mechanics {
     applyForm(egg, form.toString(), firstEvolution);
   }
 
-  private String getConfigForm(Pokemon female) {
+  private String getConfigForm(Pokemon pokemon) {
+    String form = null;
     for (EggForm eggForm : eggForms) {
-      if (eggForm.getPokemons().contains(female.showdownId())) {
-        return eggForm.getForm();
+      if (eggForm.getPokemons().contains(pokemon.showdownId())) {
+        form = eggForm.getForm();
+        break;
       }
     }
-    return null;
+    if (form == null)
+      form = forms.getOrDefault(pokemon.getForm().formOnlyShowdownId(), pokemon.getForm().formOnlyShowdownId());
+    if (CobbleDaycare.config.isDebug()) {
+      CobbleUtils.LOGGER.info(
+        "DayCareForm: No config form found for pokemon '" + pokemon.showdownId() + "'. Using form '" + form + "'"
+      );
+    }
+    return form;
   }
 
   private String getRegionalForm(Pokemon female) {

@@ -9,7 +9,6 @@ import com.kingpixel.cobbledaycare.database.DatabaseClientFactory;
 import com.kingpixel.cobbledaycare.models.EggData;
 import com.kingpixel.cobbledaycare.models.Position;
 import com.kingpixel.cobbledaycare.models.UserInformation;
-import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
 import com.kingpixel.cobbleutils.util.TypeMessage;
 import lombok.Data;
@@ -115,9 +114,6 @@ public class TaskDayCare implements Runnable {
     if (CobbleDaycare.server == null) return;
     long currentTime = System.currentTimeMillis();
     if (CobbleDaycare.server.getPlayerManager().getPlayerList().isEmpty()) return;
-    if (CobbleDaycare.config.isDebug()) {
-      CobbleUtils.LOGGER.info("[CobbleDaycare] Processing players for egg step updates...");
-    }
     var players = new ArrayList<>(CobbleDaycare.server.getPlayerManager().getPlayerList());
     int size = players.size();
     for (int i = 0; i < size; i++) {

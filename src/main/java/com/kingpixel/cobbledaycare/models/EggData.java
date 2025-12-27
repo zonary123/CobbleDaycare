@@ -26,6 +26,8 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 
+import java.util.UUID;
+
 /**
  * @author Carlos Varas Alonso - 23/07/2024 23:01
  */
@@ -168,9 +170,11 @@ public class EggData {
         CobbleUtils.server.execute(() -> {
           party.remove(egg);
           party.add(builder.getPokemon());
-          HatchEggEvent.HATCH_EGG_EVENT.emit(builder.getPlayer(), builder.getPokemon());
+          UUID uuid = player.getUuid();
+          builder.getPokemon().setOriginalTrainer(uuid);
           CobblemonEvents.HATCH_EGG_POST.emit(new com.cobblemon.mod.common.api.events.pokemon.HatchEggEvent.Post(
-            builder.getPlayer(), builder.getEgg()));
+            player, builder.getEgg()));
+          HatchEggEvent.HATCH_EGG_EVENT.emit(player, builder.getPokemon());
         });
       }
     } catch (Exception e) {
