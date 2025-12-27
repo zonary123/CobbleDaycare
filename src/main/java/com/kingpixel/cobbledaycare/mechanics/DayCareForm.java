@@ -10,7 +10,6 @@ import com.kingpixel.cobbledaycare.CobbleDaycare;
 import com.kingpixel.cobbledaycare.models.EggBuilder;
 import com.kingpixel.cobbledaycare.models.EggForm;
 import com.kingpixel.cobbledaycare.models.HatchBuilder;
-import com.kingpixel.cobbleutils.CobbleUtils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import net.minecraft.nbt.NbtCompound;
@@ -108,12 +107,7 @@ public class DayCareForm extends Mechanics {
       }
     }
     if (form == null)
-      form = forms.getOrDefault(pokemon.getForm().formOnlyShowdownId(), pokemon.getForm().formOnlyShowdownId());
-    if (CobbleDaycare.config.isDebug()) {
-      CobbleUtils.LOGGER.info(
-        "DayCareForm: No config form found for pokemon '" + pokemon.showdownId() + "'. Using form '" + form + "'"
-      );
-    }
+      form = forms.getOrDefault(pokemon.getForm().formOnlyShowdownId(), form);
     return form;
   }
 
