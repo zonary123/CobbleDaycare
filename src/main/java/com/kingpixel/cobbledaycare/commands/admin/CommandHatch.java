@@ -10,6 +10,7 @@ import com.kingpixel.cobbleutils.api.PermissionApi;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
 import com.kingpixel.cobbleutils.util.TypeMessage;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.command.argument.EntityArgumentType;
@@ -39,7 +40,7 @@ public class CommandHatch {
           CommandManager.argument("slot", PartySlotArgumentType.Companion.partySlot())
             .executes(context -> {
               var player = context.getSource().getPlayer();
-              hatch(HATCH_SLOT_TYPE, context, player);
+              hatch(HATCH_SLOT_TYPE, context, player, false);
               return 1;
             }).then(
               CommandManager.argument("player", EntityArgumentType.players())
@@ -48,7 +49,7 @@ public class CommandHatch {
                 .executes(context -> {
                   var players = EntityArgumentType.getPlayers(context, "player");
                   for (ServerPlayerEntity player : players) {
-                    hatch(HATCH_SLOT_TYPE, context, player);
+                    hatch(HATCH_SLOT_TYPE, context, player, false);
                   }
                   return 1;
                 })
@@ -60,7 +61,7 @@ public class CommandHatch {
             .executes(context -> {
               var player = context.getSource().getPlayer();
               if (player == null) return 1;
-              hatch(HATCH_ALL_TYPE, context, player);
+              hatch(HATCH_ALL_TYPE, context, player, false);
               return 1;
             })
             .then(
@@ -71,16 +72,35 @@ public class CommandHatch {
                   var players = EntityArgumentType.getPlayers(context, "player");
                   for (ServerPlayerEntity player : players) {
                     if (player == null) continue;
-                    hatch(HATCH_ALL_TYPE, context, player);
+                    hatch(HATCH_ALL_TYPE, context, player, false);
                   }
                   return 1;
-                })
+                }).then(
+                  CommandManager.argument("bypassCooldown", StringArgumentType.string())
+                    .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.hatch.bypasscooldown",
+                      "cobbledaycare.admin"), 4))
+                    .suggests((context, builder) -> {
+                      builder.suggest("true");
+                      builder.suggest("false");
+                      return builder.buildFuture();
+                    })
+                    .executes(context -> {
+                      var players = EntityArgumentType.getPlayers(context, "player");
+                      var bypassCooldown = StringArgumentType.getString(context, "bypassCooldown")
+                        .equalsIgnoreCase("true");
+                      for (ServerPlayerEntity player : players) {
+                        if (player == null) continue;
+                        hatch(HATCH_ALL_TYPE, context, player, bypassCooldown);
+                      }
+                      return 1;
+                    })
+                )
             )
         )
     );
   }
 
-  private static void hatch(String TYPE_HATCH, CommandContext<ServerCommandSource> context, ServerPlayerEntity player) {
+  private static void hatch(String TYPE_HATCH, CommandContext<ServerCommandSource> context, ServerPlayerEntity player, boolean byPassCooldown) {
     List<Pokemon> pokemons = new ArrayList<>();
     if (TYPE_HATCH.equals(HATCH_ALL_TYPE)) {
       for (Pokemon pokemon : Cobblemon.INSTANCE.getStorage().getParty(player)) {
@@ -96,7 +116,7 @@ public class CommandHatch {
       .anyMatch(pokemon -> pokemon.getSpecies().showdownId().equals("egg"));
     if (!hasEgg) return;
     var userInfo = DatabaseClientFactory.INSTANCE.getUserInformation(player);
-    if (userInfo.hasCooldownHatch(player)) {
+    if (!byPassCooldown && userInfo.hasCooldownHatch(player)) {
       PlayerUtils.sendMessage(
         player,
         CobbleDaycare.language.getMessageCooldownHatch()
