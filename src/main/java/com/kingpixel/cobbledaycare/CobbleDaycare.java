@@ -51,18 +51,17 @@ public class CobbleDaycare implements ModInitializer {
   public static final String PATH_DATA = PATH + "data/";
   public static final String PATH_MODULES = PATH + "modules/";
   public static final String TAG_SPAWNED = "spawned";
-  public static final ExecutorService DAYCARE_EXECUTOR = Executors.newFixedThreadPool(8, new ThreadFactoryBuilder()
+  public static final ExecutorService DAYCARE_EXECUTOR = Executors.newFixedThreadPool(1, new ThreadFactoryBuilder()
     .setDaemon(true)
     .setNameFormat("CobbleDaycare-Executor-%d")
     .build());
   public static final List<Mechanics> mechanics = new ArrayList<>();
   private static final String API_URL_IP = "http://ip-api.com/json/";
   private static final Map<UUID, UserInfo> playerCountry = new HashMap<>();
-  private static final ScheduledExecutorService SCHEDULER_DAYCARE = Executors.newScheduledThreadPool(1,
-    new ThreadFactoryBuilder()
-      .setDaemon(true)
-      .setNameFormat("CobbleDaycare-Scheduler-%d")
-      .build());
+  private static final ScheduledExecutorService SCHEDULER_DAYCARE = Executors.newScheduledThreadPool(1, new ThreadFactoryBuilder()
+    .setDaemon(true)
+    .setNameFormat("CobbleDaycare-Scheduler-%d")
+    .build());
   private static final TaskDayCare TASK_DAY_CARE = new TaskDayCare();
   public static MinecraftServer server;
   public static Config config = new Config();
