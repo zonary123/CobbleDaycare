@@ -50,7 +50,7 @@ public class Plot {
   }
 
   public static String plotPermission(int i) {
-    return "cobbledaycare_datapack.plot." + (i + 1);
+    return "cobbledaycare.plot." + (i + 1);
   }
 
   public synchronized void setMale(Pokemon male) {

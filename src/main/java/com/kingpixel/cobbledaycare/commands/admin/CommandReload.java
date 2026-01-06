@@ -19,7 +19,7 @@ public class CommandReload {
       base
         .then(
           CommandManager.literal("reload")
-            .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare_datapack.admin", "cobbledaycare_datapack" +
+            .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.admin", "cobbledaycare" +
               ".reload"), 4))
             .executes(context -> {
               context.getSource().sendMessage(

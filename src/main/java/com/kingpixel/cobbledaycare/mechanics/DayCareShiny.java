@@ -31,7 +31,7 @@ public class DayCareShiny extends Mechanics {
     this.parentsShiny = true;
     this.percentageShiny = 8192;
     this.percentagesShiny = Map.of(
-      "cobbledaycare_datapack.shinyboost.vip", percentageShiny
+      "cobbledaycare.shinyboost.vip", percentageShiny
     );
     this.multiplierShiny = 1.5f;
     this.multiplierMasuda = 1.5f;

@@ -27,8 +27,8 @@ public class CommandBreedable {
   public static void register(CommandDispatcher<ServerCommandSource> dispatcher, LiteralArgumentBuilder<ServerCommandSource> base) {
     var literalArgumentBuilder = CommandManager.literal("breedable")
       .requires(
-        source -> PermissionApi.hasPermission(source, List.of("cobbledaycare_datapack.admin",
-          "cobbledaycare_datapack.breedable.self", "cobbledaycare_datapack.breedable.other"), 2))
+        source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.admin",
+          "cobbledaycare.breedable.self", "cobbledaycare.breedable.other"), 2))
       .then(
         CommandManager.argument("slot", PartySlotArgumentType.Companion.partySlot())
           .executes(context -> {
@@ -41,7 +41,7 @@ public class CommandBreedable {
           .then(
             CommandManager.argument("player", EntityArgumentType.players())
               .requires(
-                source -> PermissionApi.hasPermission(source, List.of("cobbledaycare_datapack.admin", "cobbledaycare_datapack.breedable.other"), 2))
+                source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.admin", "cobbledaycare.breedable.other"), 2))
               .then(
                 CommandManager.argument("breedable", BoolArgumentType.bool())
                   .executes(context -> {

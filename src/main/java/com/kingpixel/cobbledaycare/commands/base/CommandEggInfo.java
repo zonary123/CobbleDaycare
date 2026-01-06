@@ -24,7 +24,7 @@ public class CommandEggInfo {
                               LiteralArgumentBuilder<ServerCommandSource> base) {
     dispatcher.register(
       base
-        .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare_datapack.egginfo.base", "cobbledaycare_datapack" +
+        .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.egginfo.base", "cobbledaycare" +
             ".admin"),
           4))
         .then(

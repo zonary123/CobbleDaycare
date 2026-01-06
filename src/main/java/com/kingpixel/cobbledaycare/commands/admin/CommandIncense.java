@@ -22,7 +22,7 @@ public class CommandIncense {
     dispatcher.register(
       base.then(
         CommandManager.literal("incense")
-          .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare_datapack.admin", "cobbledaycare_datapack.incense"), 4))
+          .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.admin", "cobbledaycare.incense"), 4))
           .then(
             CommandManager.argument("player", EntityArgumentType.player())
               .then(

@@ -77,7 +77,7 @@ public class Config {
     this.commandEggInfo = "egginfo";
     this.globalMultiplierSteps = false;
     this.multiplierAbilityAcceleration = 1.0;
-    this.dataBase.setDatabase("cobbledaycare_datapack");
+    this.dataBase.setDatabase("cobbledaycare");
     this.defaultSteps = 128D;
     this.steps = new HashMap<>();
     for (@NotNull EggGroup value : EggGroup.values()) {

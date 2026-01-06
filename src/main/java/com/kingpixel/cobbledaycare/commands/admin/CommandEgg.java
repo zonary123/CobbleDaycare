@@ -23,7 +23,7 @@ public class CommandEgg {
       base
         .then(
           CommandManager.literal("egg")
-            .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare_datapack.admin", "cobbledaycare_datapack" +
+            .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.admin", "cobbledaycare" +
               ".egg"), 4))
             .then(
               CommandManager.argument("player", EntityArgumentType.players())

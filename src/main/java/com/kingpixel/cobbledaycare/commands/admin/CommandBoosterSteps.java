@@ -23,7 +23,7 @@ public class CommandBoosterSteps {
       base
         .then(
           CommandManager.literal("multiplierSteps")
-            .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare_datapack.admin", "cobbledaycare_datapack" +
+            .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.admin", "cobbledaycare" +
               ".multipliersteps"), 4))
             .then(
               CommandManager.argument("seconds", IntegerArgumentType.integer(1))
