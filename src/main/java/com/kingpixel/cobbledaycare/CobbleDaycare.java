@@ -45,8 +45,8 @@ import java.util.concurrent.*;
  * @author Carlos Varas Alonso - 23/07/2024 9:24
  */
 public class CobbleDaycare implements ModInitializer {
-  public static final String MOD_ID = "cobbledaycare";
-  public static final String PATH = "/config/cobbledaycare/";
+  public static final String MOD_ID = "cobbledaycare_datapack";
+  public static final String PATH = "/config/cobbledaycare_datapack/";
   public static final String PATH_LANGUAGE = PATH + "lang/";
   public static final String PATH_DATA = PATH + "data/";
   public static final String PATH_MODULES = PATH + "modules/";
@@ -147,6 +147,7 @@ public class CobbleDaycare implements ModInitializer {
 
     LifecycleEvent.SERVER_STARTED.register(minecraftServer -> {
       server = minecraftServer;
+      DataPackDaycare.installDatapack(server, "cobbledaycare_datapack");
       load();
       int size = config.getSlotPlots().size();
       for (int i = 0; i < size; i++) {

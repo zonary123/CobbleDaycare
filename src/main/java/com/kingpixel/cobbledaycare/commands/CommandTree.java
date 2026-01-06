@@ -21,8 +21,8 @@ public class CommandTree {
     try {
       for (String command : CobbleDaycare.config.getCommands()) {
         var base = CommandManager.literal(command)
-          .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.user",
-              "cobbledaycare.admin"),
+          .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare_datapack.user",
+              "cobbledaycare_datapack.admin"),
             4));
         if (!CobbleDaycare.config.getCommandEggInfo().isEmpty()) {
           CommandEggInfo.register(dispatcher, CommandManager.literal(CobbleDaycare.config.getCommandEggInfo()));
@@ -47,7 +47,7 @@ public class CommandTree {
             return 1;
           }).then(
             CommandManager.literal("other")
-              .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.admin", "cobbledaycare" +
+              .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare_datapack.admin", "cobbledaycare_datapack" +
                 ".other"), 4))
               .then(
                 CommandManager.argument("player", EntityArgumentType.player())

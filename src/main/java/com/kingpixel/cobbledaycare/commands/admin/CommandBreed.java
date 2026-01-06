@@ -30,17 +30,17 @@ public class CommandBreed {
                               LiteralArgumentBuilder<ServerCommandSource> base) {
     dispatcher.register(
       base
-        .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.breed.base", "cobbledaycare" +
+        .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare_datapack.breed.base", "cobbledaycare_datapack" +
             ".admin"),
           4))
         .then(
           CommandManager.argument("male", PartySlotArgumentType.Companion.partySlot())
-            .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.breed.base", "cobbledaycare" +
+            .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare_datapack.breed.base", "cobbledaycare_datapack" +
                 ".admin"),
               4))
             .then(
               CommandManager.argument("female", PartySlotArgumentType.Companion.partySlot())
-                .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.breed.base", "cobbledaycare" +
+                .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare_datapack.breed.base", "cobbledaycare_datapack" +
                     ".admin"),
                   4))
                 .executes(context -> {
@@ -49,8 +49,8 @@ public class CommandBreed {
                   }
                 ).then(
                   CommandManager.argument("player", EntityArgumentType.players())
-                    .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.breed.other",
-                      "cobbledaycare.admin"), 4))
+                    .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare_datapack.breed.other",
+                      "cobbledaycare_datapack.admin"), 4))
                     .executes(context -> {
                       var players = EntityArgumentType.getPlayers(context, "player");
                       for (ServerPlayerEntity player : players) {

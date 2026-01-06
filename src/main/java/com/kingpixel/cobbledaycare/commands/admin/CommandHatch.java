@@ -32,7 +32,7 @@ public class CommandHatch {
                               LiteralArgumentBuilder<ServerCommandSource> base) {
     dispatcher.register(
       base
-        .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.hatch.base", "cobbledaycare" +
+        .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare_datapack.hatch.base", "cobbledaycare_datapack" +
             ".admin"),
           4))
         .then(
@@ -43,8 +43,8 @@ public class CommandHatch {
               return 1;
             }).then(
               CommandManager.argument("player", EntityArgumentType.players())
-                .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.hatch.other",
-                  "cobbledaycare.admin"), 4))
+                .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare_datapack.hatch.other",
+                  "cobbledaycare_datapack.admin"), 4))
                 .executes(context -> {
                   var players = EntityArgumentType.getPlayers(context, "player");
                   for (ServerPlayerEntity player : players) {
@@ -55,8 +55,8 @@ public class CommandHatch {
             )
         ).then(
           CommandManager.literal("all")
-            .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.hatch.all",
-              "cobbledaycare.admin"), 4))
+            .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare_datapack.hatch.all",
+              "cobbledaycare_datapack.admin"), 4))
             .executes(context -> {
               var player = context.getSource().getPlayer();
               if (player == null) return 1;
@@ -65,8 +65,8 @@ public class CommandHatch {
             })
             .then(
               CommandManager.argument("player", EntityArgumentType.players())
-                .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.hatch.other",
-                  "cobbledaycare.admin"), 4))
+                .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare_datapack.hatch.other",
+                  "cobbledaycare_datapack.admin"), 4))
                 .executes(context -> {
                   var players = EntityArgumentType.getPlayers(context, "player");
                   for (ServerPlayerEntity player : players) {
@@ -76,8 +76,8 @@ public class CommandHatch {
                   return 1;
                 }).then(
                   CommandManager.argument("bypassCooldown", StringArgumentType.string())
-                    .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare.hatch.bypasscooldown",
-                      "cobbledaycare.admin"), 4))
+                    .requires(source -> PermissionApi.hasPermission(source, List.of("cobbledaycare_datapack.hatch.bypasscooldown",
+                      "cobbledaycare_datapack.admin"), 4))
                     .suggests((context, builder) -> {
                       builder.suggest("true");
                       builder.suggest("false");

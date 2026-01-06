@@ -50,7 +50,7 @@ public class Plot {
   }
 
   public static String plotPermission(int i) {
-    return "cobbledaycare.plot." + (i + 1);
+    return "cobbledaycare_datapack.plot." + (i + 1);
   }
 
   public synchronized void setMale(Pokemon male) {
@@ -211,7 +211,7 @@ public class Plot {
         if (!egg.getSpecies().showdownId().equals("egg")) {
           PlayerUtils.sendMessage(
             player,
-            "You need install the datapack to use this feature",
+            "You need install the datapacks to use this feature",
             CobbleDaycare.language.getPrefix(),
             TypeMessage.CHAT
           );

@@ -85,7 +85,7 @@ public class UserInformation {
   }
 
   public boolean hasCooldownHatch(ServerPlayerEntity player) {
-    if (PermissionApi.hasPermission(player, "cobbledaycare.hatch.bypass", 4)) return false;
+    if (PermissionApi.hasPermission(player, "cobbledaycare_datapack.hatch.bypass", 4)) return false;
     return cooldownHatch > System.currentTimeMillis();
   }
 
@@ -96,7 +96,7 @@ public class UserInformation {
   }
 
   public boolean hasCooldownBreed(ServerPlayerEntity player) {
-    if (PermissionApi.hasPermission(player, "cobbledaycare.breed.bypass", 4)) return false;
+    if (PermissionApi.hasPermission(player, "cobbledaycare_datapack.breed.bypass", 4)) return false;
     return cooldownBreed > System.currentTimeMillis();
   }
 
