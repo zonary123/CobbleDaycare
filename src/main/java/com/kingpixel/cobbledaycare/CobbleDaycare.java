@@ -51,18 +51,19 @@ public class CobbleDaycare implements ModInitializer {
   public static final String PATH_DATA = PATH + "data/";
   public static final String PATH_MODULES = PATH + "modules/";
   public static final String TAG_SPAWNED = "spawned";
-  public static final ExecutorService DAYCARE_EXECUTOR = Executors.newFixedThreadPool(1, new ThreadFactoryBuilder()
+
+  public static final List<Mechanics> mechanics = new ArrayList<>();
+  private static final ExecutorService DAYCARE_EXECUTOR = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
     .setDaemon(true)
     .setNameFormat("CobbleDaycare-Executor-%d")
     .build());
-  public static final List<Mechanics> mechanics = new ArrayList<>();
   private static final String API_URL_IP = "http://ip-api.com/json/";
   private static final Map<UUID, UserInfo> playerCountry = new HashMap<>();
+  private static final TaskDayCare TASK_DAY_CARE = new TaskDayCare();
   private static final ScheduledExecutorService SCHEDULER_DAYCARE = Executors.newScheduledThreadPool(1, new ThreadFactoryBuilder()
     .setDaemon(true)
     .setNameFormat("CobbleDaycare-Scheduler-%d")
     .build());
-  private static final TaskDayCare TASK_DAY_CARE = new TaskDayCare();
   public static MinecraftServer server;
   public static Config config = new Config();
   public static Language language = new Language();
@@ -160,55 +161,43 @@ public class CobbleDaycare implements ModInitializer {
       CobbleUtils.shutdownAndAwait(SCHEDULER_DAYCARE);
     });
 
-    PlayerEvent.PLAYER_JOIN.register(player -> CompletableFuture.runAsync(() -> {
-        UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
-        userInformation.setConnectedTime(System.currentTimeMillis());
-        boolean update = false;
-        if (userInformation.getCountry() == null) {
+    PlayerEvent.PLAYER_JOIN.register(player -> CobbleDaycare.runAsync(() -> {
+      UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
+      userInformation.setConnectedTime(System.currentTimeMillis());
+      boolean update = false;
+      if (userInformation.getCountry() == null) {
+        UserInfo info = playerCountry.computeIfAbsent(player.getUuid(), uuid -> fetchCountryInfo(player));
+        if (info != null) {
+          userInformation.setCountry(info.country());
+          update = true;
+        }
+      }
+
+      fixPlayer(player);
+
+      int numPlots = 1;
+      int size = CobbleDaycare.config.getSlotPlots().size();
+      for (int i = 0; i < size; i++) {
+        if (PermissionApi.hasPermission(player, Plot.plotPermission(i), 4)) {
+          numPlots = i + 1;
+        }
+      }
+
+      if (userInformation.check(numPlots, player)) update = true;
+      if (userInformation.fix(player)) update = true;
+
+      if (update) DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInformation);
+    }));
+
+    PlayerEvent.PLAYER_QUIT.register(player -> CobbleDaycare.runAsync(() -> {
+        UserInformation userInfo = DatabaseClientFactory.INSTANCE.getUserInformation(player);
+        if (userInfo.getCountry() == null) {
           UserInfo info = playerCountry.computeIfAbsent(player.getUuid(), uuid -> fetchCountryInfo(player));
-          if (info != null) {
-            userInformation.setCountry(info.country());
-            update = true;
-          }
+          if (info != null) userInfo.setCountry(info.country());
         }
-
-        fixPlayer(player);
-
-        int numPlots = 1;
-        int size = CobbleDaycare.config.getSlotPlots().size();
-        for (int i = 0; i < size; i++) {
-          if (PermissionApi.hasPermission(player, Plot.plotPermission(i), 4)) {
-            numPlots = i + 1;
-          }
-        }
-
-        if (userInformation.check(numPlots, player)) update = true;
-        if (userInformation.fix(player)) update = true;
-
-        if (update) DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInformation);
-      }, DAYCARE_EXECUTOR)
-      .orTimeout(10, TimeUnit.SECONDS)
-      .exceptionally(e -> {
-        CobbleUtils.LOGGER.error(MOD_ID, "Error on player join: " + player.getName().getString());
-        e.printStackTrace();
-        return null;
-      }));
-
-    PlayerEvent.PLAYER_QUIT.register(player -> CompletableFuture.runAsync(() -> {
-          UserInformation userInfo = DatabaseClientFactory.INSTANCE.getUserInformation(player);
-          if (userInfo.getCountry() == null) {
-            UserInfo info = playerCountry.computeIfAbsent(player.getUuid(), uuid -> fetchCountryInfo(player));
-            if (info != null) userInfo.setCountry(info.country());
-          }
-          DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInfo);
-          DatabaseClientFactory.INSTANCE.removeFromCache(player);
-        }, DAYCARE_EXECUTOR)
-        .orTimeout(5, TimeUnit.SECONDS)
-        .exceptionally(e -> {
-          CobbleUtils.LOGGER.error(MOD_ID, "Error on player quit: " + player.getName().getString());
-          e.printStackTrace();
-          return null;
-        })
+        DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInfo);
+        DatabaseClientFactory.INSTANCE.removeFromCache(player);
+      })
     );
 
     CobblemonEvents.POKEMON_CAPTURED.subscribe(Priority.HIGHEST, evt -> {
@@ -325,6 +314,20 @@ public class CobbleDaycare implements ModInitializer {
 
   public static synchronized void setBreedable(Pokemon pokemon, boolean value) {
     pokemon.getPersistentData().putBoolean(CobbleUtilsTags.BREEDABLE_TAG, value);
+  }
+
+  public static void runAsync(Runnable task) {
+    if (DAYCARE_EXECUTOR.isShutdown() || DAYCARE_EXECUTOR.isTerminated()) {
+      task.run();
+      return;
+    }
+    CompletableFuture.runAsync(task, DAYCARE_EXECUTOR)
+      .orTimeout(15, TimeUnit.SECONDS)
+      .exceptionally(e -> {
+        CobbleUtils.LOGGER.error(MOD_ID, "Error on async task");
+        e.printStackTrace();
+        return null;
+      });
   }
 
   @Override public void onInitialize() {

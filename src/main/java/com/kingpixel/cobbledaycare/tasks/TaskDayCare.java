@@ -17,26 +17,24 @@ import net.minecraft.entity.EntityPose;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.spongepowered.asm.mixin.Unique;
 
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.Collections;
+import java.util.concurrent.*;
 
 /**
  * @author Carlos Varas Alonso - 24/11/2025 8:05
  */
 @Data
 public class TaskDayCare implements Runnable {
-  public static final Map<ServerPlayerEntity, Integer> cobbleDaycare$playerTeleport = new ConcurrentHashMap<>();
+  public static final ConcurrentMap<ServerPlayerEntity, Integer> cobbleDaycare$playerTeleport = new ConcurrentHashMap<>();
   private static final long TICKS_TO_MILLISECONDS = 50;
-  private static final Map<ServerPlayerEntity, Position> cobbleDaycare$playerPositions = new ConcurrentHashMap<>();
+  private static final ConcurrentMap<ServerPlayerEntity, Position> cobbleDaycare$playerPositions =
+    new ConcurrentHashMap<>();
   private static final ScheduledExecutorService cobbleDaycare$scheduler = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder()
     .setNameFormat("CobbleDaycare-walk-breeding-%d")
     .build());
 
   public TaskDayCare() {
-    cobbleDaycare$scheduler.scheduleAtFixedRate(this, 5, 1, java.util.concurrent.TimeUnit.SECONDS);
+    cobbleDaycare$scheduler.scheduleAtFixedRate(this, 5, 1, TimeUnit.SECONDS);
   }
 
   private static void cobbleDaycare$sendMessageMultiplierSteps(UserInformation userInformation, ServerPlayerEntity player) {
@@ -114,11 +112,10 @@ public class TaskDayCare implements Runnable {
     if (CobbleDaycare.server == null) return;
     long currentTime = System.currentTimeMillis();
     if (CobbleDaycare.server.getPlayerManager().getPlayerList().isEmpty()) return;
-    var players = new ArrayList<>(CobbleDaycare.server.getPlayerManager().getPlayerList());
-    int size = players.size();
-    for (int i = 0; i < size; i++) {
+    var players = Collections.synchronizedList(CobbleDaycare.server.getPlayerManager().getPlayerList());
+    for (ServerPlayerEntity serverPlayerEntity : players) {
       try {
-        ServerPlayerEntity player = players.get(i);
+        ServerPlayerEntity player = serverPlayerEntity;
         UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
         if (userInformation == null) continue;
         if (player == null || !player.isAlive() || player.isRemoved()) continue;

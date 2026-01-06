@@ -20,7 +20,6 @@ import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * @author Carlos Varas Alonso - 05/04/2025 2:07
@@ -131,12 +130,7 @@ public class CommandHatch {
       if (!pokemon.getSpecies().showdownId().equals("egg")) continue;
       EggData.hatch(player, pokemon);
       userInfo.setCooldownHatch(player);
-      CompletableFuture.runAsync(() -> DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInfo), CobbleDaycare.DAYCARE_EXECUTOR)
-        .orTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
-        .exceptionally(e -> {
-          e.printStackTrace();
-          return null;
-        });
+      CobbleDaycare.runAsync(() -> DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInfo));
     }
 
   }
