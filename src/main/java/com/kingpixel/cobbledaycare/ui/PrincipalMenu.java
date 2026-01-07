@@ -100,47 +100,35 @@ public class PrincipalMenu {
       if (isBattle(player)) return;
       ChestTemplate template = ChestTemplate.builder(rows).build();
       UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
-      int numPlots = 0;
       int size = CobbleDaycare.config.getSlotPlots().size();
       for (int i = 0; i < size; i++) {
+        int slot = CobbleDaycare.config.getSlotPlots().get(i);
+
+        // Verificar si el jugador tiene permiso para esta plot
         if (PermissionApi.hasPermission(player, Plot.plotPermission(i), 4)) {
-          numPlots = i + 1;
-        }
-        if (numPlots == 0) numPlots = 1;
-        userInformation.check(numPlots, player);
-        for (int i = 0; i < size; i++) {
-          int slot = CobbleDaycare.config.getSlotPlots().get(i);
-
-          // Verificar si el jugador tiene permiso para esta plot
-          if (PermissionApi.hasPermission(player, Plot.plotPermission(i), 4)) {
-            // El jugador tiene permiso, mostrar icono normal
-            Plot plot = userInformation.getPlots().get(i);
-            if (plot == null) continue;
-            ItemModel itemModel;
-            if (plot.hasEggs()) {
-              itemModel = plotWithEgg;
-            } else if (plot.notParents()) {
-              itemModel = plotWithOutParents;
-            } else {
-              itemModel = plotWithOutEgg;
-            }
-
-            template.set(slot, itemModel.getButton(plot.getEggs().size(), null, replacePlotLore(plot, player), action -> {
-              CobbleDaycare.language.getPlotMenu().open(player, plot, userInformation);
-            }));
+          // El jugador tiene permiso, mostrar icono normal
+          Plot plot = userInformation.getPlots().get(i);
+          if (plot == null) continue;
+          ItemModel itemModel;
+          if (plot.hasEggs()) {
+            itemModel = plotWithEgg;
+          } else if (plot.notParents()) {
+            itemModel = plotWithOutParents;
           } else {
-            // El jugador NO tiene permiso, mostrar icono bloqueado
-            template.set(slot, blockedPlot.getButton(1, null, null, action -> {
-              // No hacer nada cuando hace clic en una plot bloqueada
-            }));
+            itemModel = plotWithOutEgg;
           }
+
+          template.set(slot, itemModel.getButton(plot.getEggs().size(), null, replacePlotLore(plot, player), action -> {
+            CobbleDaycare.language.getPlotMenu().open(player, plot, userInformation);
+          }));
+        } else {
+          // El jugador NO tiene permiso, mostrar icono bloqueado
+          template.set(slot, blockedPlot.getButton(1, null, null, action -> {
+            // No hacer nada cuando hace clic en una plot bloqueada
+          }));
         }
-
-        template.set(slot, itemModel.getButton(plot.getEggs().size(), null, replacePlotLore(plot, player), action -> {
-          CobbleDaycare.language.getPlotMenu().open(player, plot, userInformation);
-        }));
-
       }
+
 
       List<String> loreInfo = new ArrayList<>(info.getLore());
       long cooldown = System.currentTimeMillis() + PlayerUtils.getCooldown(CobbleDaycare.config.getCooldowns(), CobbleDaycare.config.getCooldown()

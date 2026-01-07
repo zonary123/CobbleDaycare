@@ -15,6 +15,7 @@ import lombok.EqualsAndHashCode;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -30,12 +31,12 @@ public class DayCareForm extends Mechanics {
   private List<String> blacklistFeatures;
 
   public DayCareForm() {
-    this.forms = Map.of(
+    this.forms = new HashMap<>(Map.of(
       "galar", "galarian",
       "paldea", "paldean",
       "hisui", "hisuian",
       "alola", "alolan"
-    );
+    ));
     this.eggForms = List.of(
       new EggForm("galarian",
         List.of("perrserker", "sirfetchd", "mrrime", "cursola", "runerigus", "obstagoon")),
@@ -45,6 +46,7 @@ public class DayCareForm extends Mechanics {
     this.blacklistForm = List.of("halloween", "disguised");
     this.blacklistFeatures = List.of("netherite_coating", "disguised");
   }
+
 
   @Override
   public void applyEgg(EggBuilder builder) {
@@ -184,6 +186,14 @@ public class DayCareForm extends Mechanics {
 
   @Override
   public void validateData() {
+    this.forms.putAll(
+      Map.of(
+        "galar", "galarian",
+        "paldea", "paldean",
+        "hisui", "hisuian",
+        "alola", "alolan"
+      )
+    );
   }
 
   @Override
