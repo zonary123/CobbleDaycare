@@ -14,170 +14,236 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-/**
- * Refactorizado por claridad y reducción de duplicación.
- */
-@EqualsAndHashCode(callSuper = true) @Data
+@EqualsAndHashCode(callSuper = true)
+@Data
 public class DayCareForm extends Mechanics {
+
   public static final String TAG = "form";
-  private Map<String, String> forms;
-  private List<EggForm> eggForms;
-  private List<String> blacklistForm;
-  private List<String> blacklistFeatures;
+  private static final Logger LOGGER = LogManager.getLogger(CobbleDaycare.MOD_ID);
+
+  private final Map<String, String> forms = new HashMap<>();
+  private final List<EggForm> eggForms = new ArrayList<>();
+  private final List<String> blacklistForm = new ArrayList<>();
+  private final List<String> blacklistFeatures = new ArrayList<>();
 
   public DayCareForm() {
-    this.forms = new HashMap<>(Map.of(
-      "galar", "galarian",
-      "paldea", "paldean",
-      "hisui", "hisuian",
-      "alola", "alolan"
-    ));
-    this.eggForms = List.of(
-      new EggForm("galarian",
-        List.of("perrserker", "sirfetchd", "mrrime", "cursola", "runerigus", "obstagoon")),
+    validateData();
+
+    eggForms.addAll(List.of(
+      new EggForm("galarian", List.of("perrserker", "sirfetchd", "mrrime", "cursola", "runerigus", "obstagoon")),
       new EggForm("paldean", List.of("clodsire")),
       new EggForm("hisuian", List.of("overqwil", "sneasler"))
-    );
-    this.blacklistForm = List.of("halloween", "disguised");
-    this.blacklistFeatures = List.of("netherite_coating", "disguised");
+    ));
+
+    blacklistForm.addAll(List.of("halloween", "disguised"));
+    blacklistFeatures.addAll(List.of("netherite_coating", "disguised"));
   }
 
+  /* ------------------------------------------------------------ */
+  /* DEBUG                                                        */
+  /* ------------------------------------------------------------ */
+
+  private void debug(String msg, Object... args) {
+    if (CobbleDaycare.config.isDebug()) {
+      LOGGER.info(msg, args);
+    }
+  }
+
+  /* ------------------------------------------------------------ */
+  /* APPLY EGG                                                    */
+  /* ------------------------------------------------------------ */
 
   @Override
   public void applyEgg(EggBuilder builder) {
     Pokemon female = builder.getFemale();
     Pokemon male = builder.getMale();
     Pokemon egg = builder.getEgg();
-    Pokemon pokemonFinal = male.heldItem().getItem().equals(CobblemonItems.EVERSTONE)
-      ? male
-      : female;
-    Pokemon firstEvolution = builder.getFirstEvolution();
+    Pokemon evo = builder.getFirstEvolution();
 
+    Pokemon source = male.heldItem().getItem().equals(CobblemonItems.EVERSTONE) ? male : female;
+    debug("[DayCareForm] applyEgg source={}", source.showdownId());
 
-    String configForm = getConfigForm(pokemonFinal);
+    LinkedHashSet<String> parts = new LinkedHashSet<>();
+
+    add(parts, getRegionalForm(source), "Regional", source);
+    add(parts, processAspects(female), "Aspects", female);
+
+    for (String feature : processFeatures(female)) {
+      add(parts, feature, "Feature", female);
+    }
+
+    String configForm = getConfigForm(source);
     if (configForm != null) {
-      if (blacklistForm.contains(configForm)) configForm = "";
-      applyForm(egg, configForm, firstEvolution);
-      return;
+      add(parts, configForm, "ConfigForm", source);
     }
 
-    StringBuilder form = new StringBuilder(getRegionalForm(female));
-    form.append(processAspects(female));
-    form.append(processFeatures(female));
-
-    if (isBlacklisted(form.toString())) {
-      form = new StringBuilder();
-    }
-
-    applyForm(egg, form.toString(), firstEvolution);
+    finalizeForm(parts, egg, evo);
   }
+
+  /* ------------------------------------------------------------ */
+  /* CREATE EGG                                                   */
+  /* ------------------------------------------------------------ */
 
   @Override
   public void createEgg(ServerPlayerEntity player, Pokemon female, Pokemon egg) {
-    Pokemon firstEvolution = female;
+    Pokemon evo = female;
+    debug("[DayCareForm] createEgg pokemon={}", female.showdownId());
 
     String configForm = getConfigForm(female);
     if (configForm != null) {
-      if (blacklistForm.contains(configForm)) configForm = "";
-      applyForm(egg, configForm, firstEvolution);
+      if (!isBlacklisted(configForm)) {
+        debug("[DayCareForm][DIRECT APPLY] '{}'", configForm);
+        applyForm(egg, configForm, evo);
+      } else {
+        debug("[DayCareForm][REMOVE] ConfigForm '{}' Pokémon={}", configForm, female.showdownId());
+        applyForm(egg, "", evo);
+      }
       return;
-
     }
 
-    StringBuilder form = new StringBuilder(getRegionalForm(female));
-    form.append(processAspects(female));
-    form.append(processFeatures(female));
+    LinkedHashSet<String> parts = new LinkedHashSet<>();
 
-    if (isBlacklisted(form.toString())) {
-      form = new StringBuilder();
+    add(parts, getRegionalForm(female), "Regional", female);
+    add(parts, processAspects(female), "Aspects", female);
+
+    for (String feature : processFeatures(female)) {
+      add(parts, feature, "Feature", female);
     }
 
-    applyForm(egg, form.toString(), firstEvolution);
+    finalizeForm(parts, egg, evo);
   }
+
+  /* ------------------------------------------------------------ */
+  /* FINALIZE                                                     */
+  /* ------------------------------------------------------------ */
+
+  private void finalizeForm(Set<String> parts, Pokemon egg, Pokemon evo) {
+    String form = String.join(" ", parts);
+    debug("[DayCareForm] FINAL FORM='{}'", form);
+    applyForm(egg, form, evo);
+  }
+
+  /* ------------------------------------------------------------ */
+  /* ADD HELPER (DEDUP + BLACKLIST)                                */
+  /* ------------------------------------------------------------ */
+
+  private void add(Set<String> set, String value, String source, Pokemon pokemon) {
+    if (value == null || value.isBlank()) return;
+
+    String v = value.trim();
+
+    if (isBlacklisted(v)) {
+      debug("[DayCareForm][REMOVE] {} '{}' Pokémon={}", source, v, pokemon.showdownId());
+      return;
+    }
+
+    if (!set.add(v)) {
+      debug("[DayCareForm][SKIP] DUPLICATE {} '{}' Pokémon={}", source, v, pokemon.showdownId());
+      return;
+    }
+
+    debug("[DayCareForm][ADD] {} '{}' Pokémon={}", source, v, pokemon.showdownId());
+  }
+
+  /* ------------------------------------------------------------ */
+  /* SOURCES                                                      */
+  /* ------------------------------------------------------------ */
 
   private String getConfigForm(Pokemon pokemon) {
-    String form = null;
     for (EggForm eggForm : eggForms) {
       if (eggForm.getPokemons().contains(pokemon.showdownId())) {
-        form = eggForm.getForm();
-        break;
+        return eggForm.getForm();
       }
     }
-    if (form == null)
-      form = forms.getOrDefault(pokemon.getForm().formOnlyShowdownId(), form);
-    return form;
+    return forms.get(pokemon.getForm().formOnlyShowdownId());
   }
 
-  private String getRegionalForm(Pokemon female) {
-    return switch (female.getSpecies().showdownId()) {
-      case "perrserker", "sirfetchd", "mrrime", "cursola", "obstagoon", "runerigus" -> "galarian ";
+  private String getRegionalForm(Pokemon pokemon) {
+    return switch (pokemon.getSpecies().showdownId()) {
+      case "perrserker", "sirfetchd", "mrrime", "cursola", "obstagoon", "runerigus" -> "galarian";
       case "clodsire" -> "paldean";
       case "overqwil", "sneasler" -> "hisuian";
       default -> "";
     };
   }
 
-  private String processAspects(Pokemon female) {
-    List<String> aspects = female.getForm().getAspects();
-    StringBuilder form = new StringBuilder(aspects.isEmpty() ? "" : aspects.get(0));
-    form = new StringBuilder(form.toString().replace("-", "_"));
+  private String processAspects(Pokemon pokemon) {
+    if (pokemon.getForm().getAspects().isEmpty()) return "";
 
-    int lastUnderscoreIndex = form.lastIndexOf("_");
-    if (lastUnderscoreIndex != -1) {
-      form = new StringBuilder(form.substring(0, lastUnderscoreIndex) + "=" + form.substring(lastUnderscoreIndex + 1));
+    List<String> parts = new ArrayList<>();
+
+    for (String s : pokemon.getForm().getAspects()) {
+      if (s.contains("male") || s.contains("female")) continue;
+      parts.add(s.replace("-", "_").replace("_", "="));
     }
 
-    for (String label : female.getForm().getLabels()) {
+    for (String label : pokemon.getForm().getLabels()) {
       if (label.contains("regional") || label.contains("gen8a")) {
-        form.append(" ").append("region_bias=").append(female.getForm().formOnlyShowdownId());
+        parts.add("region_bias=" + pokemon.getForm().formOnlyShowdownId());
       }
     }
-    return form.toString();
+
+    return String.join(" ", parts);
   }
 
-  private String processFeatures(Pokemon female) {
-    StringBuilder form = new StringBuilder();
-    for (SpeciesFeatureProvider<?> speciesFeatureProvider : SpeciesFeatures.INSTANCE.getFeaturesFor(female.getSpecies())) {
-      if (speciesFeatureProvider instanceof ChoiceSpeciesFeatureProvider choice) {
-        var choiceForm = choice.get(female);
-        if (choiceForm != null) {
-          String name = choiceForm.getName();
-          String value = choiceForm.getValue();
-          if (isBlacklisted(name, value)) continue;
-          form.append(" ").append(name).append("=").append(value);
+  private List<String> processFeatures(Pokemon pokemon) {
+    List<String> features = new ArrayList<>();
+
+    for (SpeciesFeatureProvider<?> provider : SpeciesFeatures.INSTANCE.getFeaturesFor(pokemon.getSpecies())) {
+      if (provider instanceof ChoiceSpeciesFeatureProvider choice) {
+        var feature = choice.get(pokemon);
+        if (feature == null) continue;
+
+        String entry = feature.getName() + "=" + feature.getValue();
+        if (isBlacklisted(feature.getName(), feature.getValue())) {
+          debug("[DayCareForm][REMOVE] Feature '{}' Pokémon={}", entry, pokemon.showdownId());
+          continue;
         }
+
+        features.add(entry);
       }
     }
-    return form.toString();
+    return features;
   }
+
+  /* ------------------------------------------------------------ */
+  /* BLACKLIST                                                    */
+  /* ------------------------------------------------------------ */
 
   private boolean isBlacklisted(String... values) {
-    for (String value : values) {
-      if (blacklistFeatures.contains(value) || blacklistForm.contains(value)) {
+    for (String v : values) {
+      if (blacklistForm.contains(v) || blacklistFeatures.contains(v)) {
         return true;
       }
     }
     return false;
   }
 
-  private void applyForm(Pokemon egg, String form, Pokemon firstEvolution) {
+  /* ------------------------------------------------------------ */
+  /* APPLY / HATCH                                                */
+  /* ------------------------------------------------------------ */
+
+  private void applyForm(Pokemon egg, String form, Pokemon evo) {
     egg.getPersistentData().putString(TAG, form);
-    PokemonProperties.Companion.parse(form).apply(firstEvolution);
+    PokemonProperties.Companion.parse(form).apply(evo);
   }
 
   @Override
   public void applyHatch(HatchBuilder builder) {
-    Pokemon egg = builder.getEgg();
-    String form = egg.getPersistentData().getString(TAG);
+    String form = builder.getEgg().getPersistentData().getString(TAG);
+    debug("[DayCareForm] applyHatch '{}'", form);
+
     PokemonProperties.Companion.parse(form).apply(builder.getPokemon());
     CobbleDaycare.fixBreedable(builder.getPokemon());
-    egg.getPersistentData().remove(TAG);
+    builder.getEgg().getPersistentData().remove(TAG);
   }
+
+  /* ------------------------------------------------------------ */
 
   @Override
   public String getEggInfo(String s, NbtCompound nbt) {
@@ -186,23 +252,19 @@ public class DayCareForm extends Mechanics {
 
   @Override
   public void validateData() {
-    this.forms.putAll(
-      Map.of(
-        "galar", "galarian",
-        "paldea", "paldean",
-        "hisui", "hisuian",
-        "alola", "alolan"
-      )
-    );
+    forms.putAll(Map.of(
+      "galar", "galarian",
+      "paldea", "paldean",
+      "hisui", "hisuian",
+      "alola", "alolan"
+    ));
   }
 
-  @Override
-  public String fileName() {
+  @Override public String fileName() {
     return "form";
   }
 
-  @Override
-  public String replace(String text, ServerPlayerEntity player) {
+  @Override public String replace(String text, ServerPlayerEntity player) {
     return text;
   }
 }

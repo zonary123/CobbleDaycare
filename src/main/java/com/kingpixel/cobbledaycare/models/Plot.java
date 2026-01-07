@@ -268,7 +268,11 @@ public class Plot {
       .player(player)
       .build();
     for (Mechanics mechanic : CobbleDaycare.mechanics) {
-      if (mechanic.isActive()) mechanic.applyEgg(eggBuilder);
+      try {
+        if (mechanic.isActive()) mechanic.applyEgg(eggBuilder);
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }
     return egg;
   }

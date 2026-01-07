@@ -7,6 +7,8 @@
 - Added `EVERSTONE` logic with male forms.
 - Fixed forms not being inherited correctly. Added a config option to add more forms if needed.
 - Automatic installation of datapack.
+- Locked plots you own will now be visible
+- Forms should now work better. Please test to ensure everything works correctly
 
 ### Optimizations
 
