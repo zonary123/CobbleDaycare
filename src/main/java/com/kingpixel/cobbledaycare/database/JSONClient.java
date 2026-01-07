@@ -24,7 +24,7 @@ public class JSONClient extends DatabaseClient {
   }
 
   @Override public void disconnect() {
-    var entries = DatabaseClientFactory.USER_INFORMATION_MAP.asMap().entrySet();
+    var entries = DatabaseClient.USERS.asMap().entrySet();
     for (var entry : entries) {
       var key = entry.getKey();
       var value = entry.getValue();
@@ -37,10 +37,10 @@ public class JSONClient extends DatabaseClient {
   }
 
   @Override public UserInformation getUserInformation(ServerPlayerEntity player) {
-    UserInformation userInformation = DatabaseClientFactory.USER_INFORMATION_MAP.getIfPresent(player.getUuid());
+    UserInformation userInformation = DatabaseClient.USERS.getIfPresent(player.getUuid());
     if (userInformation == null) {
       readFile(player);
-      userInformation = DatabaseClientFactory.USER_INFORMATION_MAP.getIfPresent(player.getUuid());
+      userInformation = DatabaseClient.USERS.getIfPresent(player.getUuid());
     }
     return userInformation;
   }
@@ -56,13 +56,13 @@ public class JSONClient extends DatabaseClient {
           );
           futureWrite.join();
         }
-        DatabaseClientFactory.USER_INFORMATION_MAP.put(player.getUuid(), userInformation);
+        DatabaseClient.USERS.put(player.getUuid(), userInformation);
       }
     );
 
-    if (!futureRead.join()) {
+    if (Boolean.FALSE.equals(futureRead.join())) {
       UserInformation userInformation = new UserInformation(player);
-      DatabaseClientFactory.USER_INFORMATION_MAP.put(player.getUuid(), userInformation);
+      DatabaseClient.USERS.put(player.getUuid(), userInformation);
       CompletableFuture<Boolean> futureWrite = Utils.writeFileAsync(
         CobbleDaycare.PATH_DATA, player.getUuidAsString() + ".json", Utils.newWithoutSpacingGson().toJson(userInformation)
       );
@@ -73,20 +73,11 @@ public class JSONClient extends DatabaseClient {
 
   @Override public void saveOrUpdateUserInformation(ServerPlayerEntity player, UserInformation userInformation) {
     if (player == null || userInformation == null) return;
-    if (CobbleDaycare.server.isStopped() || CobbleDaycare.server.isStopping()) {
-      saveOrUpdateUserInformation(player.getUuid(), userInformation);
-    } else {
-      CompletableFuture.runAsync(() -> saveOrUpdateUserInformation(player.getUuid(), userInformation), CobbleDaycare.DAYCARE_EXECUTOR)
-        .orTimeout(5, java.util.concurrent.TimeUnit.SECONDS)
-        .exceptionally(e -> {
-          e.printStackTrace();
-          return null;
-        });
-    }
+    CobbleDaycare.runAsync(() -> saveOrUpdateUserInformation(player.getUuid(), userInformation));
   }
 
   private void saveOrUpdateUserInformation(UUID playerUUID, UserInformation userInformation) {
-    DatabaseClientFactory.USER_INFORMATION_MAP.put(playerUUID, userInformation);
+    DatabaseClient.USERS.put(playerUUID, userInformation);
     Utils.writeFileSync(
       Utils.getAbsolutePath(CobbleDaycare.PATH_DATA + playerUUID.toString() + ".json"),
       UserInformation.GSON.toJson(userInformation)

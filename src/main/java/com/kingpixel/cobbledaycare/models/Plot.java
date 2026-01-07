@@ -211,7 +211,7 @@ public class Plot {
         if (!egg.getSpecies().showdownId().equals("egg")) {
           PlayerUtils.sendMessage(
             player,
-            "You need install the datapack to use this feature",
+            "You need install the datapacks to use this feature",
             CobbleDaycare.language.getPrefix(),
             TypeMessage.CHAT
           );

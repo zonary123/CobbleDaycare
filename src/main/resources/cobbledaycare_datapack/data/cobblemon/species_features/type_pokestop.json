@@ -1,0 +1,12 @@
+{
+  "type": "choice",
+  "keys": ["type_pokestop"],
+  "default": "one",
+  "choices": [
+	"one", 
+	"two", 
+	"three"
+  ],
+  "isAspect": true,
+  "aspectFormat": "type-pokestop-{{choice}}"
+}

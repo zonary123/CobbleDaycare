@@ -4,8 +4,9 @@
 
 ### Features
 
-- Added EVERSTONE logic with male forms.
+- Added `EVERSTONE` logic with male forms.
 - Fixed forms not being inherited correctly. Added a config option to add more forms if needed.
+- Automatic installation of datapack.
 
 ### Optimizations
 

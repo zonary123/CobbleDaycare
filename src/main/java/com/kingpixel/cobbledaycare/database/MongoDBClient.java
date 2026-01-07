@@ -42,7 +42,7 @@ public class MongoDBClient extends DatabaseClient {
 
   @Override
   public void disconnect() {
-    var entries = DatabaseClientFactory.USER_INFORMATION_MAP.asMap().entrySet();
+    var entries = DatabaseClient.USERS.asMap().entrySet();
     for (var entry : entries) {
       var key = entry.getKey();
       var value = entry.getValue();
@@ -58,7 +58,7 @@ public class MongoDBClient extends DatabaseClient {
   @Override
   public UserInformation getUserInformation(ServerPlayerEntity player) {
     UUID uuid = player.getUuid();
-    UserInformation userInformation = DatabaseClientFactory.USER_INFORMATION_MAP.getIfPresent(uuid);
+    UserInformation userInformation = DatabaseClient.USERS.getIfPresent(uuid);
     if (userInformation != null) return userInformation;
     Document document = collection.find(Filters.eq("playerUUID", uuid.toString())).first();
     if (document != null) {
@@ -66,7 +66,7 @@ public class MongoDBClient extends DatabaseClient {
       userInformation = UserInformation.fromDocument(document);
       CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID,
         "User information loaded from MongoDB: " + userInformation.getPlayerName() + " (" + userInformation.getPlayerUUID() + ")");
-      DatabaseClientFactory.USER_INFORMATION_MAP.put(uuid, userInformation);
+      DatabaseClient.USERS.put(uuid, userInformation);
       return userInformation;
     } else {
       CobbleUtils.LOGGER.info(CobbleDaycare.MOD_ID, "No user information found for player " + player.getGameProfile().getName() + ", creating new entry.");

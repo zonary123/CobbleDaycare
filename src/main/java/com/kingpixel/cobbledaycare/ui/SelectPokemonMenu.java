@@ -31,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -73,45 +72,40 @@ public class SelectPokemonMenu {
 
   public void open(ServerPlayerEntity player, Plot plot, UserInformation userInformation, SelectGender gender, int position) {
     if (PlayerUtils.isCooldownMenu(player, "select_menu", DurationValue.parse("1s"))) return;
-    CompletableFuture.runAsync(() -> {
-        // Clonar el template base
-        ChestTemplate template = baseTemplate.clone();
+    CobbleDaycare.runAsync(() -> {
+      // Clonar el template base
+      ChestTemplate template = baseTemplate.clone();
 
-        // Obtener botones para esta página
-        List<Button> buttons = getButtons(plot, player, gender, userInformation, position);
+      // Obtener botones para esta página
+      List<Button> buttons = getButtons(plot, player, gender, userInformation, position);
 
-        LinkedPage.Builder builder = LinkedPage.builder().title(AdventureTranslator.toNative(title));
+      LinkedPage.Builder builder = LinkedPage.builder().title(AdventureTranslator.toNative(title));
 
-        // Botón cerrar
-        close.applyTemplate(template, close.getButton(action -> {
-          CobbleDaycare.language.getPlotMenu().open(player, plot, userInformation);
+      // Botón cerrar
+      close.applyTemplate(template, close.getButton(action -> {
+        CobbleDaycare.language.getPlotMenu().open(player, plot, userInformation);
+      }, 1, TimeUnit.SECONDS, 1));
+
+      // Botón previo
+      if (position > 0) {
+        previous.applyTemplate(template, previous.getButton(action -> {
+          if (CobbleDaycare.config.hasOpenCooldown(action.getPlayer())) return;
+          open(player, plot, userInformation, gender, Math.max(0, position - POKEMONS_PER_PAGE));
         }, 1, TimeUnit.SECONDS, 1));
+      }
 
-        // Botón previo
-        if (position > 0) {
-          previous.applyTemplate(template, previous.getButton(action -> {
-            if (CobbleDaycare.config.hasOpenCooldown(action.getPlayer())) return;
-            open(player, plot, userInformation, gender, Math.max(0, position - POKEMONS_PER_PAGE));
-          }, 1, TimeUnit.SECONDS, 1));
-        }
+      // Botón siguiente
+      if (buttons.size() == POKEMONS_PER_PAGE) {
+        next.applyTemplate(template, next.getButton(action -> {
+          if (CobbleDaycare.config.hasOpenCooldown(action.getPlayer())) return;
+          open(player, plot, userInformation, gender, position + POKEMONS_PER_PAGE);
+        }, 1, TimeUnit.SECONDS, 1));
+      }
 
-        // Botón siguiente
-        if (buttons.size() == POKEMONS_PER_PAGE) {
-          next.applyTemplate(template, next.getButton(action -> {
-            if (CobbleDaycare.config.hasOpenCooldown(action.getPlayer())) return;
-            open(player, plot, userInformation, gender, position + POKEMONS_PER_PAGE);
-          }, 1, TimeUnit.SECONDS, 1));
-        }
+      GooeyPage page = PaginationHelper.createPagesFromPlaceholders(template, buttons, builder);
 
-        GooeyPage page = PaginationHelper.createPagesFromPlaceholders(template, buttons, builder);
-
-        CobbleDaycare.server.execute(() -> UIManager.openUIForcefully(player, page));
-      }, CobbleDaycare.DAYCARE_EXECUTOR)
-      .orTimeout(5, TimeUnit.SECONDS)
-      .exceptionally(e -> {
-        e.printStackTrace();
-        return null;
-      });
+      CobbleDaycare.server.execute(() -> UIManager.openUIForcefully(player, page));
+    });
   }
 
   private List<Button> getButtons(Plot plot, ServerPlayerEntity player, SelectGender gender,
@@ -158,16 +152,11 @@ public class SelectPokemonMenu {
       .display(display)
       .with(DataComponentTypes.CUSTOM_NAME, AdventureTranslator.toNative(PokemonUtils.getTranslatedName(pokemon)))
       .with(DataComponentTypes.LORE, new LoreComponent(AdventureTranslator.toNativeL(lore)))
-      .onClick(action -> CompletableFuture.runAsync(() -> {
-          if (PlayerUtils.isCooldownMenu(player, "select_menu_add", DurationValue.parse("1s"))) return;
-          CobbleDaycare.language.getPlotMenu().open(player, plot, userInformation);
-          plot.addPokemon(player, pokemon, gender, userInformation);
-        }, CobbleDaycare.DAYCARE_EXECUTOR)
-        .orTimeout(5, TimeUnit.SECONDS)
-        .exceptionally(e -> {
-          e.printStackTrace();
-          return null;
-        }))
+      .onClick(action -> CobbleDaycare.runAsync(() -> {
+        if (PlayerUtils.isCooldownMenu(player, "select_menu_add", DurationValue.parse("1s"))) return;
+        CobbleDaycare.language.getPlotMenu().open(player, plot, userInformation);
+        plot.addPokemon(player, pokemon, gender, userInformation);
+      }))
       .build();
 
     buttons.add(button);

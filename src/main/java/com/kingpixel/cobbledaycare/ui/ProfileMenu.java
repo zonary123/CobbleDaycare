@@ -15,7 +15,6 @@ import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * @author Carlos Varas Alonso - 14/03/2025 22:25
@@ -48,51 +47,47 @@ public class ProfileMenu {
   }
 
   public void open(ServerPlayerEntity player, UserInformation userInformation) {
-    CompletableFuture.runAsync(() -> {
-        ChestTemplate template = ChestTemplate
-          .builder(rows)
-          .build();
+    CobbleDaycare.runAsync(() -> {
+      ChestTemplate template = ChestTemplate
+        .builder(rows)
+        .build();
 
-        PanelsConfig.applyConfig(template, panels);
+      PanelsConfig.applyConfig(template, panels);
 
-        notifyActionBar.applyTemplate(template, notifyActionBar.getButton(1, null, replaceLore(notifyActionBar.getLore(),
-          userInformation.isActionBar()), action -> {
-          userInformation.setActionBar(!userInformation.isActionBar());
+      notifyActionBar.applyTemplate(template, notifyActionBar.getButton(1, null, replaceLore(notifyActionBar.getLore(),
+        userInformation.isActionBar()), action -> {
+        userInformation.setActionBar(!userInformation.isActionBar());
+        DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInformation);
+        open(player, userInformation);
+      }));
+
+      notifyCreateEgg.applyTemplate(template, notifyCreateEgg.getButton(1, null, replaceLore(notifyCreateEgg.getLore(),
+          userInformation.isNotifyCreateEgg()),
+        action -> {
+          userInformation.setNotifyCreateEgg(!userInformation.isNotifyCreateEgg());
           DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInformation);
           open(player, userInformation);
         }));
 
-        notifyCreateEgg.applyTemplate(template, notifyCreateEgg.getButton(1, null, replaceLore(notifyCreateEgg.getLore(),
-            userInformation.isNotifyCreateEgg()),
-          action -> {
-            userInformation.setNotifyCreateEgg(!userInformation.isNotifyCreateEgg());
-            DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInformation);
-            open(player, userInformation);
-          }));
-
-        notifyBanPokemon.applyTemplate(template, notifyBanPokemon.getButton(1, null,
-          replaceLore(notifyBanPokemon.getLore(),
-            userInformation.isNotifyBanPokemon()), action -> {
-            userInformation.setNotifyBanPokemon(!userInformation.isNotifyBanPokemon());
-            DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInformation);
-            open(player, userInformation);
-          }));
-
-        close.applyTemplate(template, close.getButton(action -> {
-          CobbleDaycare.language.getPrincipalMenu().open(player);
+      notifyBanPokemon.applyTemplate(template, notifyBanPokemon.getButton(1, null,
+        replaceLore(notifyBanPokemon.getLore(),
+          userInformation.isNotifyBanPokemon()), action -> {
+          userInformation.setNotifyBanPokemon(!userInformation.isNotifyBanPokemon());
+          DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInformation);
+          open(player, userInformation);
         }));
 
-        GooeyPage page = GooeyPage.builder()
-          .template(template)
-          .title(AdventureTranslator.toNative(title))
-          .build();
+      close.applyTemplate(template, close.getButton(action -> {
+        CobbleDaycare.language.getPrincipalMenu().open(player);
+      }));
 
-        CobbleDaycare.server.execute(() -> UIManager.openUIForcefully(player, page));
-      }, CobbleDaycare.DAYCARE_EXECUTOR)
-      .exceptionally(e -> {
-        e.printStackTrace();
-        return null;
-      });
+      GooeyPage page = GooeyPage.builder()
+        .template(template)
+        .title(AdventureTranslator.toNative(title))
+        .build();
+
+      CobbleDaycare.server.execute(() -> UIManager.openUIForcefully(player, page));
+    });
   }
 
   private List<String> replaceLore(List<String> lore, boolean value) {

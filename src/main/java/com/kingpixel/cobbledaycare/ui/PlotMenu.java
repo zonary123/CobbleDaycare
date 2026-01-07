@@ -26,8 +26,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Carlos Varas Alonso - 11/03/2025 5:09
@@ -54,119 +52,93 @@ public class PlotMenu {
   public void open(ServerPlayerEntity player, Plot plot, UserInformation userInformation) {
     if (PlayerUtils.isCooldownMenu(player, "plot_menu", DurationValue.parse("1s"))) return;
     CobbleDaycare.server.execute(() -> UIManager.closeUI(player));
-    CompletableFuture.runAsync(() -> {
-        ChestTemplate template = ChestTemplate.builder(rows)
-          .build();
+    CobbleDaycare.runAsync(() -> {
+      ChestTemplate template = ChestTemplate.builder(rows)
+        .build();
 
-        if (plot.checkEgg(player, userInformation))
-          DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInformation);
+      if (plot.checkEgg(player, userInformation))
+        DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInformation);
 
-        GooeyButton maleButton = GooeyButton
-          .builder()
-          .display(plot.getMale() != null ? PokemonItem.from(plot.getMale()) : male.getItemStack())
-          .with(DataComponentTypes.LORE, new LoreComponent(AdventureTranslator.toNativeL(PokemonUtils.replaceLore(plot.getMale()))))
-          .with(DataComponentTypes.CUSTOM_MODEL_DATA, new CustomModelDataComponent((int) egg.getCustomModelData()))
-          .onClick(action -> CompletableFuture.runAsync(() -> {
-              if (CobbleDaycare.config.hasOpenCooldown(action.getPlayer())) return;
-              if (plot.getMale() != null) {
-                PlayerUtils.sendMessage(
-                  player,
-                  PokemonUtils.replace(CobbleDaycare.language.getMessageRemovedMale(), plot.getMale())
-                    .replace("%plot%", userInformation.getIndexPlot(plot) + ""),
-                  CobbleDaycare.language.getPrefix(),
-                  TypeMessage.CHAT
-                );
-                Pokemon malePokemon = plot.getMale().clone(false, CobbleDaycare.server.getRegistryManager());
-                plot.setMale(null);
-                CobbleDaycare.server.submit(() -> Cobblemon.INSTANCE.getStorage().getParty(player).add(malePokemon));
-                DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInformation);
-                open(player, plot, userInformation);
-              } else {
-                CobbleDaycare.language.getSelectPokemonMenu().open(player, plot, userInformation, SelectGender.MALE, 0);
-              }
-            }, CobbleDaycare.DAYCARE_EXECUTOR)
-            .orTimeout(5, TimeUnit.SECONDS)
-            .exceptionally(e -> {
-              e.printStackTrace();
-              return null;
-            }))
-          .build();
-        male.applyTemplate(template, maleButton);
+      GooeyButton maleButton = GooeyButton
+        .builder()
+        .display(plot.getMale() != null ? PokemonItem.from(plot.getMale()) : male.getItemStack())
+        .with(DataComponentTypes.LORE, new LoreComponent(AdventureTranslator.toNativeL(PokemonUtils.replaceLore(plot.getMale()))))
+        .with(DataComponentTypes.CUSTOM_MODEL_DATA, new CustomModelDataComponent((int) egg.getCustomModelData()))
+        .onClick(action -> CobbleDaycare.runAsync(() -> {
+          if (CobbleDaycare.config.hasOpenCooldown(action.getPlayer())) return;
+          if (plot.getMale() != null) {
+            PlayerUtils.sendMessage(
+              player,
+              PokemonUtils.replace(CobbleDaycare.language.getMessageRemovedMale(), plot.getMale())
+                .replace("%plot%", userInformation.getIndexPlot(plot) + ""),
+              CobbleDaycare.language.getPrefix(),
+              TypeMessage.CHAT
+            );
+            Pokemon malePokemon = plot.getMale().clone(false, CobbleDaycare.server.getRegistryManager());
+            plot.setMale(null);
+            CobbleDaycare.server.submit(() -> Cobblemon.INSTANCE.getStorage().getParty(player).add(malePokemon));
+            DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInformation);
+            open(player, plot, userInformation);
+          } else {
+            CobbleDaycare.language.getSelectPokemonMenu().open(player, plot, userInformation, SelectGender.MALE, 0);
+          }
+        }))
+        .build();
+      male.applyTemplate(template, maleButton);
 
-        ItemStack displayEgg = plot.getEggs().isEmpty() ? egg.getItemStack() : PokemonItem.from(plot.getEggs().getFirst());
-        GooeyButton eggButton = GooeyButton.builder()
-          .display(displayEgg)
-          .with(DataComponentTypes.CUSTOM_MODEL_DATA, new CustomModelDataComponent((int) egg.getCustomModelData()))
-          .onClick(action -> CompletableFuture.runAsync(() -> {
-              if (plot.giveEggs(player)) {
-                if (plot.getEggs().size() >= plot.limitEggs(player)) plot.setTime(player);
-                DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInformation);
-                CobbleDaycare.language.getPrincipalMenu().open(player);
-              }
-            }, CobbleDaycare.DAYCARE_EXECUTOR)
-            .exceptionally(e -> {
-              e.printStackTrace();
-              return null;
-            }))
-          .build();
-        eggButton.setDisplay(displayEgg);
-        egg.applyTemplate(template, eggButton);
+      ItemStack displayEgg = plot.getEggs().isEmpty() ? egg.getItemStack() : PokemonItem.from(plot.getEggs().getFirst());
+      GooeyButton eggButton = GooeyButton.builder()
+        .display(displayEgg)
+        .with(DataComponentTypes.CUSTOM_MODEL_DATA, new CustomModelDataComponent((int) egg.getCustomModelData()))
+        .onClick(action -> CobbleDaycare.runAsync(() -> {
+          if (plot.giveEggs(player)) {
+            if (plot.getEggs().size() >= plot.limitEggs(player)) plot.setTime(player);
+            DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInformation);
+            CobbleDaycare.language.getPrincipalMenu().open(player);
+          }
+        }))
+        .build();
+      eggButton.setDisplay(displayEgg);
+      egg.applyTemplate(template, eggButton);
 
-        // Female
-        GooeyButton femaleButton = GooeyButton
-          .builder()
-          .display(plot.getFemale() != null ? PokemonItem.from(plot.getFemale()) : female.getItemStack())
-          .with(DataComponentTypes.LORE, new LoreComponent(AdventureTranslator.toNativeL(PokemonUtils.replaceLore(plot.getFemale()))))
-          .with(DataComponentTypes.CUSTOM_MODEL_DATA, new CustomModelDataComponent((int) female.getCustomModelData()))
-          .onClick(action -> CompletableFuture.runAsync(() -> {
-              if (CobbleDaycare.config.hasOpenCooldown(action.getPlayer())) return;
-              if (plot.getFemale() != null) {
-                PlayerUtils.sendMessage(
-                  player,
-                  PokemonUtils.replace(CobbleDaycare.language.getMessageRemovedFemale(), plot.getFemale())
-                    .replace("%plot%", userInformation.getIndexPlot(plot) + ""),
-                  CobbleDaycare.language.getPrefix(),
-                  TypeMessage.CHAT
-                );
-                Pokemon femalePokemon = plot.getFemale().clone(false, CobbleDaycare.server.getRegistryManager());
-                plot.setFemale(null);
-                CobbleDaycare.server.submit(() -> Cobblemon.INSTANCE.getStorage().getParty(player).add(femalePokemon));
-                DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInformation);
-                open(player, plot, userInformation);
-              } else {
-                CobbleDaycare.language.getSelectPokemonMenu().open(player, plot, userInformation, SelectGender.FEMALE, 0);
-              }
-            }, CobbleDaycare.DAYCARE_EXECUTOR)
-            .orTimeout(5, TimeUnit.SECONDS)
-            .exceptionally(e -> {
-              e.printStackTrace();
-              return null;
-            }))
-          .build();
-        female.applyTemplate(template, femaleButton);
+      // Female
+      GooeyButton femaleButton = GooeyButton
+        .builder()
+        .display(plot.getFemale() != null ? PokemonItem.from(plot.getFemale()) : female.getItemStack())
+        .with(DataComponentTypes.LORE, new LoreComponent(AdventureTranslator.toNativeL(PokemonUtils.replaceLore(plot.getFemale()))))
+        .with(DataComponentTypes.CUSTOM_MODEL_DATA, new CustomModelDataComponent((int) female.getCustomModelData()))
+        .onClick(action -> CobbleDaycare.runAsync(() -> {
+          if (CobbleDaycare.config.hasOpenCooldown(action.getPlayer())) return;
+          if (plot.getFemale() != null) {
+            PlayerUtils.sendMessage(
+              player,
+              PokemonUtils.replace(CobbleDaycare.language.getMessageRemovedFemale(), plot.getFemale())
+                .replace("%plot%", userInformation.getIndexPlot(plot) + ""),
+              CobbleDaycare.language.getPrefix(),
+              TypeMessage.CHAT
+            );
+            Pokemon femalePokemon = plot.getFemale().clone(false, CobbleDaycare.server.getRegistryManager());
+            plot.setFemale(null);
+            CobbleDaycare.server.submit(() -> Cobblemon.INSTANCE.getStorage().getParty(player).add(femalePokemon));
+            DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInformation);
+            open(player, plot, userInformation);
+          } else {
+            CobbleDaycare.language.getSelectPokemonMenu().open(player, plot, userInformation, SelectGender.FEMALE, 0);
+          }
+        }))
+        .build();
+      female.applyTemplate(template, femaleButton);
 
-        template.set(close.getSlot(), close.getButton(action -> CobbleDaycare.language.getPrincipalMenu().open(player)));
+      template.set(close.getSlot(), close.getButton(action -> CobbleDaycare.language.getPrincipalMenu().open(player)));
 
-        GooeyPage page = GooeyPage.builder()
-          .template(template)
-          .title(AdventureTranslator.toNative(title))
-          .onClose(action -> CompletableFuture.runAsync(() -> {
-              DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInformation);
-            }, CobbleDaycare.DAYCARE_EXECUTOR)
-            .orTimeout(5, TimeUnit.SECONDS)
-            .exceptionally(e -> {
-              e.printStackTrace();
-              return null;
-            }))
-          .build();
+      GooeyPage page = GooeyPage.builder()
+        .template(template)
+        .title(AdventureTranslator.toNative(title))
+        .onClose(action -> CobbleDaycare.runAsync(() -> DatabaseClientFactory.INSTANCE.saveOrUpdateUserInformation(player, userInformation)))
+        .build();
 
-        CobbleDaycare.server.execute(() -> UIManager.openUIForcefully(player, page));
-      }, CobbleDaycare.DAYCARE_EXECUTOR)
-      .orTimeout(5, TimeUnit.SECONDS)
-      .exceptionally(e -> {
-        e.printStackTrace();
-        return null;
-      });
+      CobbleDaycare.server.execute(() -> UIManager.openUIForcefully(player, page));
+    });
   }
 
 }
