@@ -28,7 +28,8 @@ import java.util.Objects;
 /**
  * @author Carlos Varas Alonso - 11/03/2025 7:38
  */
-@EqualsAndHashCode(callSuper = true) @Data
+@EqualsAndHashCode(callSuper = true)
+@Data
 public class DayCarePokemon extends Mechanics {
   public static final String TAG_OLD_POKEMON = "species";
   public static final String TAG_POKEMON = "pokemon";
@@ -117,7 +118,8 @@ public class DayCarePokemon extends Mechanics {
     return "type_egg=" + showdownId;
   }
 
-  @Override public void applyHatch(HatchBuilder builder) {
+  @Override
+  public void applyHatch(HatchBuilder builder) {
     Pokemon egg = builder.getEgg();
     egg.setOriginalTrainer(builder.getPlayer().getUuid());
     egg.setOriginalTrainer(builder.getPlayer().getGameProfile().getName());
@@ -152,7 +154,8 @@ public class DayCarePokemon extends Mechanics {
     egg.getPersistentData().remove(TAG_REFERENCE_CYCLES);
   }
 
-  @Override public void createEgg(ServerPlayerEntity player, Pokemon pokemon, Pokemon egg) {
+  @Override
+  public void createEgg(ServerPlayerEntity player, Pokemon pokemon, Pokemon egg) {
     egg.setOriginalTrainer("???");
     PokemonProperties.Companion.parse(getTypeEgg(pokemon)).apply(egg);
     egg.getPersistentData().putString(TAG_POKEMON, pokemon.getSpecies().showdownId());
@@ -163,7 +166,8 @@ public class DayCarePokemon extends Mechanics {
     egg.getPersistentData().putInt(TAG_REFERENCE_CYCLES, pokemon.getSpecies().getEggCycles());
   }
 
-  @Override public String getEggInfo(String s, NbtCompound nbt) {
+  @Override
+  public String getEggInfo(String s, NbtCompound nbt) {
     return s
       .replace("%steps%", String.format("%.2f", nbt.getDouble(TAG_STEPS)))
       .replace("%reference_steps%", String.format("%.2f", nbt.getDouble(TAG_REFERENCE_STEPS)))
@@ -172,14 +176,17 @@ public class DayCarePokemon extends Mechanics {
       .replace("%gender%", PokemonUtils.getGenderTranslate(Gender.valueOf(nbt.getString(TAG_GENDER))));
   }
 
-  @Override public void validateData() {
+  @Override
+  public void validateData() {
   }
 
-  @Override public String fileName() {
+  @Override
+  public String fileName() {
     return "pokemon";
   }
 
-  @Override public String replace(String text, ServerPlayerEntity player) {
+  @Override
+  public String replace(String text, ServerPlayerEntity player) {
     return text;
   }
 
@@ -189,7 +196,7 @@ public class DayCarePokemon extends Mechanics {
 
   public Pokemon getEvolutionPokemonEgg(Species species) {
     if (species.showdownId().equals("manaphy"))
-      return PokemonSpecies.INSTANCE.getByIdentifier(Identifier.of("cobblemon:phione")).create(1);
+      return PokemonSpecies.getByIdentifier(Identifier.of("cobblemon:phione")).create(1);
     Species firstEvolution = getFirstPreEvolution(species);
 
     Pokemon specialPokemon = findSpecialPokemon(firstEvolution);

@@ -90,14 +90,13 @@ public class PrincipalMenu {
   }
 
   private boolean isBattle(ServerPlayerEntity player) {
-    //var battle = BattleRegistry.getBattleByParticipatingPlayer(player);
-    var battle = BattleRegistry.INSTANCE.getBattleByParticipatingPlayer(player);
+    var battle = BattleRegistry.getBattleByParticipatingPlayer(player);
     return battle != null;
   }
 
   public void open(ServerPlayerEntity player) {
+    if (isBattle(player)) return;
     CobbleDaycare.runAsync(() -> {
-      if (isBattle(player)) return;
       ChestTemplate template = ChestTemplate.builder(rows).build();
       UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
       int size = CobbleDaycare.config.getSlotPlots().size();

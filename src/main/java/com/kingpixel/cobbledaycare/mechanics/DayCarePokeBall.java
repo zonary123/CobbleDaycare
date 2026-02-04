@@ -24,7 +24,7 @@ public class DayCarePokeBall extends Mechanics {
   @Override
   public void applyEgg(EggBuilder builder) {
     Identifier id = builder.getFemale().getCaughtBall().getName();
-    PokeBall pokeBall = PokeBalls.INSTANCE.getPokeBall(id);
+    PokeBall pokeBall = PokeBalls.getPokeBall(id);
     if (pokeBall != null) {
       if (viewPokeball)
         builder.getEgg().setCaughtBall(pokeBall);
@@ -32,18 +32,20 @@ public class DayCarePokeBall extends Mechanics {
     builder.getEgg().getPersistentData().putString(TAG, id.getNamespace() + ":" + id.getPath());
   }
 
-  @Override public String replace(String text, ServerPlayerEntity player) {
+  @Override
+  public String replace(String text, ServerPlayerEntity player) {
     return text
       .replace("%pokeball%", isActive() ? CobbleUtils.language.getYes() : CobbleUtils.language.getNo());
   }
 
-  @Override public void applyHatch(HatchBuilder builder) {
+  @Override
+  public void applyHatch(HatchBuilder builder) {
     Pokemon egg = builder.getEgg();
     Pokemon pokemon = builder.getPokemon();
     String ball = egg.getPersistentData().getString(TAG);
     if (!ball.isEmpty()) {
       try {
-        PokeBall pokeBall = PokeBalls.INSTANCE.getPokeBall(Identifier.of(ball));
+        PokeBall pokeBall = PokeBalls.getPokeBall(Identifier.of(ball));
         if (pokeBall != null) {
           pokemon.setCaughtBall(pokeBall);
         }
@@ -53,19 +55,23 @@ public class DayCarePokeBall extends Mechanics {
     egg.getPersistentData().remove(TAG);
   }
 
-  @Override public void createEgg(ServerPlayerEntity player, Pokemon pokemon, Pokemon egg) {
+  @Override
+  public void createEgg(ServerPlayerEntity player, Pokemon pokemon, Pokemon egg) {
     Identifier id = pokemon.getCaughtBall().getName();
     egg.getPersistentData().putString(TAG, id.getNamespace() + ":" + id.getPath());
   }
 
-  @Override public String getEggInfo(String s, NbtCompound nbt) {
+  @Override
+  public String getEggInfo(String s, NbtCompound nbt) {
     return s.replace("%pokeball%", nbt.getString(TAG));
   }
 
-  @Override public void validateData() {
+  @Override
+  public void validateData() {
   }
 
-  @Override public String fileName() {
+  @Override
+  public String fileName() {
     return "pokeball";
   }
 }

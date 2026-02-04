@@ -19,7 +19,8 @@ import static com.cobblemon.mod.common.CobblemonItems.MIRROR_HERB;
 /**
  * @author Carlos Varas Alonso - 11/03/2025 9:09
  */
-@EqualsAndHashCode(callSuper = true) @Data
+@EqualsAndHashCode(callSuper = true)
+@Data
 public class DayCareMirrorHerb extends Mechanics {
 
   public DayCareMirrorHerb() {
@@ -34,7 +35,7 @@ public class DayCareMirrorHerb extends Mechanics {
       for (String move : sourceMoves) {
         if (size >= 4) break;
         if (eggMoves.contains(move)) {
-          MoveTemplate moveTemplate = Moves.INSTANCE.getByName(move);
+          MoveTemplate moveTemplate = Moves.getByName(move);
           if (moveTemplate == null) {
             continue;
           }
@@ -47,7 +48,8 @@ public class DayCareMirrorHerb extends Mechanics {
     }
   }
 
-  @Override public String replace(String text, ServerPlayerEntity player) {
+  @Override
+  public String replace(String text, ServerPlayerEntity player) {
     String s = isActive() ? CobbleUtils.language.getYes() : CobbleUtils.language.getNo();
     return text
       .replace("%mirrorHerb%", s)
@@ -70,18 +72,22 @@ public class DayCareMirrorHerb extends Mechanics {
 
   }
 
-  @Override public void createEgg(ServerPlayerEntity player, Pokemon pokemon, Pokemon egg) {
+  @Override
+  public void createEgg(ServerPlayerEntity player, Pokemon pokemon, Pokemon egg) {
 
   }
 
-  @Override public String getEggInfo(String s, NbtCompound nbt) {
+  @Override
+  public String getEggInfo(String s, NbtCompound nbt) {
     return s;
   }
 
-  @Override public void validateData() {
+  @Override
+  public void validateData() {
   }
 
-  @Override public String fileName() {
+  @Override
+  public String fileName() {
     return "mirror_herb";
   }
 }

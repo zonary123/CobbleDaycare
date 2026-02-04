@@ -41,44 +41,50 @@ public class DayCareNature extends Mechanics {
         }
       }
     } else {
-      applyNature(Natures.INSTANCE.getRandomNature(), egg);
+      applyNature(Natures.getRandomNature(), egg);
     }
   }
 
-  @Override public void applyHatch(HatchBuilder builder) {
+  @Override
+  public void applyHatch(HatchBuilder builder) {
     Pokemon egg = builder.getEgg();
     Pokemon pokemon = builder.getPokemon();
     String s = egg.getPersistentData().getString(TAG);
     if (!s.isEmpty()) {
-      Nature nature = Natures.INSTANCE.getNature(s);
+      Nature nature = Natures.getNature(s);
       if (nature == null) {
         CobbleUtils.LOGGER.error(CobbleDaycare.MOD_ID, "Invalid nature: " + s);
-        nature = Natures.INSTANCE.getRandomNature();
+        nature = Natures.getRandomNature();
       }
       pokemon.setNature(nature);
     } else {
-      pokemon.setNature(Natures.INSTANCE.getRandomNature());
+      pokemon.setNature(Natures.getRandomNature());
     }
     egg.getPersistentData().remove(TAG);
   }
 
-  @Override public void createEgg(ServerPlayerEntity player, Pokemon pokemon, Pokemon egg) {
+  @Override
+  public void createEgg(ServerPlayerEntity player, Pokemon pokemon, Pokemon egg) {
     applyNature(pokemon.getNature(), egg);
   }
 
-  @Override public String getEggInfo(String s, NbtCompound nbt) {
-    Nature nature = Natures.INSTANCE.getNature(nbt.getString(TAG));
+  @Override
+  public String getEggInfo(String s, NbtCompound nbt) {
+    Nature nature = Natures.getNature(nbt.getString(TAG));
     return s.replace("%nature%", PokemonUtils.getNatureTranslate(nature));
   }
 
-  @Override public void validateData() {
+  @Override
+  public void validateData() {
   }
 
-  @Override public String fileName() {
+  @Override
+  public String fileName() {
     return "nature";
   }
 
-  @Override public String replace(String text, ServerPlayerEntity player) {
+  @Override
+  public String replace(String text, ServerPlayerEntity player) {
     return text
       .replace("%everstone%", String.format("%.2f", percentageEverstone));
   }

@@ -79,7 +79,7 @@ public class DayCareEggMoves extends Mechanics {
     var moves = extractMoveNamesFromJson(json);
 
     for (String s : moves) {
-      MoveTemplate moveTemplate = Moves.INSTANCE.getByName(s);
+      MoveTemplate moveTemplate = Moves.getByName(s);
       if (moveTemplate == null) continue;
       Move move = moveTemplate.create();
       JsonObject moveJson = move.saveToJSON(new JsonObject());

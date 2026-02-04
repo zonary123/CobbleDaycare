@@ -194,7 +194,7 @@ public class DayCareForm extends Mechanics {
   private List<String> processFeatures(Pokemon pokemon) {
     List<String> features = new ArrayList<>();
 
-    for (SpeciesFeatureProvider<?> provider : SpeciesFeatures.INSTANCE.getFeaturesFor(pokemon.getSpecies())) {
+    for (SpeciesFeatureProvider<?> provider : SpeciesFeatures.getFeaturesFor(pokemon.getSpecies())) {
       if (provider instanceof ChoiceSpeciesFeatureProvider choice) {
         var feature = choice.get(pokemon);
         if (feature == null) continue;
@@ -260,11 +260,13 @@ public class DayCareForm extends Mechanics {
     ));
   }
 
-  @Override public String fileName() {
+  @Override
+  public String fileName() {
     return "form";
   }
 
-  @Override public String replace(String text, ServerPlayerEntity player) {
+  @Override
+  public String replace(String text, ServerPlayerEntity player) {
     return text;
   }
 }
