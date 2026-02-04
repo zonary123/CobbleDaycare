@@ -101,12 +101,15 @@ public class PrincipalMenu {
       ChestTemplate template = ChestTemplate.builder(rows).build();
       UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
       int size = CobbleDaycare.config.getSlotPlots().size();
+      int playerPlotsSize = userInformation.getPlots().size();
       for (int i = 0; i < size; i++) {
         int slot = CobbleDaycare.config.getSlotPlots().get(i);
-
-        // Verificar si el jugador tiene permiso para esta plot
-        if (PermissionApi.hasPermission(player, Plot.plotPermission(i), 4)) {
-          // El jugador tiene permiso, mostrar icono normal
+        if (PermissionApi.hasPermission(player, Plot.plotPermission(i), 2)) {
+          if (i >= playerPlotsSize) {
+            template.set(slot, plotWithOutParents.getButton(1, null, null, action -> {
+            }));
+            continue;
+          }
           Plot plot = userInformation.getPlots().get(i);
           if (plot == null) continue;
           ItemModel itemModel;
@@ -122,9 +125,7 @@ public class PrincipalMenu {
             CobbleDaycare.language.getPlotMenu().open(player, plot, userInformation);
           }));
         } else {
-          // El jugador NO tiene permiso, mostrar icono bloqueado
           template.set(slot, blockedPlot.getButton(1, null, null, action -> {
-            // No hacer nada cuando hace clic en una plot bloqueada
           }));
         }
       }
