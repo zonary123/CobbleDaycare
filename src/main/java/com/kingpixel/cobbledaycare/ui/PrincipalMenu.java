@@ -99,12 +99,17 @@ public class PrincipalMenu {
     CobbleDaycare.runAsync(() -> {
       ChestTemplate template = ChestTemplate.builder(rows).build();
       UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
-      int size = CobbleDaycare.config.getSlotPlots().size();
+      int slotSize = CobbleDaycare.config.getSlotPlots().size();
+      int plotSize = userInformation.getPlots().size();
+      int size = Math.min(slotSize, plotSize);
+
       for (int i = 0; i < size; i++) {
         int slot = CobbleDaycare.config.getSlotPlots().get(i);
+
         if (PermissionApi.hasPermission(player, Plot.plotPermission(i), 2)) {
           Plot plot = userInformation.getPlots().get(i);
           if (plot == null) continue;
+
           ItemModel itemModel;
           if (plot.hasEggs()) {
             itemModel = plotWithEgg;
@@ -114,9 +119,12 @@ public class PrincipalMenu {
             itemModel = plotWithOutEgg;
           }
 
-          template.set(slot, itemModel.getButton(plot.getEggs().size(), null, replacePlotLore(plot, player), action -> {
-            CobbleDaycare.language.getPlotMenu().open(player, plot, userInformation);
-          }));
+          template.set(slot, itemModel.getButton(
+            plot.getEggs().size(),
+            null,
+            replacePlotLore(plot, player),
+            action -> CobbleDaycare.language.getPlotMenu().open(player, plot, userInformation)
+          ));
         } else {
           template.set(slot, blockedPlot.getButton(1, null, null, action -> {
           }));
