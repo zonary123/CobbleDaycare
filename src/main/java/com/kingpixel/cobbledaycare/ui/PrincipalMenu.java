@@ -100,15 +100,9 @@ public class PrincipalMenu {
       ChestTemplate template = ChestTemplate.builder(rows).build();
       UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
       int size = CobbleDaycare.config.getSlotPlots().size();
-      int playerPlotsSize = userInformation.getPlots().size();
       for (int i = 0; i < size; i++) {
         int slot = CobbleDaycare.config.getSlotPlots().get(i);
         if (PermissionApi.hasPermission(player, Plot.plotPermission(i), 2)) {
-          if (i >= playerPlotsSize) {
-            template.set(slot, plotWithOutParents.getButton(1, null, null, action -> {
-            }));
-            continue;
-          }
           Plot plot = userInformation.getPlots().get(i);
           if (plot == null) continue;
           ItemModel itemModel;
