@@ -99,36 +99,41 @@ public class PrincipalMenu {
     CobbleDaycare.runAsync(() -> {
       ChestTemplate template = ChestTemplate.builder(rows).build();
       UserInformation userInformation = DatabaseClientFactory.INSTANCE.getUserInformation(player);
+
       int slotSize = CobbleDaycare.config.getSlotPlots().size();
       int plotSize = userInformation.getPlots().size();
-      int size = Math.min(slotSize, plotSize);
 
-      for (int i = 0; i < size; i++) {
+      for (int i = 0; i < slotSize; i++) {
         int slot = CobbleDaycare.config.getSlotPlots().get(i);
 
-        if (PermissionApi.hasPermission(player, Plot.plotPermission(i), 2)) {
-          Plot plot = userInformation.getPlots().get(i);
-          if (plot == null) continue;
-
-          ItemModel itemModel;
-          if (plot.hasEggs()) {
-            itemModel = plotWithEgg;
-          } else if (plot.notParents()) {
-            itemModel = plotWithOutParents;
-          } else {
-            itemModel = plotWithOutEgg;
-          }
-
-          template.set(slot, itemModel.getButton(
-            plot.getEggs().size(),
-            null,
-            replacePlotLore(plot, player),
-            action -> CobbleDaycare.language.getPlotMenu().open(player, plot, userInformation)
-          ));
-        } else {
+        if (!PermissionApi.hasPermission(player, Plot.plotPermission(i), 2) || i >= plotSize) {
           template.set(slot, blockedPlot.getButton(1, null, null, action -> {
           }));
+          continue;
         }
+
+        Plot plot = userInformation.getPlots().get(i);
+        if (plot == null) {
+          template.set(slot, blockedPlot.getButton(1, null, null, action -> {
+          }));
+          continue;
+        }
+
+        ItemModel itemModel;
+        if (plot.hasEggs()) {
+          itemModel = plotWithEgg;
+        } else if (plot.notParents()) {
+          itemModel = plotWithOutParents;
+        } else {
+          itemModel = plotWithOutEgg;
+        }
+
+        template.set(slot, itemModel.getButton(
+          plot.getEggs().size(),
+          null,
+          replacePlotLore(plot, player),
+          action -> CobbleDaycare.language.getPlotMenu().open(player, plot, userInformation)
+        ));
       }
 
 

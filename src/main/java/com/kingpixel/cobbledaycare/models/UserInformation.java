@@ -1,6 +1,7 @@
 package com.kingpixel.cobbledaycare.models;
 
 import com.cobblemon.mod.common.Cobblemon;
+import com.cobblemon.mod.common.api.storage.party.PlayerPartyStore;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.google.gson.Gson;
 import com.kingpixel.cobbledaycare.CobbleDaycare;
@@ -17,9 +18,9 @@ import lombok.ToString;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.bson.Document;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author Carlos Varas Alonso - 31/01/2025 1:16
@@ -43,7 +44,7 @@ public class UserInformation {
   private long timeMultiplierSteps;
   private long cooldownHatch;
   private long cooldownBreed;
-  private CopyOnWriteArrayList<Plot> plots;
+  private ArrayList<Plot> plots;
 
   public UserInformation() {
     this.playerUUID = null;
@@ -56,7 +57,7 @@ public class UserInformation {
     this.notifyBanPokemon = userInfoOptions.isNotifyBanPokemon();
     this.notifyCreateEgg = userInfoOptions.isNotifyCreateEgg();
     this.actionBar = userInfoOptions.isActionBar();
-    this.plots = new CopyOnWriteArrayList<>();
+    this.plots = new ArrayList<>();
   }
 
   public UserInformation(ServerPlayerEntity player) {
@@ -107,16 +108,16 @@ public class UserInformation {
   }
 
   public synchronized boolean check(int numPlots, ServerPlayerEntity player) {
+    if (player == null) throw new IllegalArgumentException("The player cannot be null.");
+
     boolean update = false;
+
 
     if (plots == null) {
       CobbleUtils.LOGGER.error(CobbleDaycare.MOD_ID, "UserInformation plots was null for player " + player.getGameProfile().getName() + " fixing...");
-      plots = new CopyOnWriteArrayList<>();
+      plots = new ArrayList<>();
       update = true;
     }
-
-    if (player == null) throw new IllegalArgumentException("The player cannot be null.");
-
 
     if (playerUUID == null || playerName == null) {
       playerUUID = player.getUuid();
@@ -134,42 +135,12 @@ public class UserInformation {
     } else if (currentSize > numPlots) {
       var party = Cobblemon.INSTANCE.getStorage().getParty(player);
       for (int i = currentSize - 1; i >= numPlots; i--) {
-        Plot plot = plots.get(i);
-        if (plot != null) {
-          if (plot.getMale() != null) {
-            PlayerUtils.sendMessage(
-              player,
-              "Your Pokémon " + plot.getMale().getDisplayName(false).getString() + " has been returned to your party " +
-                "because the plot has been removed.",
-              CobbleDaycare.language.getPrefix(),
-              TypeMessage.CHAT
-            );
-            party.add(plot.getMale());
-          }
-          if (plot.getFemale() != null) {
-            PlayerUtils.sendMessage(
-              player,
-              "Your Pokémon " + plot.getFemale().getDisplayName(false).getString() + " has been returned to your party " +
-                "because the plot has been removed.",
-              CobbleDaycare.language.getPrefix(),
-              TypeMessage.CHAT
-            );
-            party.add(plot.getFemale());
-          }
-          plot.giveEggs(player);
-          for (Pokemon egg : plot.getEggs()) {
-            if (egg != null) {
-              PlayerUtils.sendMessage(
-                player,
-                "Your egg " + egg.getPersistentData().getString(DayCarePokemon.TAG_POKEMON) + " has been returned to your party because the plot has been removed.",
-                CobbleDaycare.language.getPrefix(),
-                TypeMessage.CHAT
-              );
-              party.add(egg);
-            }
-          }
-        }
-        plots.remove(i);
+        Plot plot = plots.remove(i);
+        if (plot == null) continue;
+
+        returnToParty(player, party, plot.getMale(), "male");
+        returnToParty(player, party, plot.getFemale(), "female");
+        plot.giveEggs(player);
       }
       update = true;
     }
@@ -177,18 +148,36 @@ public class UserInformation {
     return update;
   }
 
+  private void returnToParty(ServerPlayerEntity player, PlayerPartyStore party, Pokemon pokemon, String type) {
+    if (pokemon == null) return;
+
+    String name = type.equals("egg") ?
+      pokemon.getPersistentData().getString(DayCarePokemon.TAG_POKEMON) :
+      pokemon.getDisplayName(false).getString();
+
+    PlayerUtils.sendMessage(
+      player,
+      "Your " + type + " " + name + " has been returned to your party because the plot has been removed.",
+      CobbleDaycare.language.getPrefix(),
+      TypeMessage.CHAT
+    );
+    CobbleUtils.server.execute(() -> party.add(pokemon));
+  }
+
 
   public synchronized boolean fix(ServerPlayerEntity player) {
     boolean update = false;
     if (plots == null) {
       CobbleUtils.LOGGER.error(CobbleDaycare.MOD_ID, "UserInformation plots was null for player " + player.getGameProfile().getName() + " fixing...");
-      plots = new CopyOnWriteArrayList<>();
+      plots = new ArrayList<>();
       update = true;
     }
     for (Plot plot : plots) {
-      for (Pokemon egg : plot.getEggs()) {
+      var eggsIterator = plot.getEggs().iterator();
+      while (eggsIterator.hasNext()) {
+        Pokemon egg = eggsIterator.next();
         if (egg == null) {
-          plot.getEggs().remove(egg);
+          eggsIterator.remove();
           update = true;
         }
       }
