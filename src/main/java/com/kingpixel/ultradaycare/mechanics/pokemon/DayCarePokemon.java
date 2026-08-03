@@ -3,6 +3,7 @@ package com.kingpixel.ultradaycare.mechanics.pokemon;
 import com.cobblemon.mod.common.api.pokemon.PokemonProperties;
 import com.cobblemon.mod.common.api.pokemon.PokemonSpecies;
 import com.cobblemon.mod.common.api.pokemon.egg.EggGroup;
+import com.cobblemon.mod.common.pokemon.FormData;
 import com.cobblemon.mod.common.pokemon.Gender;
 import com.cobblemon.mod.common.pokemon.OriginalTrainerType;
 import com.cobblemon.mod.common.pokemon.Pokemon;
@@ -24,6 +25,7 @@ import net.minecraft.util.Identifier;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -52,18 +54,48 @@ public class DayCarePokemon extends Mechanics {
         new PokemonChance("volbeat", 50))));
   }
 
-  private static Species getFirstPreEvolution(Species species) {
-    while (species.getPreEvolution() != null) {
-      Species preEvolution = species.getPreEvolution().getSpecies();
+  private static final Map<String, Integer> SPECIAL_FORM_INDEXES = Map.of(
+    "sirfetch’d", 1,
+    "sirfetch'd", 1,
+    "cursola", 1,
+    "obstagoon", 1,
+    "runerigus", 1,
+    "clodsire", 1,
+    "overqwil", 1,
+    "sneasler", 1,
+    "perrserker", 2,
+    "basculegion", 2
+  );
 
-      if (preEvolution.showdownId().equalsIgnoreCase(species.showdownId())) {
+  public static FormData determineChildForm(FormData parentForm) {
+    if (parentForm == null) return null;
+    Species baseSpecies = parentForm.getSpecies();
+
+    while (baseSpecies.getPreEvolution() != null) {
+      Species pre = baseSpecies.getPreEvolution().getSpecies();
+      if (pre.showdownId().equalsIgnoreCase(baseSpecies.showdownId())) {
         break;
       }
-
-      species = preEvolution;
+      baseSpecies = pre;
     }
 
-    return species;
+    String parentNameLower = parentForm.getSpecies().getName().toLowerCase();
+    Integer formIdx = SPECIAL_FORM_INDEXES.get(parentNameLower);
+    if (formIdx != null && baseSpecies.getForms().size() > formIdx) {
+      return baseSpecies.getForms().get(formIdx);
+    }
+
+    String parentFormId = parentForm.formOnlyShowdownId();
+    if (!parentFormId.isEmpty()) {
+      for (FormData f : baseSpecies.getForms()) {
+        String childFormId = f.formOnlyShowdownId();
+        if (childFormId.contains(parentFormId) || parentFormId.contains(childFormId)) {
+          return f;
+        }
+      }
+    }
+
+    return baseSpecies.getStandardForm();
   }
 
   @Override
@@ -93,7 +125,7 @@ public class DayCarePokemon extends Mechanics {
       if (incensePokemon != null) {
         firstEvolution = incensePokemon;
       } else {
-        firstEvolution = getEvolutionPokemonEgg(firstEvolution.getSpecies());
+        firstEvolution = getEvolutionPokemonEgg(firstEvolution);
       }
     }
 
@@ -189,20 +221,37 @@ public class DayCarePokemon extends Mechanics {
     return text;
   }
 
+  public Pokemon createChildPokemonInstance(Pokemon pokemon) {
+    if (pokemon == null) return null;
+    return createChildPokemonInstance(pokemon.getForm());
+  }
+
+  public Pokemon createChildPokemonInstance(FormData form) {
+    if (form == null) return null;
+    Species species = form.getSpecies();
+    if (species.showdownId().equalsIgnoreCase("manaphy")) {
+      return PokemonSpecies.getByIdentifier(Identifier.of("cobblemon:phione")).create(1);
+    }
+    FormData childForm = determineChildForm(form);
+    Pokemon specialPokemon = findSpecialPokemon(childForm.getSpecies());
+    if (specialPokemon != null) return specialPokemon;
+
+    Pokemon child = childForm.getSpecies().create(1);
+    child.setForm(childForm);
+    return child;
+  }
+
   public Pokemon getEvolutionPokemonEgg(Pokemon pokemon) {
-    return getEvolutionPokemonEgg(pokemon.getSpecies());
+    return createChildPokemonInstance(pokemon);
+  }
+
+  public Pokemon getEvolutionPokemonEgg(FormData form) {
+    return createChildPokemonInstance(form);
   }
 
   public Pokemon getEvolutionPokemonEgg(Species species) {
-    if (species.showdownId().equals("manaphy"))
-      return PokemonSpecies.getByIdentifier(Identifier.of("cobblemon:phione")).create(1);
-    Species firstEvolution = getFirstPreEvolution(species);
-
-    Pokemon specialPokemon = findSpecialPokemon(firstEvolution);
-
-    // Usamos Objects.requireNonNullElseGet para devolver el Pokémon especial si
-    // existe, o crear uno nuevo si no
-    return Objects.requireNonNullElseGet(specialPokemon, () -> firstEvolution.create(1));
+    if (species == null) return null;
+    return createChildPokemonInstance(species.getStandardForm());
   }
 
   private Pokemon findSpecialPokemon(Species species) {
