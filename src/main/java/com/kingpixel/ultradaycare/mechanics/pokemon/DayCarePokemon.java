@@ -68,34 +68,12 @@ public class DayCarePokemon extends Mechanics {
   );
 
   public static FormData determineChildForm(FormData parentForm) {
+    DayCareForm formMechanic = UltraDaycare.getActiveMechanic(DayCareForm.class);
+    if (formMechanic != null) {
+      return formMechanic.determineChildForm(parentForm);
+    }
     if (parentForm == null) return null;
-    Species baseSpecies = parentForm.getSpecies();
-
-    while (baseSpecies.getPreEvolution() != null) {
-      Species pre = baseSpecies.getPreEvolution().getSpecies();
-      if (pre.showdownId().equalsIgnoreCase(baseSpecies.showdownId())) {
-        break;
-      }
-      baseSpecies = pre;
-    }
-
-    String parentNameLower = parentForm.getSpecies().getName().toLowerCase();
-    Integer formIdx = SPECIAL_FORM_INDEXES.get(parentNameLower);
-    if (formIdx != null && baseSpecies.getForms().size() > formIdx) {
-      return baseSpecies.getForms().get(formIdx);
-    }
-
-    String parentFormId = parentForm.formOnlyShowdownId();
-    if (!parentFormId.isEmpty()) {
-      for (FormData f : baseSpecies.getForms()) {
-        String childFormId = f.formOnlyShowdownId();
-        if (childFormId.contains(parentFormId) || parentFormId.contains(childFormId)) {
-          return f;
-        }
-      }
-    }
-
-    return baseSpecies.getStandardForm();
+    return parentForm.getSpecies().getStandardForm();
   }
 
   @Override
