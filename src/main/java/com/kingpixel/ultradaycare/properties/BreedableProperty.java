@@ -44,11 +44,11 @@ public class BreedableProperty implements CustomPokemonProperty {
 
   @Override
   public boolean matches(@NotNull Pokemon pokemon) {
-    return true;
+    return UltraDaycare.isBreedable(pokemon) == this.value;
   }
 
   @Override
   public boolean matches(@NotNull PokemonEntity pokemonEntity) {
-    return true;
+    return UltraDaycare.isBreedable(pokemonEntity.getPokemon()) == this.value;
   }
 }

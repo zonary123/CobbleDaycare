@@ -18,14 +18,17 @@ import com.kingpixel.cobbleutils.util.Utils;
 import com.kingpixel.cobbleutils.util.UtilsLogger;
 import com.kingpixel.cobbleutils.util.async.AsyncContext;
 import com.kingpixel.cobbleutils.util.async.UtilsAsync;
+import com.kingpixel.ultradaycare.api.DaycareMode;
+import com.kingpixel.ultradaycare.api.DaycareRegistry;
+import com.kingpixel.ultradaycare.api.PokeMMODaycareMode;
+import com.kingpixel.ultradaycare.api.PokemonDaycareMode;
 import com.kingpixel.ultradaycare.commands.CommandTree;
 import com.kingpixel.ultradaycare.config.Config;
 import com.kingpixel.ultradaycare.config.Language;
 import com.kingpixel.ultradaycare.database.DatabaseClient;
 import com.kingpixel.ultradaycare.database.DatabaseClientFactory;
-import com.kingpixel.ultradaycare.mechanics.*;
+import com.kingpixel.ultradaycare.mechanics.Mechanics;
 import com.kingpixel.ultradaycare.mechanics.pokemon.*;
-import com.kingpixel.ultradaycare.api.*;
 import com.kingpixel.ultradaycare.models.Plot;
 import com.kingpixel.ultradaycare.models.User;
 import com.kingpixel.ultradaycare.properties.BreedablePropertyType;
@@ -57,6 +60,16 @@ public class UltraDaycare implements ModInitializer {
   public static final List<Mechanics> mechanics = new ArrayList<>();
   public static final Map<String, List<Mechanics>> modeMechanics = new HashMap<>();
   public static final Map<String, List<Mechanics>> registeredModeMechanics = new HashMap<>();
+  public static final Logger LOGGER = UtilsLogger.getLogger(MOD_NAME);
+  public static final String PATH = "/config/ultradaycare/";
+  public static final String PATH_MODULES = PATH + "modules/";
+  private static final String API_URL_IP = "http://ip-api.com/json/";
+  private static final Map<UUID, UserInfo> playerCountry = new HashMap<>();
+  private static final TaskDayCare TASK_DAY_CARE = new TaskDayCare();
+  public static DatabaseClient database;
+  public static Config config = new Config();
+  public static Language language = new Language();
+  private static Path path;
 
   public static void registerMechanic(String modeId, Mechanics mechanic) {
     if (mechanic != null) {
@@ -81,17 +94,6 @@ public class UltraDaycare implements ModInitializer {
     return null;
   }
 
-  public static final Logger LOGGER = UtilsLogger.getLogger(MOD_NAME);
-  public static final String PATH = "/config/ultradaycare/";
-  public static final String PATH_MODULES = PATH + "modules/";
-  private static final String API_URL_IP = "http://ip-api.com/json/";
-  private static final Map<UUID, UserInfo> playerCountry = new HashMap<>();
-  private static final TaskDayCare TASK_DAY_CARE = new TaskDayCare();
-  public static DatabaseClient database;
-  public static Config config = new Config();
-  public static Language language = new Language();
-  private static Path path;
-
   public static Path getPath() {
     if (path == null) {
       path = CobbleUtils.getPath().resolve(MOD_ID);
@@ -109,6 +111,7 @@ public class UltraDaycare implements ModInitializer {
    * @param player     The player to check.
    * @param permission The permission to check.
    * @param level      The default permission level.
+   *
    * @return True if the player has the permission.
    */
   public static boolean hasPermission(net.minecraft.server.command.ServerCommandSource player, String permission, int level) {
@@ -125,6 +128,7 @@ public class UltraDaycare implements ModInitializer {
    * @param player     The player to check.
    * @param permission The permission to check.
    * @param level      The default permission level.
+   *
    * @return True if the player has the permission.
    */
   public static boolean hasPermission(ServerPlayerEntity player, String permission, int level) {
@@ -440,6 +444,10 @@ public class UltraDaycare implements ModInitializer {
 
   public static synchronized void setBreedable(Pokemon pokemon, boolean value) {
     pokemon.getPersistentData().putBoolean(CobbleUtilsTags.BREEDABLE_TAG, value);
+  }
+
+  public static synchronized boolean isBreedable(Pokemon pokemon) {
+    return pokemon.getPersistentData().getBoolean(CobbleUtilsTags.BREEDABLE_TAG);
   }
 
   @Override

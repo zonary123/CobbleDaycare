@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.6]
+
+### Fixed
+
+- **Pokémon Form & Regional Variant Inheritance**: Fixed form inheritance mechanics when breeding. Offspring eggs now correctly inherit species-specific forms and regional variants (e.g. Alolan, Galarian, Hisuian, Paldean) from parent Pokémon holding an Everstone or following mother inheritance rules, while properly excluding blacklisted cosmetic forms.
+- **Breedable Property Matching**: Fixed the `breedable` property check so commands, custom property selectors, and system checks accurately identify whether a Pokémon is allowed to breed or if its breeding status has been disabled.
+
 ## [1.2.5]
 
 ### Added
