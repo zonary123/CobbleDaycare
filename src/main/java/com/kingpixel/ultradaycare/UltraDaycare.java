@@ -144,7 +144,7 @@ public class UltraDaycare implements ModInitializer {
     DaycareRegistry.registerMode(new PokemonDaycareMode());
     DaycareRegistry.registerMode(new PokeMMODaycareMode());
     registerDefaultMechanics();
-    CobbleUtils.info(MOD_ID, "1.2.0", "https://github.com/zonary123/UltraDaycare");
+    CobbleUtils.info(MOD_ID, "1.2.7", "https://github.com/zonary123/UltraDaycare");
     files();
     DatabaseClientFactory.createDatabaseClient(config.getDataBase());
   }

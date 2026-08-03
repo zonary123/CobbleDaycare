@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.2.7]
+
+### Added
+
+- **Multi-Database Support**: Added support for SQL databases (**H2**, **SQLite**, **MySQL**, and **MariaDB**) alongside existing JSON and MongoDB options, allowing server owners to choose their preferred storage system.
+
+### Changed
+
+- **Fully Configurable Form System**: Made form inheritance rules, regional biases, and egg forms completely customizable through `form.json`.
+- **Automatic Configuration Repair**: The mod now automatically adds missing default Pokémon forms during startup without overwriting your custom changes.
+
+### Fixed
+
+- **Basculin & Basculegion Forms**: Fixed visual rendering and form textures for White-Striped, Blue-Striped, and Red-Striped Basculin and Basculegion so their forms display properly.
+- **Regional Form Inheritance**: Guaranteed that regional variants (Alola, Galar, Hisui, and Paldea) correctly inherit their region bias when hatched from eggs.
+
 ## [1.2.6]
 
 ### Fixed
