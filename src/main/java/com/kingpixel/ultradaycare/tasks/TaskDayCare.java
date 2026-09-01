@@ -3,7 +3,6 @@ package com.kingpixel.ultradaycare.tasks;
 import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.api.storage.party.PlayerPartyStore;
 import com.cobblemon.mod.common.pokemon.Pokemon;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
 import com.kingpixel.cobbleutils.util.TypeMessage;
@@ -22,7 +21,9 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import org.spongepowered.asm.mixin.Unique;
 
 import java.util.Collections;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Carlos Varas Alonso - 24/11/2025 8:05
@@ -32,14 +33,9 @@ public class TaskDayCare implements Runnable {
   public static final ConcurrentMap<ServerPlayerEntity, Integer> cobbleDaycare$playerTeleport = new ConcurrentHashMap<>();
   private static final long TICKS_TO_MILLISECONDS = 50;
   private static final ConcurrentMap<ServerPlayerEntity, Position> cobbleDaycare$playerPositions = new ConcurrentHashMap<>();
-  private static final ScheduledExecutorService cobbleDaycare$scheduler = Executors
-      .newSingleThreadScheduledExecutor(new ThreadFactoryBuilder()
-          .setNameFormat("CobbleDaycare-walk-breeding-%d")
-          .setDaemon(true)
-          .build());
 
   public TaskDayCare() {
-    cobbleDaycare$scheduler.scheduleAtFixedRate(this, 5, 1, TimeUnit.SECONDS);
+    UltraDaycare.getAsyncContext().scheduleAtFixedRate(this, 5, 1, TimeUnit.SECONDS);
   }
 
   private static void sendMessageMultiplierSteps(User user, ServerPlayerEntity player) {
